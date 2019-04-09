@@ -25,8 +25,7 @@ function mdl = multinomialModel(mdl,DmatX,DmatY,glmnetOpt)
         trainDmatY = DmatY(trainIdx,:);
         testDmatX = DmatX(testIdx,:);
         testDmatY = DmatY(testIdx,:);
-        
-      
+
         
         %% GLM model fitting
         %xFold CV to find optimal lambda for regularization

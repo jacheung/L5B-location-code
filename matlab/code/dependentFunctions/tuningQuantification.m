@@ -108,7 +108,7 @@ for d = 1:length(selectedCells)
 
    
     figure(390);subplot(plotrow,plotcolumn,d);
-    filex_shadedErrorBar(xy(:,1),xy(:,2),cibins,'-k'); 
+    shadedErrorBar(xy(:,1),xy(:,2),cibins,'-k'); 
 %     scatter(xy(:,1),xy(:,2),[],[.7 .7 .7],'filled')
     set(gca,'ytick',round(min(xy(:,2))-1):round(max(xy(:,2))+1),'ylim',[round(min(xy(:,2))-1) round(max(xy(:,2))+1)],...
         'xlim',[min(xy(:,1)) max(xy(:,1))],'xtick',-20:20:60)
