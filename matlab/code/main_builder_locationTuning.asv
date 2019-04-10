@@ -3,12 +3,6 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat')
 %% Top level parameters and definitions 
 touchWindow = [-25:50]; %window for analyses around touch
 numInterpPts = 24; %used for stretching or shrinking tuning curves to within the same bounds for decoding object location
-% GLM model parameters
-glmnetOpt = glmnetSet;
-glmnetOpt.standardize = 0; %set to 0 b/c already standardized
-glmnetOpt.alpha = 0.95;
-glmnetOpt.xfoldCV = 5;
-glmnetOpt.numIterations = 10;
 
 touchCells = touchCell(U);
 selectedCells = find(touchCells==1);
@@ -41,26 +35,30 @@ for d = 1
 end
 
 %% Builder for decoding
+% GLM model parameters
+glmnetOpt = glmnetSet;
+glmnetOpt.standardize = 0; %set to 0 b/c already standardized
+glmnetOpt.alpha = 0.95;
+glmnetOpt.xfoldCV = 5;
+glmnetOpt.numIterations = 10;
+
+%design matrix for feature in fields list
 fieldsList = fields(popV{1});
-[DmatX,DmatY] = designMatrixBuilder_touchFeature(U,popV,selectedCells,fieldsList{1},touchWindow,numInterpPts);
+[mdl.io.X, mdl.io.Y.normal, mdl.io.Y.shuffled] = designMatrixBuilder_touchFeature(U,popV,selectedCells,fieldsList{1},touchWindow,numInterpPts);
 
-mdl.io.X = DmatX;
-mdl.io.Y = DmatY; 
-
-mdl = multinomialModel(mdl,DmatX,DmatY.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+%multinomial model for decoding location 
+mdl = multinomialModel(mdl,mdl.io.X,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 decoderPerformance(mdl)
-
-mdl = multinomialModel(mdl,DmatX,DmatY.shuffled,glmnetOpt); %shuffled outcomes to define baseline
-decoderPerformance(mdl)
-
-predProb = mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix); 
-figure;imagesc(predProb)
-caxis([0 max(predProb(:))])
-colorbar
-axis square
 
 %% Builder for hilbert source 
 selectedArray = U(selectedCells);
+
+%GLMNET parameters
+glmnetOpt = glmnetSet;
+glmnetOpt.standardize = 0;
+glmnetOpt.alpha = 0.95;
+glmnetOpt.xfoldCV = 5;
+glmnetOpt.numIterations = 1;
 
 %BUILD parameters
 glmnetOpt.buildIndices = [-25:50]; %Indices around touch
@@ -72,16 +70,19 @@ glmnetOpt.bf.bfspacing = 3;
 basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwidth,0,glmnetOpt.bf.bfstd),0,1);
 glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
 
-%GLMNET parameters
-glmnetOpt = glmnetSet;
-glmnetOpt.standardize = 0;
-glmnetOpt.alpha = 0.95;
-glmnetOpt.xfoldCV = 5;
-glmnetOpt.numIterations = 10;
+%GLM
+fileName = 'glmModelTest';
+if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+else
+    glmModel = []; 
+end
 
-[DmatX,DmatY,glmModel] = designMatrixBuilder_hilbert(selectedArray,glmnetOpt);
+[glmModel] = designMatrixBuilder_hilbert(selectedArray,glmnetOpt,glmModel);
 
-%STANDARDIZATION
-DmatX = cellfun(@(x) (x-nanmean(x)) ./ nanstd(x) ,DmatX,'uniformoutput',false);
+for i = 1:length(DmatX) 
+glm = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
 
-binomialModel_hilbert(DmatX,DmatY,selectedArray,glmnetOpt)
+cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
+save(fileName,'glmModel')
+end

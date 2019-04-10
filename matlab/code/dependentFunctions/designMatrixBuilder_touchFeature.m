@@ -1,4 +1,4 @@
-function [DmatX,DmatY ] = designMatrixBuilder_touchFeature(U,popV,selectedCells,fields,touchWindow,numInterpPts)
+function [DmatX,DmatYnorm,DmatYshuff] = designMatrixBuilder_touchFeature(U,popV,selectedCells,fields,touchWindow,numInterpPts)
 
 %% LOCATION TUNING MODELING
 
@@ -92,9 +92,7 @@ end
     DmatYnorm = repmat([1:size(modelY,1)]',resampNum,1);
     randshuff = randperm(length(DmatYnorm));
     DmatYshuff = DmatYnorm(randshuff);
-    
-    DmatY.shuffled = DmatYshuff;
-    DmatY.normal = DmatYnorm; 
+
     
 %     %     for d = 1:length(DmatY)
 %     for d = 1

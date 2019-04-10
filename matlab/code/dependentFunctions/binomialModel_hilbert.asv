@@ -1,6 +1,6 @@
-function binomialModel_hilbert(DmatX,DmatY,selectedArray,glmnetOpt)
+function glmModel = binomialModel_hilbert(DmatX,DmatY,selectedArray,glmnetOpt,glmModel)
 
-for i = 1:length(DmatX)
+
     %GLMNET 
     sangles = cell(1,glmnetOpt.numIterations);
     sHeat = cell(1,glmnetOpt.numIterations);
@@ -8,10 +8,10 @@ for i = 1:length(DmatX)
     fitDevExplained = nan(1,glmnetOpt.numIterations);
     fitDevExplainedFull = nan(1,glmnetOpt.numIterations);
     mccDiff = nan(glmnetOpt.numIterations,2);
-    numTrials = size(DmatX{i},1)/length(buildIndices);
+    numTrials = size(DmatY,1)/length(glmnetOpt.buildIndices);
     
     for p = 1:glmnetOpt.numIterations
-        disp(['running glmnet with elasticNet ' num2str(glmnetOpt.alpha) ' for iteration ' num2str(p) '/' num2str(glmnetOpt.numIterations) '. Cell ' num2str(i) '/' num2str(length(selectedCells)) ])
+        disp(['running glmnet with elasticNet ' num2str(glmnetOpt.alpha) ' for iteration ' num2str(p) '/' num2str(glmnetOpt.numIterations) '. Cell ' num2str(i) '/' num2str(length(DmatX)) ])
         % test and train sets
         % might want to include stratification to make sure all ranges
         % are used
@@ -20,15 +20,15 @@ for i = 1:length(DmatX)
         trainIdxStartRaw = shuffIdx(1:round(numTrials*.7));
         testIdxStartRaw = setdiff(shuffIdx,trainIdxStartRaw);
         
-        trainIdxStart = ((trainIdxStartRaw-1).*length(buildIndices))+1;
-        testIdxStart = ((testIdxStartRaw-1).*length(buildIndices))+1;
+        trainIdxStart = ((trainIdxStartRaw-1).*length(glmnetOpt.buildIndices))+1;
+        testIdxStart = ((testIdxStartRaw-1).*length(glmnetOpt.buildIndices))+1;
         
-        trainIdx = trainIdxStart'+(0:length(buildIndices)-1);
-        testIdx = testIdxStart'+(0:length(buildIndices)-1);
+        trainIdx = trainIdxStart'+(0:length(glmnetOpt.buildIndices)-1);
+        testIdx = testIdxStart'+(0:length(glmnetOpt.buildIndices)-1);
         
-        trainDmatX = DmatXNorm(trainIdx',:);
+        trainDmatX = DmatX(trainIdx',:);
         trainDmatY = DmatY(trainIdx',:);
-        testDmatX = DmatXNorm(testIdx',:);
+        testDmatX = DmatX(testIdx',:);
         testDmatY = DmatY(testIdx',:);
         
         %Check that design matrix is properly indexed when ew split to test
@@ -43,8 +43,6 @@ for i = 1:length(DmatX)
         fitLambda = cv.lambda_1se;
         iLambda = find(cv.lambda == cv.lambda_1se);
         fitCoeffs = [cv.glmnet_fit.a0(iLambda) ; cv.glmnet_fit.beta(:,iLambda)];
-        
-        m = size(testDmatX,1);
         predicts = cvglmnetPredict(cv,testDmatX,fitLambda); % this outputs testDmatX * fitCoeffs
         predProb = sigmoid(predicts); %this is the sigmoid of predicts which means the probabilities
         
@@ -57,13 +55,12 @@ for i = 1:length(DmatX)
 %         trainDevianceExplained = 1-(-trainfullLL)/(-trainnullLL);
 %         devExplained = cv.glmnet_fit.dev(iLambda);
         
-        % goodness of fit using deviance
+        % goodness of fit using deviance explained in selected touch
+        % response windows 
         mu = mean(testDmatY);
-        
-        %goodness of fit using selectedTouch Response windows
-        reshapedDmatY = reshape(testDmatY,length(buildIndices),length(testDmatY)./length(buildIndices));
-        reshapedPredProb = reshape(predProb,length(buildIndices),length(predProb)./length(buildIndices));
-        selIdx = [find(buildIndices==selectedArray{i}.meta.responseWindow(1)):find(buildIndices==selectedArray{i}.meta.responseWindow(2))];
+        reshapedDmatY = reshape(testDmatY,length(glmnetOpt.buildIndices),length(testDmatY)./length(glmnetOpt.buildIndices));
+        reshapedPredProb = reshape(predProb,length(glmnetOpt.buildIndices),length(predProb)./length(glmnetOpt.buildIndices));
+        selIdx = [find(glmnetOpt.buildIndices==selectedArray{i}.meta.responseWindow(1)):find(glmnetOpt.buildIndices==selectedArray{i}.meta.responseWindow(2))];
         selectedDmatY = reshapedDmatY(selIdx,:);
         selectedPredProb = reshapedPredProb(selIdx,:);
         
@@ -71,10 +68,8 @@ for i = 1:length(DmatX)
         nullLL = sum(log(binopdf(selectedDmatY(:),1,(ones(length(selectedPredProb(:)),1)*mu))));
         saturatedLL = sum(log(binopdf(selectedDmatY(:) ,1,selectedDmatY(:) )));
         
-        
-        
-        
         fitDevExplained(p) = 1 - (saturatedLL-fullLL)/(saturatedLL-nullLL);
+        
         %goodness of fit using all indices
         fullLL = sum(log(binopdf(testDmatY,1,predProb)));
         nullLL = sum(log(binopdf(testDmatY,1,(ones(length(predProb),1)*mu))));
@@ -86,20 +81,18 @@ for i = 1:length(DmatX)
         pcBins = 0:.05:1;
         spksProbNull = (ones(length(predProb),1)*mu) > pcBins;
         spksProbFull = predProb>pcBins;
-        
         for j = 1:length(0:.05:1)
             mccFull(j) = mccCalculator(testDmatY,double(spksProbFull(:,j)));
             mccNull(j) = mccCalculator(testDmatY,double(spksProbNull(:,j)));
         end
-        
         [mccDiff(p,1), maxidx] = max(mccFull-mccNull);
         mccDiff(p,2) = pcBins(maxidx);
         
         %variables for recreating heat map
-        rawFR = reshape(testDmatY,length(buildIndices),length(testIdxStart));
-        predFR = reshape(predProb,length(buildIndices),length(testIdxStart));
+        rawFR = reshape(testDmatY,length(glmnetOpt.buildIndices),length(testIdxStart));
+        predFR = reshape(predProb,length(glmnetOpt.buildIndices),length(testIdxStart));
         bounds = [-100:2:100];
-        rawAngle = angle(touchIdx);
+        rawAngle = glmModel{i}.raw.angle;
         [sangles{p},sidx] = sort(rawAngle(testIdxStartRaw));
         sHeat{p} = predFR(:,sidx)';
         sRaw{p} = rawFR(:,sidx)';
@@ -109,30 +102,32 @@ for i = 1:length(DmatX)
     
     
     %constructing output structure of model
-    glmModel{i}.modelParams = glmnetOpt; 
+    glm.modelParams = glmnetOpt; 
     
+    
+
+
+    touchShiftIdx = glm.basisFunctions.touch;
+
     coeffsIter = cell2mat(sFitCoeffs);
-    glmModel{i}.basisFunctions.touch = touchShiftIdx;
-    glmModel{i}.basisFunctions.features = touchShiftIdxRaw;
+    glm.coeffs.raw = cell2mat(sFitCoeffs);
+    glm.coeffs.touchCoeffs = mean(coeffsIter(2:2+size(touchShiftIdx,2)-1,:),2);
+    glm.coeffs.phaseCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
+    glm.coeffs.ampCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
+   glm.coeffs.midpointCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
+        glm.coeffs.curvatureCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
     
-    glmModel{i}.coeffs.raw = cell2mat(sFitCoeffs);
-    glmModel{i}.coeffs.touchCoeffs = mean(coeffsIter(2:2+size(touchShiftIdx,2)-1,:),2);
-    glmModel{i}.coeffs.phaseCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
-    glmModel{i}.coeffs.ampCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
-    glmModel{i}.coeffs.midpointCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
-        glmModel{i}.coeffs.curvatureCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
-    
-    glmModel{i}.raw.spikes = reshape(DmatY,length(buildIndices),length(DmatY)/length(buildIndices))';
-    glmModel{i}.raw.angle = rawAngle;
-    glmModel{i}.raw.angle(trialsToRemove) = [];
+  glm.raw.spikes = reshape(DmatY,length(glmnetOpt.buildIndices),length(DmatY)/length(glmnetOpt.buildIndices))';
+    glm.raw.angle = rawAngle;
+  glm.raw.angle(trialsToRemove) = [];
     
     
-    glmModel{i}.predicted.spikeTestRaw = cell2mat(sRaw');
-    glmModel{i}.predicted.spikeProb = cell2mat(sHeat');
-    glmModel{i}.predicted.angles = cell2mat(sangles');
+    glm.predicted.spikeTestRaw = cell2mat(sRaw');
+   glm.predicted.spikeProb = cell2mat(sHeat');
+ glm.predicted.angles = cell2mat(sangles');
     
-    glmModel{i}.gof.devExplained = fitDevExplained;
-    glmModel{i}.gof.mcc = mccDiff;
+    glm.gof.devExplained = fitDevExplained;
+  glm.gof.mcc = mccDiff;
     
   
     %predictedHeat
@@ -158,4 +153,3 @@ for i = 1:length(DmatX)
     
     cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
     save(fileName,'glmModel')
-end

@@ -1,4 +1,4 @@
-function [gDmatX,gDmatY,glmModel] = designMatrixBuilder_hilbert(selectedArray,glmnetOpt)
+function [glmModel] = designMatrixBuilder_hilbert(selectedArray,glmnetOpt,glmModel)
 
 basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwidth,0,glmnetOpt.bf.bfstd),0,1);
 
@@ -57,13 +57,16 @@ for i = 1:length(selectedArray)
     
     rawAngle = angle(touchIdx);
     
-    gDmatX{i} = DmatX;
-    gDmatY{i} = DmatY; 
+    glmModel{i}.io.DmatX = DmatX;
+    glmModel{i}.io.DmatY = DmatY; 
+    glmModel{i}.io.DmatXNormalized = (DmatX - mean(DmatX)) ./ std(DmatX);
     
+
     glmModel{i}.basisFunctions.touch = touchShiftIdx;
     glmModel{i}.basisFunctions.features = touchShiftIdxRaw;
     
     glmModel{i}.raw.angle = rawAngle;
-    glmModel{i}.raw.angle(trialsToRemove) = [];
+    glmModel{i}.raw.trimmedAngle = rawAngle;
+    glmModel{i}.raw.trimmedAngle(trialsToRemove) = [];
 
 end
