@@ -104,18 +104,18 @@ end
 %constructing output structure of model
 mdl.modelParams = glmnetOpt;
 
-
-
-
 touchShiftIdx = mdl.basisFunctions.touch;
 
 coeffsIter = cell2mat(sFitCoeffs);
 mdl.coeffs.raw = cell2mat(sFitCoeffs);
-mdl.coeffs.touchCoeffs = mean(coeffsIter(2:2+size(touchShiftIdx,2)-1,:),2);
-mdl.coeffs.phaseCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
-mdl.coeffs.ampCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
-mdl.coeffs.midpointCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
-mdl.coeffs.curvatureCoeffs = mean(coeffsIter(2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd ):2+size(touchShiftIdx,2)+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )+length(glmnetOpt.bf.indicesToAdd )-1,:),2);
+
+
+featureLagsEnds = [cumsum(mdl.io.selectedFeatures.dims)+1]; 
+featureLagsStarts = [2 cumsum(mdl.io.selectedFeatures.dims)+2];
+
+for j = 1:length(featureLagsEnds)
+mdl.coeffs.(mdl.io.selectedFeatures.name{j}) = mean(coeffsIter(featureLagsStarts(j):featureLagsEnds(j),:),2); 
+end
 
 mdl.raw.spikes = reshape(DmatY,length(glmnetOpt.buildIndices),length(DmatY)/length(glmnetOpt.buildIndices))';
 

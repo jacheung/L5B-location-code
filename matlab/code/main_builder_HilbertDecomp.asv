@@ -22,7 +22,7 @@ glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0;
 glmnetOpt.alpha = 0.95;
 glmnetOpt.xfoldCV = 5;
-glmnetOpt.numIterations = 5;
+glmnetOpt.numIterations = 10;
 
 %BUILD parameters
 glmnetOpt.buildIndices = [-25:50]; %Indices around touch
@@ -40,17 +40,17 @@ if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat']
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
     glmModel = []; 
+    [glmModel] = designMatrixBuilder_hilbert(selectedArray,glmnetOpt,glmModel);
 end
 
-[glmModel] = designMatrixBuilder_hilbert(selectedArray,glmnetOpt,glmModel);
 
-for i = 1:length(glmModel) 
+parfor i = 8
     i 
 glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
 
 glmModel{i}.meta = tunedCellsIdx(i);
+end
 
 cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
 save(fileName,'glmModel','-v7.3')
-end
 %% Hilbert source plotters

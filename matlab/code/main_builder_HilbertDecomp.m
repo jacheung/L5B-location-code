@@ -34,23 +34,29 @@ glmnetOpt.bf.bfspacing = 3;
 basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwidth,0,glmnetOpt.bf.bfstd),0,1);
 glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
 
-%GLM
-fileName = 'glmModelCurvature';
+%GLMdesign Matrix Set-up
+fileName = 'glmModelFull';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
     glmModel = []; 
-    [glmModel] = designMatrixBuilder_hilbert(selectedArray,glmnetOpt,glmModel);
+    [glmModel] = designMatrixBlocks(selectedArray,glmnetOpt,glmModel);
 end
 
+%GLMdesign Matrix Build
+selectedFeatures = [1 3 4 5 ]; 
 
-parfor i = 1:length(glmModel) 
+selectedFeaturesOptions = fields(glmModel{1}.io.components);
+selectedFeaturesTitles = selectedFeaturesOptions([selectedFeatures])
+[glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures);
+
+
+for i = 8
     i 
 glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
 
 glmModel{i}.meta = tunedCellsIdx(i);
 end
 
-cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
-save(fileName,'glmModel','-v7.3')
-%% Hilbert source plotters
+% cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
+% save(fileName,'glmModel','-v7.3')
