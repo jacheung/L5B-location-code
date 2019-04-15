@@ -39,19 +39,24 @@ fileName = 'glmModelFull';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
-    glmModel = []; 
+    glmModel = [];
     [glmModel] = designMatrixBlocks(selectedArray,glmnetOpt,glmModel);
 end
 
 %GLMdesign Matrix Build
-selectedFeatures = [1 3 4 5 ]; 
+selectedFeatures = [1 2 4 5 6 7]; 
 
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
-selectedFeaturesTitles = selectedFeaturesOptions([selectedFeatures])
+selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 [glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures);
 
+%Plot correlation matrix between features of design matrix. Look for
+%obvious colinearity between features
+figure(62);clf
+imagesc(corr(glmModel{datasample(1:length(glmModel),1)}.io.DmatXNormalized))
+caxis([0 .7]) ; colorbar
 
-for i = 8
+for i = 9
     i 
 glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
 

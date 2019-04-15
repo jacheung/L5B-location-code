@@ -172,16 +172,15 @@ for i = 8
     coeffsToPlot = fields(glmModel{i}.coeffs);
     for u = 2:length(coeffsToPlot)
         coeffsToPlotName = coeffsToPlot{u}; 
-        
-    hold on; plot(-25:50,sum(glmModel{i}.coeffs.touchCoeffs'.*glmModel{i}.basisFunctions.touch,2))
-    hold on; plot(-25:50,sum(glmModel{i}.coeffs.phaseCoeffs'.*glmModel{i}.basisFunctions.features,2))
-    hold on; plot(-25:50,sum(glmModel{i}.coeffs.ampCoeffs'.*glmModel{i}.basisFunctions.features,2))
-    hold on; plot(-25:50,sum(glmModel{i}.coeffs.midpointCoeffs'.*glmModel{i}.basisFunctions.features,2))
-    hold on; plot(-25:50,sum(glmModel{i}.coeffs.curvatureCoeffs'.*glmModel{i}.basisFunctions.features,2))
-    set(gca,'xlim',[-25 50],'xtick',-25:25:50)
+        if strcmp(coeffsToPlotName,'touch') || strcmp(coeffsToPlotName,'touchDur')
+            hold on; plot(BI,sum(glmModel{i}.coeffs.(coeffsToPlotName)'.*glmModel{i}.basisFunctions.touch,2))
+        else
+            hold on; plot(BI,sum(glmModel{i}.coeffs.(coeffsToPlotName)'.*glmModel{i}.basisFunctions.features,2))
+        end
+    end
     ylabel('kernel weight')
     xlabel('time from touch onset (ms)')
-    legend('touch','phase','amp','midpoint','curvature')
+    legend(coeffsToPlot(2:end))
     
     print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\hilbert_' num2str(i)],'-dpng')
     

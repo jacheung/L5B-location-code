@@ -18,7 +18,7 @@ trialCutoffs = repmat([1 200],numel(cellNum),1);
 clear U
 layer = 'L5bInt';
 cellNum = [1:7];
-trialCutoffs = repmat([1 200],numel(cellNum),1);
+trialCutoffs = repmat([1 500],numel(cellNum),1);
 %%
 
 for cellStep = 1:length(cellNum)

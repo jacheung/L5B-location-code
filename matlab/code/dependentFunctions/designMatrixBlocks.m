@@ -6,8 +6,9 @@ for i = 1:length(selectedArray)
     currentCell = selectedArray{i};
     
     %Defining features
-    touchmat = zeros(currentCell.t,currentCell.k);
+    touchDurMat = zeros(currentCell.t,currentCell.k); 
     touchIdx = [find(currentCell.S_ctk(9,:,:)==1) ;find(currentCell.S_ctk(12,:,:)==1)];
+    touchOffIdx = [find(currentCell.S_ctk(10,:,:)==1) ;find(currentCell.S_ctk(13,:,:)==1)];
     spikes = squeeze(currentCell.R_ntk);
     phase = squeeze(currentCell.S_ctk(5,:,:));
     amplitude = squeeze(currentCell.S_ctk(3,:,:));
@@ -16,7 +17,9 @@ for i = 1:length(selectedArray)
     velocity = squeeze(currentCell.S_ctk(2,:,:));
     curvature = squeeze(currentCell.S_ctk(17,:,:));
     DKappa = squeeze(currentCell.S_ctk(6,:,:));
-    touchmat(touchIdx)=1;
+    for d = 1:length(touchIdx)
+        touchDurMat(touchIdx(d):touchOffIdx(d)) = 1;
+    end
     
     %Get rid of touches with nan values
     nanidx = unique([find(isnan(midpoint(touchIdx))) ; find(isnan(amplitude(touchIdx))) ; find(isnan(phase(touchIdx))) ; find(isnan(curvature(touchIdx))) ] );
@@ -30,8 +33,8 @@ for i = 1:length(selectedArray)
     midpoint_conv = conv2(basisFunction,1,midpoint,'same');
     curvature_conv = conv2(basisFunction,1,curvature,'same');
     DKappa_conv = conv2(basisFunction,1,DKappa,'same');
-    touchmat_conv = conv2(basisFunction,1,touchmat,'same');
-    
+    touchDur_conv = conv2(basisFunction,1,touchDurMat,'same'); 
+
     %INDEX BUILDER FOR LAGS
     startIdx = glmnetOpt.buildIndices'+touchIdx';
     
@@ -48,7 +51,9 @@ for i = 1:length(selectedArray)
     
     touchShiftIdx = touchShiftIdxRaw(:,(glmnetOpt.bf.indicesToAdd <=0));
     
+    %Feature blocks for design matrix construction 
     glmModel{i}.io.components.touch = repmat(touchShiftIdx,length(touchIdx),1);
+    glmModel{i}.io.components.touchDur = touchDur_conv(shiftIdx(glmnetOpt.bf.indicesToAdd <=0,:)'); 
     glmModel{i}.io.components.angle = angle_conv(shiftIdx');
     glmModel{i}.io.components.phase = phase_conv(shiftIdx');
     glmModel{i}.io.components.amplitude = amplitude_conv(shiftIdx');

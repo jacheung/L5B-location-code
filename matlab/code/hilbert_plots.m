@@ -1,7 +1,7 @@
 %% QUANTIFICATION OF MODEL PARAMETERS
 popV = touchFeatureBinned(U,touchWindow);
 %%
-for i = 8
+for i = 9
     
     array = U{glmModel{i}.meta};
     BI = glmModel{i}.modelParams.buildIndices;
@@ -60,6 +60,8 @@ for i = 8
         'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
     ylabel('angle at touch')
     title('original tuning curve')
+    hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
+    hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
     
     subplot(2,3,4)
     imagesc(imgaussfilt(selMdlMat,gaussFilt,'padding','replicate'));
@@ -70,6 +72,8 @@ for i = 8
     xlabel('time from touch onset (ms)')
     ylabel('angle at touch')
     title('glmNet result')
+    hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
+    hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
     
     %     hold on; plot([selIdx(1) selIdx(1)],[0 30],'-.w')
     %     hold on; plot([selIdx(end) selIdx(end)],[0 30],'-.w')
@@ -97,7 +101,8 @@ for i = 8
         angleatT = angleGroup{d};
        
         bl = allspks(:,1:find(BI==0));
-        response = allspks(:,find(BI==touchResp(1)):find(BI==touchResp(2)));
+%         response = allspks(:,find(BI==touchResp(1)):find(BI==touchResp(2)));
+        response = allspks(:,find(BI==3):find(BI==15));
         
         meanbase =  mean(mean(bl,2));
         stdbase = std(mean(bl,2));
@@ -172,7 +177,7 @@ for i = 8
     coeffsToPlot = fields(glmModel{i}.coeffs);
     for u = 2:length(coeffsToPlot)
         coeffsToPlotName = coeffsToPlot{u}; 
-        if strcmp(coeffsToPlotName,'touch')
+        if strcmp(coeffsToPlotName,'touch') || strcmp(coeffsToPlotName,'touchDur')
             hold on; plot(BI,sum(glmModel{i}.coeffs.(coeffsToPlotName)'.*glmModel{i}.basisFunctions.touch,2))
         else
             hold on; plot(BI,sum(glmModel{i}.coeffs.(coeffsToPlotName)'.*glmModel{i}.basisFunctions.features,2))
