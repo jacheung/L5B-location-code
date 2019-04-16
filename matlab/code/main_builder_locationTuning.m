@@ -1,5 +1,7 @@
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat')
 
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat')
+%%
 % Top level parameters and definitions 
 touchWindow = [-25:50]; %window for analyses around touch
 numInterpPts = 24; %used for stretching or shrinking tuning curves to within the same bounds for decoding object location
@@ -10,6 +12,8 @@ selectedCells = find(touchCells==1);
 % Structure for quantifying tuning and evaluating decoding 
 popV = touchFeatureBinned(U,touchWindow);
 
+% Defining touch response
+U = defTouchResponse(U,.99);
 %% Plotter for feature tuning around touch window
 gaussFilt = 1; %smoothing function for tuning plots
 fieldsList = fields(popV{1});

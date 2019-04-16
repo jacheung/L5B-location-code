@@ -7,8 +7,9 @@ trialCutoffs(10,:)=[1 95];
 %%
 clear U
 layer = 'NL5b';
-cellNum = [1:7 9:11 13:29];
-trialCutoffs = repmat([1 500],numel(cellNum),1);
+cellNum = 1:30;
+cellNum = [1:7 9:11 13:29 31]; %some cells selected out because they are interneurons
+% trialCutoffs = repmat([1 500],numel(cellNum),1);
 %%
 clear U
 layer = 'L5bOut';
@@ -17,7 +18,7 @@ trialCutoffs = repmat([1 200],numel(cellNum),1);
 %%
 clear U
 layer = 'L5bInt';
-cellNum = [1:7];
+cellNum = [1:6];
 trialCutoffs = repmat([1 500],numel(cellNum),1);
 %%
 
@@ -192,4 +193,5 @@ for cellStep = 1:length(cellNum)
     U{cellStep}.whisker.barPos         = cellfun(@(x)x.whiskerTrial.barPos,T.trials(useTrials),'UniformOutput',false);
 end
 
+cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
 

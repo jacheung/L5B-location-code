@@ -94,45 +94,54 @@ end
 [~,INHIBftidx] = sort(idx);
 
 
+if ~isempty(tc)
+    figure(48);clf;
+    subplot(4,1,[1 2])
+    imagesc(heatSpks(ftidx,:))
+    hold on; plot([26 26],[0 length(tc)],'-.w','linewidth',3)
+    colorbar
+    colormap(jet)
+    caxis([0 1])
+    set(gca,'xtick',1:25:76,'xticklabel',-25:25:75,'ytick',[])
+    
+    figure(580);clf
+    subplot(3,1,1)
+    bar(-25:50,mean(excitRaw)*1000,'facecolor',[.5 .5 .5])
+    set(gca,'xlim',[-25 50],'xtick',-25:25:50)
+end
 
-figure(48);clf;
-subplot(4,1,[1 2])
-imagesc(heatSpks(ftidx,:))
-hold on; plot([26 26],[0 length(tc)],'-.w','linewidth',3)
-colorbar
-colormap(jet)
-caxis([0 1])
-set(gca,'xtick',1:25:76,'xticklabel',-25:25:75,'ytick',[])
+if ~isempty(INHIBtc)
+    figure(48);hold on;
+    subplot(4,1,[3])
+    imagesc(INHIBheatSpks(INHIBftidx,:))
+    hold on; plot([26 26],[0 length(tc)],'-.w','linewidth',3)
+    colorbar
+    colormap(jet)
+    caxis([0 1])
+    set(gca,'xtick',125:76,'xticklabel',-25:25:75,'ytick',[])
+    
+    figure(580);subplot(3,1,2)
+    bar(-25:50,mean(inhibRaw)*1000,'facecolor',[.5 .5 .5])
+    set(gca,'xlim',[-25 50],'xtick',-25:25:50)
+end
 
-figure(48);hold on;
-subplot(4,1,[3])
-imagesc(INHIBheatSpks(INHIBftidx,:))
-hold on; plot([26 26],[0 length(tc)],'-.w','linewidth',3)
-colorbar
-colormap(jet)
-caxis([0 1])
-set(gca,'xtick',125:76,'xticklabel',-25:25:75,'ytick',[])
-
-subplot(4,1,[4])
-imagesc(ntheatSpks)
-hold on; plot([26 26],[0 length(ntc)],'-.w','linewidth',3)
-colorbar
-colormap(jet)
-caxis([0 1])
-set(gca,'xtick',1:25:76,'xticklabel',-25:25:75,'ytick',[])
+if ~isempty(ntc)
+    subplot(4,1,[4])
+    imagesc(ntheatSpks)
+    hold on; plot([26 26],[0 length(ntc)],'-.w','linewidth',3)
+    colorbar
+    colormap(jet)
+    caxis([0 1])
+    set(gca,'xtick',1:25:76,'xticklabel',-25:25:75,'ytick',[])
+    
+    
+    figure(580);subplot(3,1,3)
+    bar(-25:50,mean(ntRaw)*1000,'facecolor',[.5 .5 .5])
+    set(gca,'xlim',[-25 50],'xtick',-25:25:50)
+end
 
 
-figure(580);clf
-subplot(3,1,1)
-bar(-25:50,mean(excitRaw)*1000,'facecolor',[.5 .5 .5])
-set(gca,'xlim',[-25 50],'xtick',-25:25:50)
 
-subplot(3,1,2)
-bar(-25:50,mean(inhibRaw)*1000,'facecolor',[.5 .5 .5])
-set(gca,'xlim',[-25 50],'xtick',-25:25:50)
 
-subplot(3,1,3)
-bar(-25:50,mean(ntRaw)*1000,'facecolor',[.5 .5 .5])
-set(gca,'xlim',[-25 50],'xtick',-25:25:50)
 
 
