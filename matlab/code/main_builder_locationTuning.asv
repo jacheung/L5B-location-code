@@ -1,5 +1,7 @@
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat')
 
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat')
+%%
 % Top level parameters and definitions 
 touchWindow = [-25:50]; %window for analyses around touch
 numInterpPts = 24; %used for stretching or shrinking tuning curves to within the same bounds for decoding object location
@@ -10,14 +12,17 @@ selectedCells = find(touchCells==1);
 % Structure for quantifying tuning and evaluating decoding 
 popV = touchFeatureBinned(U,touchWindow);
 
+% Defining touch response
+U = defTouchResponse(U,.99);
 %% Plotter for feature tuning around touch window
 gaussFilt = 1; %smoothing function for tuning plots
-fieldsList = fields(popV{1});
-touchFeatureBinned_plotter(U,popV,selectedCells,fieldsList(1),touchWindow,gaussFilt)
+whichTouches = fields(popV{1});
+fieldsList = fields(popV{1}.allTouches);
+touchFeatureBinned_plotter(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,gaussFilt)
 
 %% Plotter for object location tuning
-fieldsList = fields(popV{1});
-tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),touchWindow);
+fieldsList = fields(popV{1}.allTouches);
+tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow);
 
 %optional raster of FRs for tuned cells. 
 for d = 1
@@ -34,7 +39,7 @@ for d = 1
     end
 end
 
-%% Builder for identifying hilbert components that generate tuning
+%% Builder for decoding tuning location 
 % GLM model parameters
 glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0; %set to 0 b/c already standardized
@@ -50,40 +55,5 @@ fieldsList = fields(popV{1});
 mdl = multinomialModel(mdl,mdl.io.X,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 decoderPerformance(mdl)
 
-%% Builder for hilbert source 
-selectedArray = U(selectedCells);
 
-%GLMNET parameters
-glmnetOpt = glmnetSet;
-glmnetOpt.standardize = 0;
-glmnetOpt.alpha = 0.95;
-glmnetOpt.xfoldCV = 5;
-glmnetOpt.numIterations = 1;
 
-%BUILD parameters
-glmnetOpt.buildIndices = [-25:50]; %Indices around touch
-
-%basis function and convolution using gaussian distribution
-glmnetOpt.bf.bfwidth =7;
-glmnetOpt.bf.bfstd = 5;
-glmnetOpt.bf.bfspacing = 3;
-basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwidth,0,glmnetOpt.bf.bfstd),0,1);
-glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
-
-%GLM
-fileName = 'glmModelCurvature';
-if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
-else
-    glmModel = []; 
-end
-
-[glmModel] = designMatrixBuilder_hilbert(selectedArray,glmnetOpt,glmModel);
-
-for i = 1:length(DmatX) 
-glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
-
-cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
-save(fileName,'glmModel')
-end
-%% Hilbert source 

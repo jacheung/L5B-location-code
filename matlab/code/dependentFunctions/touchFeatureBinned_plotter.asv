@@ -24,7 +24,7 @@ for g = 1:numel(touchOrderFields)
         smoothedHeat = imgaussfilt(popV{currCell}.(touchOrderFields{g}).(variableFields{1}).spikes(toKeep,:),gaussFilt,'padding','replicate');
         heatToPlot = smoothedHeat;
         
-        figure(322);subplot(plotrow,plotcolumn,d);
+        subplot(plotrow,plotcolumn,d);
         imagesc(heatToPlot);
         colormap(gca,parula);
         set(gca,'Ydir','normal','ytick',1:sum(toKeep),'yticklabel',[popV{currCell}.(touchOrderFields{g}).(variableFields{1}).range(toKeep)],...
@@ -41,4 +41,5 @@ for g = 1:numel(touchOrderFields)
         hold on; plot([selIdx(1) selIdx(1)],[0 30],'-.w')
         hold on; plot([selIdx(end) selIdx(end)],[0 30],'-.w')
     end
+    suptitle(touchOrderFields{g})
 end
