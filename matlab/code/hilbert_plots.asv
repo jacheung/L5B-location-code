@@ -1,7 +1,7 @@
 %% QUANTIFICATION OF MODEL PARAMETERS
 popV = touchFeatureBinned(U,touchWindow);
 %%
-for i = 8
+for i = 19
     
     array = U{glmModel{i}.meta};
     BI = glmModel{i}.modelParams.buildIndices;
@@ -49,10 +49,20 @@ for i = 8
     selRawMat = glmModel{i}.heat.matrixRaw([min(find(selectedBins)):max(find(selectedBins))],:); 
     selMdlMat = glmModel{i}.heat.matrix([min(find(selectedBins)):max(find(selectedBins))],:); 
     
-    
+    rawThetaIdx = ismember(popV{glmModel{i}.meta}.theta.range,selThetaBins);
+    rawTheta = popV{glmModel{i}.meta}.theta.range(rawThetaIdx); 
+    rawMap= popV{glmModel{i}.meta}.theta.spikes;
     
     figure(5480);clf
-    subplot(2,3,1)
+    subplot(3,3,1)
+    imagesc(imgaussfilt(rawMap(rawTheta,:),gaussFilt,'padding','replicate'));
+    hold on;plot([find(BI==0)-1 find(BI==0)-1],[size(glmModel{i}.heat.matrixRaw,1) 0],'w:')
+    set(gca,'ytick',1:anglePlotSpacing:length(rawTheta),'yticklabel', rawTheta(1:anglePlotSpacing:length(rawTheta)),'ydir','normal',...
+        'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
+    
+    
+    
+    subplot(3,3,4)
     imagesc(imgaussfilt(selRawMat,gaussFilt,'padding','replicate'));
 %     caxis([0 prctile(selRawMat(:),99)])
     hold on;plot([find(BI==0)-1 find(BI==0)-1],[size(glmModel{i}.heat.matrixRaw,1) 0],'w:')
@@ -60,8 +70,10 @@ for i = 8
         'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
     ylabel('angle at touch')
     title('original tuning curve')
+    hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
+    hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
     
-    subplot(2,3,4)
+    subplot(3,3,7)
     imagesc(imgaussfilt(selMdlMat,gaussFilt,'padding','replicate'));
     caxis([0 prctile(selMdlMat(:),tuningPrctile)]) %cap limit at 99th percentile in case of outliers in predictions
     hold on;plot([find(BI==0)-1 find(BI==0)-1],[size(glmModel{i}.heat.matrixRaw,1) 0],'w:')
@@ -70,6 +82,8 @@ for i = 8
     xlabel('time from touch onset (ms)')
     ylabel('angle at touch')
     title('glmNet result')
+    hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
+    hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
     
     %     hold on; plot([selIdx(1) selIdx(1)],[0 30],'-.w')
     %     hold on; plot([selIdx(end) selIdx(end)],[0 30],'-.w')
@@ -97,7 +111,8 @@ for i = 8
         angleatT = angleGroup{d};
        
         bl = allspks(:,1:find(BI==0));
-        response = allspks(:,find(BI==touchResp(1)):find(BI==touchResp(2)));
+%         response = allspks(:,find(BI==touchResp(1)):find(BI==touchResp(2)));
+        response = allspks(:,find(BI==3):find(BI==15));
         
         meanbase =  mean(mean(bl,2));
         stdbase = std(mean(bl,2));
@@ -182,6 +197,6 @@ for i = 8
     xlabel('time from touch onset (ms)')
     legend(coeffsToPlot(2:end))
     
-    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\hilbert_' num2str(i)],'-dpng')
-    
+%     print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\hilbert_' num2str(i)],'-dpng')
+%     
 end

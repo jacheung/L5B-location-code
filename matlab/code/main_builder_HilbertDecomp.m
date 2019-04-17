@@ -13,6 +13,7 @@ selectedCells = find(touchCells==1);
 % Structure for quantifying tuning and evaluating decoding 
 popV = touchFeatureBinned(U,touchWindow);
 
+U = defTouchResponse(U,.99);
 %% Plotter for object location tuning
 fieldsList = fields(popV{1});
 tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),touchWindow);
@@ -38,7 +39,7 @@ basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwid
 glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
 
 %GLMdesign Matrix Set-up
-fileName = 'glmModelFull';
+fileName = 'glmModelHilbertOnly';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
@@ -47,7 +48,7 @@ else
 end
 
 %GLMdesign Matrix Build
-selectedFeatures = [1 2 4 5 6 7]; 
+selectedFeatures = [1 2 4 5 6]; 
 
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
@@ -55,16 +56,17 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 
 %Plot correlation matrix between features of design matrix. Look for
 %obvious colinearity between features
-figure(62);clf
-imagesc(corr(glmModel{datasample(1:length(glmModel),1)}.io.DmatXNormalized))
-caxis([0 .7]) ; colorbar
+% figure(62);clf
+% imagesc(corr(glmModel{datasample(1:length(glmModel),1)}.io.DmatXNormalized))
+% caxis([0 .7]) ; colorbar
 
-for i = 9
+parfor i = 1:length(tunedCellsIdx)
     i 
-glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
+ glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
 
-glmModel{i}.meta = tunedCellsIdx(i);
+ glmModel{i}.meta = tunedCellsIdx(i);
+glmModel{i}.name = fileName;
 end
 
-% cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
-% save(fileName,'glmModel','-v7.3')
+cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
+save(fileName,'glmModel','-v7.3')

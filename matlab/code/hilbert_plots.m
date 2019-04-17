@@ -1,38 +1,37 @@
 %% QUANTIFICATION OF MODEL PARAMETERS
 popV = touchFeatureBinned(U,touchWindow);
 %%
-for i = 9
+for i = 1:length(glmModel)
     
     array = U{glmModel{i}.meta};
     BI = glmModel{i}.modelParams.buildIndices;
     touchResp = array.meta.responseWindow;
     
     %PLOTTING BASIS FUNCTIONS
-    figure(480);clf
-    subplot(2,1,1)
-    plot(glmModel{i}.modelParams.buildIndices,glmModel{1}.basisFunctions.touch,'k')
-    subplot(2,1,2)
-    plot(glmModel{i}.modelParams.buildIndices,glmModel{1}.basisFunctions.features,'k')
-    
+    %     figure(480);clf
+    %     subplot(2,1,1)
+    %     plot(glmModel{i}.modelParams.buildIndices,glmModel{1}.basisFunctions.touch,'k')
+    %     subplot(2,1,2)
+    %     plot(glmModel{i}.modelParams.buildIndices,glmModel{1}.basisFunctions.features,'k')
+    %
     %PLOTTING FOR time from touch onset
     %     figure(800);subplot(5,6,i)
-    figure(484);clf
-    subplot(2,1,1)
-    %     touchSpks = spikes(repmat(touchIdx,1,length(buildIndices))+repmat(buildIndices,size(touchIdx,1),1));
-    %     hold on; plot(buildIndices,smooth(mean(touchSpks*1000,1)),'k')
+    
+    figure(5480);clf
+    subplot(3,3,[2 3])
     hold on;plot(BI,smooth(mean(glmModel{i}.predicted.spikeTestRaw *1000,1),glmModel{i}.modelParams.bf.bfwidth),'k','linewidth',2)
-    hold on;plot(BI,mean(glmModel{i}.predicted.spikeProb *1000,1),'b','linewidth',2)
+    hold on;plot(BI,mean(glmModel{i}.predicted.spikeProb *1000,1),'r','linewidth',2)
     ylabel('firing rate (hz)')
-    title(['mean psth of real vs model. Rsqd = ' num2str(corr(smooth(mean(glmModel{i}.predicted.spikeTestRaw *1000,1)'),mean(glmModel{i}.predicted.spikeProb *1000,1)').^2)]);
+    title(['OG(black) | modeled(red). Touch response. Rsqd = ' num2str(corr(smooth(mean(glmModel{i}.predicted.spikeTestRaw *1000,1)'),mean(glmModel{i}.predicted.spikeProb *1000,1)').^2)]);
     set(gca,'xtick',[])
     
-    figure(484);subplot(2,1,2);
-    hold on;
-    plot(BI,smooth(std(glmModel{i}.predicted.spikeTestRaw )*1000,length(basisFunction)),'k')
-    plot(BI,std(glmModel{i}.predicted.spikeProb )*1000,'b')
-    title('variance of real(black) vs model(blue)')
-    xlabel('time from touch onset')
-    
+    %     figure(484);subplot(2,1,2);
+    %     hold on;
+    %     plot(BI,smooth(std(glmModel{i}.predicted.spikeTestRaw )*1000,length(basisFunction)),'k')
+    %     plot(BI,std(glmModel{i}.predicted.spikeProb )*1000,'b')
+    %     title('variance of real(black) vs model(blue)')
+    %     xlabel('time from touch onset')
+    %
     
     %plotting of original heatmap
     %toss touches out that are >10 degree difference from nearest bin.
@@ -41,29 +40,38 @@ for i = 9
     sampledAngles = glmModel{i}.heat.angle;
     anglePlotSpacing = 3;
     tuningPrctile = 99;
-    countsThresh = 10; 
+    countsThresh = 10;
     
     
     selThetaBins = popV{glmModel{i}.meta}.theta.range(popV{glmModel{i}.meta}.theta.counts>=countsThresh);
     selectedBins = ismember(glmModel{i}.heat.angle,selThetaBins)    ;
-    selRawMat = glmModel{i}.heat.matrixRaw([min(find(selectedBins)):max(find(selectedBins))],:); 
-    selMdlMat = glmModel{i}.heat.matrix([min(find(selectedBins)):max(find(selectedBins))],:); 
+    selRawMat = glmModel{i}.heat.matrixRaw([min(find(selectedBins)):max(find(selectedBins))],:);
+    selMdlMat = glmModel{i}.heat.matrix([min(find(selectedBins)):max(find(selectedBins))],:);
     
+    rawThetaIdx = ismember(popV{glmModel{i}.meta}.theta.range,selThetaBins);
+    rawTheta = popV{glmModel{i}.meta}.theta.range(rawThetaIdx);
+    rawMap= popV{glmModel{i}.meta}.theta.spikes;
     
+    subplot(3,3,1)
+    imagesc(imgaussfilt(rawMap(rawThetaIdx,:),gaussFilt,'padding','replicate'));
+    hold on;plot([find(BI==0)-1 find(BI==0)-1],[size(glmModel{i}.heat.matrixRaw,1) 0],'w:')
+    set(gca,'ytick',1:anglePlotSpacing:length(rawTheta),'yticklabel', rawTheta(1:anglePlotSpacing:length(rawTheta)),'ydir','normal',...
+        'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
+    ylabel('angle at touch')
+    title('OG tuning curve')
     
-    figure(5480);clf
-    subplot(2,3,1)
+    subplot(3,3,4)
     imagesc(imgaussfilt(selRawMat,gaussFilt,'padding','replicate'));
-%     caxis([0 prctile(selRawMat(:),99)])
+    %     caxis([0 prctile(selRawMat(:),99)])
     hold on;plot([find(BI==0)-1 find(BI==0)-1],[size(glmModel{i}.heat.matrixRaw,1) 0],'w:')
     set(gca,'ytick',1:anglePlotSpacing:length(selThetaBins),'yticklabel', selThetaBins(1:anglePlotSpacing:length(selThetaBins)),'ydir','normal',...
         'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
     ylabel('angle at touch')
-    title('original tuning curve')
+    title('DmatY tuning curve')
     hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
     hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
     
-    subplot(2,3,4)
+    subplot(3,3,7)
     imagesc(imgaussfilt(selMdlMat,gaussFilt,'padding','replicate'));
     caxis([0 prctile(selMdlMat(:),tuningPrctile)]) %cap limit at 99th percentile in case of outliers in predictions
     hold on;plot([find(BI==0)-1 find(BI==0)-1],[size(glmModel{i}.heat.matrixRaw,1) 0],'w:')
@@ -71,7 +79,7 @@ for i = 9
         'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
     xlabel('time from touch onset (ms)')
     ylabel('angle at touch')
-    title('glmNet result')
+    title('modeled tuning curve')
     hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
     hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
     
@@ -81,17 +89,17 @@ for i = 9
     
     %PLOTTING LOCATION TUNING CURVE
     
-    colors = {'k','r'};
+    colors = {'k','b','r'};
     
     tangles = [];
     for g = 1:length(popV{glmModel{i}.meta}.theta.range)
         tangles = [tangles ; repmat(popV{glmModel{i}.meta}.theta.range(g),popV{glmModel{i}.meta}.theta.counts(g),1)];
     end
     
-%     angleGroup = {glmModel{i}.raw.trimmedAngle, glmModel{i}.predicted.angles};
     
-    spikesGroup = {cell2mat(popV{glmModel{i}.meta}.theta.raw) , glmModel{i}.predicted.spikeProb};
-    angleGroup = {tangles, glmModel{i}.predicted.angles};
+    spikesGroup = {glmModel{i}.raw.spikes, cell2mat(popV{glmModel{i}.meta}.theta.raw) , glmModel{i}.predicted.spikeProb};
+    angleGroup = {glmModel{i}.raw.trimmedAngle, tangles, glmModel{i}.predicted.angles};
+    
     
     thetabounds = [-100:2:100];
     
@@ -99,9 +107,9 @@ for i = 9
         
         allspks = spikesGroup{d};
         angleatT = angleGroup{d};
-       
+        
         bl = allspks(:,1:find(BI==0));
-%         response = allspks(:,find(BI==touchResp(1)):find(BI==touchResp(2)));
+        %         response = allspks(:,find(BI==touchResp(1)):find(BI==touchResp(2)));
         response = allspks(:,find(BI==3):find(BI==15));
         
         meanbase =  mean(mean(bl,2));
@@ -114,7 +122,7 @@ for i = 9
         samps = cellfun(@numel,sorted);
         selBins = find(samps>sum(samps)./100);
         
-        zraw = nan(length(sorted),2000);
+        zraw = nan(length(sorted),1000);
         for b = 1:length(sorted)
             if sum(b == selBins)>0
                 currvals = sorted{b};
@@ -145,7 +153,7 @@ for i = 9
         
         xy = [x y'];
         
-        hold on;subplot(2,3,[2 3])
+        hold on;subplot(3,3,[5 6])
         shadedErrorBar(xy(:,1),xy(:,2),cibins,['-' colors{d}]);
         hold on;
         set(gca,'xlim',[min(xy(:,1)) max(xy(:,1))],'xtick',-20:20:60)
@@ -166,17 +174,17 @@ for i = 9
     interIdx2 = ismember(zresp{2}(:,1),raw);
     
     xlabel('angle at touch');ylabel('z-scored response')
-    title(['raw(black) vs model(red) tuning. expVar=' num2str(corr(zresp{1}(interIdx,2),zresp{2}(interIdx2,2)).^2)])
+    title(['OG(black) | DmatY(blue) | modeled(red). expVar=' num2str(corr(zresp{1}(interIdx,2),zresp{2}(interIdx2,2)).^2)])
     
     [zresp{1}(interIdx,1) zresp{2}(interIdx2,1)]
     
     expVar(i) = corr(zresp{1}(interIdx,2),zresp{2}(interIdx2,2)).^2;
     
     
-    hold on;subplot(2,3,[5 6])
+    hold on;subplot(3,3,[8 9])
     coeffsToPlot = fields(glmModel{i}.coeffs);
     for u = 2:length(coeffsToPlot)
-        coeffsToPlotName = coeffsToPlot{u}; 
+        coeffsToPlotName = coeffsToPlot{u};
         if strcmp(coeffsToPlotName,'touch') || strcmp(coeffsToPlotName,'touchDur')
             hold on; plot(BI,sum(glmModel{i}.coeffs.(coeffsToPlotName)'.*glmModel{i}.basisFunctions.touch,2))
         else
@@ -187,6 +195,10 @@ for i = 9
     xlabel('time from touch onset (ms)')
     legend(coeffsToPlot(2:end))
     
-    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\hilbert_' num2str(i)],'-dpng')
+    dir = ['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\' glmModel{i}.name];
+    if ~exist(dir,'dir')
+        mkdir(dir)
+    end
     
+    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\' glmModel{i}.name '\hilbert_' num2str(i)],'-dpng')
 end
