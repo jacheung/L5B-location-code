@@ -1,4 +1,4 @@
-function [glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures)
+function [glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures,interpOption)
 
 %selectedFeatures is a vector with values corresponding to the values in
 %the DmatFields 
@@ -14,6 +14,12 @@ for i = 1:length(glmModel)
         dims = [dims size(glmModel{i}.io.components.(DmatFields{selectedFeatures(g)}),2)];
     end
 
+    if strcmp(interpOption,'on')
+        DmatX = fillmissing(DmatX,'linear',1);
+    elseif strcmp(interOption,'off')
+        disp('no interpolation of missing values') 
+    end
+    
     DmatY = glmModel{i}.io.DmatY; 
     
     [row,~] = find(isnan(DmatX));

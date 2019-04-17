@@ -49,10 +49,10 @@ end
 
 %GLMdesign Matrix Build
 selectedFeatures = [1 2 4 5 6]; 
-
+interpOption = 'on'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
-[glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures);
+[glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures,interpOption);
 
 %Plot correlation matrix between features of design matrix. Look for
 %obvious colinearity between features
