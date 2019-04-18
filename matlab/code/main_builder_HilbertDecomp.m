@@ -40,7 +40,7 @@ basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwid
 glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
 
 %GLMdesign Matrix Set-up
-fileName = 'glmModelHilbertOnly';
+fileName = 'glmModelFullInterp';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
@@ -49,7 +49,7 @@ else
 end
 
 %GLMdesign Matrix Build
-selectedFeatures = [1 2 4 5 6]; 
+selectedFeatures = [1 2 4 5 6 7 9]; 
 interpOption = 'on'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
@@ -61,12 +61,11 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 % imagesc(corr(glmModel{datasample(1:length(glmModel),1)}.io.DmatXNormalized))
 % caxis([0 .7]) ; colorbar
 
-parfor i = 1:length(tunedCellsIdx)
-    i 
+for i =8
+ i
  glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
-
- glmModel{i}.meta = tunedCellsIdx(i);
-glmModel{i}.name = fileName;
+ glmModel{i}.meta = tunedCellsIdx{1}(i);
+ glmModel{i}.name = fileName;
 end
 
 cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
