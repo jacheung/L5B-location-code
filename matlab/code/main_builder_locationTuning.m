@@ -21,8 +21,9 @@ fieldsList = fields(popV{1}.allTouches);
 touchFeatureBinned_plotter(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,gaussFilt)
 
 %% Plotter for object location tuning
-fieldsList = fields(popV{1});
-tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),touchWindow);
+whichTouches = fields(popV{1});
+fieldsList = fields(popV{1}.allTouches);
+tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow);
 
 %optional raster of FRs for tuned cells. 
 for d = 1
