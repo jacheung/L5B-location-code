@@ -16,6 +16,14 @@ Dataset structures with neural recordings and stimulus variables - Request datas
 
 ## Main figure builders: 
 
+### main_builder_locationTuning:
+This script compiles whisking and neural time series data into figures for viewing of object location at touch representation. 
+
+#### main_builder_hilbert:
+This script is responsible for transforming the neuron data structure into a design matrix for predicting firing rate around touch. Basis functions and lags can be set as parameters. Sample of the correlation between features in the design matrix is shown below. 
+![Alt text](./pictures/sampleCorrelationDmatX.png)
+
+
 #### hilbert_plots:
 This script compiles the optimized binomial models of neural activity around touch and generates the below figures for analysis. 
 ![Alt text](./pictures/sampleModeledHilbert.png)
