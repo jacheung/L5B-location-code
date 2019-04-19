@@ -3,7 +3,11 @@
 %Future edit could involve just grabbing peak post touch within that window
 %and using that to define
 
-function [touchORnaw] = touchCell(U)
+function [touchORnaw] = touchCell(U,displayOpt)
+
+if (nargin < 2), displayOpt = 'on'; end
+willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
+    | strcmp(displayOpt,'off'));
 
 for rec=1:length(U)
     window = [-50:150];
@@ -44,102 +48,103 @@ for rec=1:length(U)
     
 end
 
-figure(40);clf;
-rowColumns = numSubplots(length(U));
-plotrow=rowColumns(1);
-plotcol=rowColumns(2);
-
-for k = 1:size(sTrains,1)
-    subplot(plotrow,plotcol,k);
-    avgSpikes = sTrains(k,:);
-    if touchORnaw(k)==1
-        bar(-50:150,avgSpikes,'b');
-    elseif touchORnaw(k) == -1
-        bar(-50:150,avgSpikes,'r');
-    else
-        b=bar(-50:150,avgSpikes,'k');
-        b.FaceColor = [.5 .5 .5];
+%Display option for histogram and heatmpa plotting
+if (willdisplay)
+    figure(40);clf;
+    rowColumns = numSubplots(length(U));
+    plotrow=rowColumns(1);
+    plotcol=rowColumns(2);
+    
+    for k = 1:size(sTrains,1)
+        subplot(plotrow,plotcol,k);
+        avgSpikes = sTrains(k,:);
+        if touchORnaw(k)==1
+            bar(-50:150,avgSpikes,'b');
+        elseif touchORnaw(k) == -1
+            bar(-50:150,avgSpikes,'r');
+        else
+            b=bar(-50:150,avgSpikes,'k');
+            b.FaceColor = [.5 .5 .5];
+        end
+        hold on; plot([0 0],[0 max(sTrains(k,:))*1.5],'-.k','linewidth',2)
+        set(gca,'xlim',[-25 50],'xtick',0,'ytick',[]);
+        
     end
-    hold on; plot([0 0],[0 max(sTrains(k,:))*1.5],'-.k','linewidth',2)
-    set(gca,'xlim',[-25 50],'xtick',0,'ytick',[]);
     
-end
-
-%% HEATMAP PLOTTING
-tc=find(touchORnaw==1);
-heatSpks = nan(length(tc),76);
-for g = 1:sum(touchORnaw==1)
-    avgSpikes = sTrains(tc(g),:);
-    heatSpks(g,:) = normalize_var(avgSpikes(25:100),0,1);
-    excitRaw(g,:) = avgSpikes(25:100);
-end
-[~,idx]  = max(heatSpks');
-[~,ftidx] = sort(idx);
-
-ntc = find(touchORnaw==0);
-for g = 1:sum(touchORnaw==0)
-    avgSpikes = sTrains(ntc(g),:);
-    ntheatSpks(g,:) = normalize_var(avgSpikes(25:100),0,1);
-    ntRaw(g,:) = avgSpikes(25:100);
-end
-
-INHIBtc=find(touchORnaw==-1);
-INHIBheatSpks = nan(length(INHIBtc),76);
-for g = 1:sum(touchORnaw==-1)
-    avgSpikes = sTrains(INHIBtc(g),:);
-    INHIBheatSpks(g,:) = normalize_var(avgSpikes(25:100),0,1);
-    inhibRaw(g,:) = avgSpikes(25:100);
-end
-[~,idx]  = min(INHIBheatSpks(:,25:end)');
-[~,INHIBftidx] = sort(idx);
-
-
-if ~isempty(tc)
-    figure(48);clf;
-    subplot(4,1,[1 2])
-    imagesc(heatSpks(ftidx,:))
-    hold on; plot([26 26],[0 length(tc)],'-.w','linewidth',3)
-    colorbar
-    colormap(jet)
-    caxis([0 1])
-    set(gca,'xtick',1:25:76,'xticklabel',-25:25:75,'ytick',[])
+    %% HEATMAP PLOTTING
+    tc=find(touchORnaw==1);
+    heatSpks = nan(length(tc),76);
+    for g = 1:sum(touchORnaw==1)
+        avgSpikes = sTrains(tc(g),:);
+        heatSpks(g,:) = normalize_var(avgSpikes(25:100),0,1);
+        excitRaw(g,:) = avgSpikes(25:100);
+    end
+    [~,idx]  = max(heatSpks');
+    [~,ftidx] = sort(idx);
     
-    figure(580);clf
-    subplot(3,1,1)
-    bar(-25:50,mean(excitRaw)*1000,'facecolor',[.5 .5 .5])
-    set(gca,'xlim',[-25 50],'xtick',-25:25:50)
-end
-
-if ~isempty(INHIBtc)
-    figure(48);hold on;
-    subplot(4,1,[3])
-    imagesc(INHIBheatSpks(INHIBftidx,:))
-    hold on; plot([26 26],[0 length(tc)],'-.w','linewidth',3)
-    colorbar
-    colormap(jet)
-    caxis([0 1])
-    set(gca,'xtick',125:76,'xticklabel',-25:25:75,'ytick',[])
+    ntc = find(touchORnaw==0);
+    for g = 1:sum(touchORnaw==0)
+        avgSpikes = sTrains(ntc(g),:);
+        ntheatSpks(g,:) = normalize_var(avgSpikes(25:100),0,1);
+        ntRaw(g,:) = avgSpikes(25:100);
+    end
     
-    figure(580);subplot(3,1,2)
-    bar(-25:50,mean(inhibRaw)*1000,'facecolor',[.5 .5 .5])
-    set(gca,'xlim',[-25 50],'xtick',-25:25:50)
-end
-
-if ~isempty(ntc)
-    subplot(4,1,[4])
-    imagesc(ntheatSpks)
-    hold on; plot([26 26],[0 length(ntc)],'-.w','linewidth',3)
-    colorbar
-    colormap(jet)
-    caxis([0 1])
-    set(gca,'xtick',1:25:76,'xticklabel',-25:25:75,'ytick',[])
+    INHIBtc=find(touchORnaw==-1);
+    INHIBheatSpks = nan(length(INHIBtc),76);
+    for g = 1:sum(touchORnaw==-1)
+        avgSpikes = sTrains(INHIBtc(g),:);
+        INHIBheatSpks(g,:) = normalize_var(avgSpikes(25:100),0,1);
+        inhibRaw(g,:) = avgSpikes(25:100);
+    end
+    [~,idx]  = min(INHIBheatSpks(:,25:end)');
+    [~,INHIBftidx] = sort(idx);
     
+    if ~isempty(tc)
+        figure(48);clf;
+        subplot(4,1,[1 2])
+        imagesc(heatSpks(ftidx,:))
+        hold on; plot([26 26],[0 length(tc)],'-.w','linewidth',3)
+        colorbar
+        colormap(jet)
+        caxis([0 1])
+        set(gca,'xtick',1:25:76,'xticklabel',-25:25:75,'ytick',[])
+        
+        figure(580);clf
+        subplot(3,1,1)
+        bar(-25:50,mean(excitRaw)*1000,'facecolor',[.5 .5 .5])
+        set(gca,'xlim',[-25 50],'xtick',-25:25:50)
+    end
     
-    figure(580);subplot(3,1,3)
-    bar(-25:50,mean(ntRaw)*1000,'facecolor',[.5 .5 .5])
-    set(gca,'xlim',[-25 50],'xtick',-25:25:50)
+    if ~isempty(INHIBtc)
+        figure(48);hold on;
+        subplot(4,1,[3])
+        imagesc(INHIBheatSpks(INHIBftidx,:))
+        hold on; plot([26 26],[0 length(tc)],'-.w','linewidth',3)
+        colorbar
+        colormap(jet)
+        caxis([0 1])
+        set(gca,'xtick',125:76,'xticklabel',-25:25:75,'ytick',[])
+        
+        figure(580);subplot(3,1,2)
+        bar(-25:50,mean(inhibRaw)*1000,'facecolor',[.5 .5 .5])
+        set(gca,'xlim',[-25 50],'xtick',-25:25:50)
+    end
+    
+    if ~isempty(ntc)
+        subplot(4,1,[4])
+        imagesc(ntheatSpks)
+        hold on; plot([26 26],[0 length(ntc)],'-.w','linewidth',3)
+        colorbar
+        colormap(jet)
+        caxis([0 1])
+        set(gca,'xtick',1:25:76,'xticklabel',-25:25:75,'ytick',[])
+        
+        
+        figure(580);subplot(3,1,3)
+        bar(-25:50,mean(ntRaw)*1000,'facecolor',[.5 .5 .5])
+        set(gca,'xlim',[-25 50],'xtick',-25:25:50)
+    end
 end
-
 
 
 

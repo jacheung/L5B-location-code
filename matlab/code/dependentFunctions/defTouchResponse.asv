@@ -49,7 +49,7 @@ for rec=1:length(U)
     end
     
     %Defining touch responses as a period between two points that are less
-    %than 5ms apart.
+    %than 5ms apart. 
     if sum(excitthreshIdx)>0
         tps = window(excitthreshIdx);
         if ~isempty(tps)
@@ -59,10 +59,8 @@ for rec=1:length(U)
                 endPoint = tps(end);
             end
             U{rec}.meta.responseWindow=[startPoint endPoint];
-            if willdisplay
-                hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
-            end
+            hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
         end
     end
-    
+
 end

@@ -29,8 +29,6 @@ for i = 1:length(glmModel)
     DmatY(trialsToRemoveIdx,:) = [] ;
     
     
-    
-    
     glmModel{i}.io.DmatX = DmatX;
     glmModel{i}.io.DmatY = DmatY; 
     glmModel{i}.io.DmatXNormalized = (DmatX - mean(DmatX)) ./ std(DmatX);
