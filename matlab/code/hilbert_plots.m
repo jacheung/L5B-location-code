@@ -1,7 +1,11 @@
 %% QUANTIFICATION OF MODEL PARAMETERS
 popV = touchFeatureBinned(U,touchWindow);
+touchOrderFields = fields(popV{1});
+whichTouches = 1; 
+
+
 %%
-for i = 1:length(glmModel)
+for i = 8
     
     array = U{glmModel{i}.meta};
     BI = glmModel{i}.modelParams.buildIndices;
@@ -43,14 +47,14 @@ for i = 1:length(glmModel)
     countsThresh = 10;
     
     
-    selThetaBins = popV{glmModel{i}.meta}.theta.range(popV{glmModel{i}.meta}.theta.counts>=countsThresh);
+    selThetaBins = popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.range(popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.counts>=countsThresh);
     selectedBins = ismember(glmModel{i}.heat.angle,selThetaBins)    ;
     selRawMat = glmModel{i}.heat.matrixRaw([min(find(selectedBins)):max(find(selectedBins))],:);
     selMdlMat = glmModel{i}.heat.matrix([min(find(selectedBins)):max(find(selectedBins))],:);
     
-    rawThetaIdx = ismember(popV{glmModel{i}.meta}.theta.range,selThetaBins);
-    rawTheta = popV{glmModel{i}.meta}.theta.range(rawThetaIdx);
-    rawMap= popV{glmModel{i}.meta}.theta.spikes;
+    rawThetaIdx = ismember(popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.range,selThetaBins);
+    rawTheta = popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.range(rawThetaIdx);
+    rawMap= popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.spikes;
     
     subplot(3,3,1)
     imagesc(imgaussfilt(rawMap(rawThetaIdx,:),gaussFilt,'padding','replicate'));
@@ -92,12 +96,12 @@ for i = 1:length(glmModel)
     colors = {'k','b','r'};
     
     tangles = [];
-    for g = 1:length(popV{glmModel{i}.meta}.theta.range)
-        tangles = [tangles ; repmat(popV{glmModel{i}.meta}.theta.range(g),popV{glmModel{i}.meta}.theta.counts(g),1)];
+    for g = 1:length(popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.range)
+        tangles = [tangles ; repmat(popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.range(g),popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.counts(g),1)];
     end
     
     
-    spikesGroup = {glmModel{i}.raw.spikes, cell2mat(popV{glmModel{i}.meta}.theta.raw) , glmModel{i}.predicted.spikeProb};
+    spikesGroup = {glmModel{i}.raw.spikes, cell2mat(popV{glmModel{i}.meta}.(touchOrderFields{whichTouches}).theta.raw) , glmModel{i}.predicted.spikeProb};
     angleGroup = {glmModel{i}.raw.trimmedAngle, tangles, glmModel{i}.predicted.angles};
     
     
