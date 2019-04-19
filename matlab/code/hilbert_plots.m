@@ -1,11 +1,14 @@
 %% QUANTIFICATION OF MODEL PARAMETERS
+touchWindow = [-25:50]; %window for analyses around touch
 popV = touchFeatureBinned(U,touchWindow);
 touchOrderFields = fields(popV{1});
 whichTouches = 1; 
 
+% Defining touch response
+U = defTouchResponse(U,.99);
 
 %%
-for i = 8
+for i = 1:length(glmModel)
     
     array = U{glmModel{i}.meta};
     BI = glmModel{i}.modelParams.buildIndices;
@@ -26,7 +29,7 @@ for i = 8
     hold on;plot(BI,smooth(mean(glmModel{i}.predicted.spikeTestRaw *1000,1),glmModel{i}.modelParams.bf.bfwidth),'k','linewidth',2)
     hold on;plot(BI,mean(glmModel{i}.predicted.spikeProb *1000,1),'r','linewidth',2)
     ylabel('firing rate (hz)')
-    title(['OG(black) | modeled(red). Touch response. Rsqd = ' num2str(corr(smooth(mean(glmModel{i}.predicted.spikeTestRaw *1000,1)'),mean(glmModel{i}.predicted.spikeProb *1000,1)').^2)]);
+    title(['original(black) | modeled(red). Touch response. Rsqd = ' num2str(corr(smooth(mean(glmModel{i}.predicted.spikeTestRaw *1000,1)'),mean(glmModel{i}.predicted.spikeProb *1000,1)').^2)]);
     set(gca,'xtick',[])
     
     %     figure(484);subplot(2,1,2);
@@ -62,7 +65,7 @@ for i = 8
     set(gca,'ytick',1:anglePlotSpacing:length(rawTheta),'yticklabel', rawTheta(1:anglePlotSpacing:length(rawTheta)),'ydir','normal',...
         'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
     ylabel('angle at touch')
-    title('OG tuning curve')
+    title('original tuning curve')
     
     subplot(3,3,4)
     imagesc(imgaussfilt(selRawMat,gaussFilt,'padding','replicate'));
@@ -71,7 +74,7 @@ for i = 8
     set(gca,'ytick',1:anglePlotSpacing:length(selThetaBins),'yticklabel', selThetaBins(1:anglePlotSpacing:length(selThetaBins)),'ydir','normal',...
         'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
     ylabel('angle at touch')
-    title('DmatY tuning curve')
+    title('training tuning curve')
     hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
     hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
     
@@ -178,7 +181,7 @@ for i = 8
     interIdx2 = ismember(zresp{2}(:,1),raw);
     
     xlabel('angle at touch');ylabel('z-scored response')
-    title(['OG(black) | DmatY(blue) | modeled(red). expVar=' num2str(corr(zresp{1}(interIdx,2),zresp{2}(interIdx2,2)).^2)])
+    title(['original(black) | training(blue) | modeled(red). expVar=' num2str(corr(zresp{1}(interIdx,2),zresp{2}(interIdx2,2)).^2)])
     
     [zresp{1}(interIdx,1) zresp{2}(interIdx2,1)]
     
