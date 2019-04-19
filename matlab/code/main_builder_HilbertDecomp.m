@@ -57,9 +57,9 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 
 %Plot correlation matrix between features of design matrix. Look for
 %obvious colinearity between features
-% figure(62);clf
-% imagesc(corr(glmModel{datasample(1:length(glmModel),1)}.io.DmatXNormalized))
-% caxis([0 .7]) ; colorbar
+figure(62);clf
+imagesc(corr(glmModel{datasample(1:length(glmModel),1)}.io.DmatXNormalized))
+caxis([0 .7]) ; colorbar
 
 for i =8
  i
