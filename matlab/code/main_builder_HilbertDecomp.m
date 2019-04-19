@@ -1,23 +1,23 @@
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat')
+%Load whisking and neural time series struct 
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat') %L5b excitatory cells
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat')
-
-%%
-% Top level parameters and definitions 
+%% Top level parameters and definitions 
 touchWindow = [-25:50]; %window for analyses around touch
 numInterpPts = 24; %used for stretching or shrinking tuning curves to within the same bounds for decoding object location
 
-touchCells = touchCell(U);
+touchCells = touchCell(U,'off');
 selectedCells = find(touchCells==1);
 
 % Structure for quantifying tuning and evaluating decoding 
 popV = touchFeatureBinned(U,touchWindow);
 
-U = defTouchResponse(U,.99);
+% Defining touch response
+U = defTouchResponse(U,.99,'off');
 %% Plotter for object location tuning
 whichTouches = fields(popV{1});
 fieldsList = fields(popV{1}.allTouches);
-tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow);
+tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
 
 %% Builder for identifying hilbert components that generate tuning
 selectedArray = U(tunedCellsIdx{1});
@@ -40,7 +40,7 @@ basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwid
 glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
 
 %GLMdesign Matrix Set-up
-fileName = 'glmModelFullInterp';
+fileName = 'glmModelTMP';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
@@ -59,7 +59,8 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 %obvious colinearity between features
 % figure(62);clf
 % imagesc(corr(glmModel{datasample(1:length(glmModel),1)}.io.DmatXNormalized))
-% caxis([0 .7]) ; colorbar
+% caxis([0 .7]) ;colorbar
+% axis square; set(gca,'xtick',[],'ytick',[])
 
 for i =8
  i
@@ -68,5 +69,5 @@ for i =8
  glmModel{i}.name = fileName;
 end
 
-cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
-save(fileName,'glmModel','-v7.3')
+% cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
+% save(fileName,'glmModel','-v7.3')

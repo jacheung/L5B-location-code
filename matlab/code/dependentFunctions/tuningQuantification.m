@@ -1,12 +1,20 @@
-function tunedCells = tuningQuantification(cellStruct,popV,selectedCells,variableFields,touchOrderFields,window)
+function tunedCells = tuningQuantification(cellStruct,popV,selectedCells,variableFields,touchOrderFields,viewWindow,displayOpt)
 
 %% ZSCORE CONVERSION and tuning width
 
-[rc] = numSubplots(length(selectedCells));
+
 % thetabounds = linspace(pi*-1,pi,13);
 bounds = popV{1}.allTouches.(variableFields{1}).bounds;
-plotrow = rc(1);
-plotcolumn = rc(2);
+
+if (nargin < 7), displayOpt = 'on'; end
+willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
+    | strcmp(displayOpt,'off'));
+
+if (willdisplay)
+    [rc] = numSubplots(length(selectedCells));
+    plotrow = rc(1);
+    plotcolumn = rc(2);
+end
 
 for g = 1:numel(touchOrderFields)
     
@@ -14,7 +22,6 @@ for g = 1:numel(touchOrderFields)
     pw=fr;
     pwzs = nan(length(selectedCells),50);
     pwtheta = nan(length(selectedCells),2);
-    figure(390+g);clf
     numInterpPts = 16;
     
     for d = 1:length(selectedCells)
@@ -34,10 +41,10 @@ for g = 1:numel(touchOrderFields)
         tvectNorm = normalize_var(thetavect,-1,1);
         
         allspikes = cell2mat(popV{currCell}.(touchOrderFields{g}).(variableFields{1}).raw);
-        meanbase = mean(mean(allspikes(:,1:find(window==0)),2));
-        stdbase = std(mean(allspikes(:,1:find(window==0)),2));
+        meanbase = mean(mean(allspikes(:,1:find(viewWindow==0)),2));
+        stdbase = std(mean(allspikes(:,1:find(viewWindow==0)),2));
         %     postresponses = allspikes(:,find(window==0)+5:find(window==0)+35);
-        postresponses = allspikes(:,find(window==0)+ cellStruct{currCell}.meta.responseWindow(1) : find(window==0)+cellStruct{currCell}.meta.responseWindow(2));
+        postresponses = allspikes(:,find(viewWindow==0)+ cellStruct{currCell}.meta.responseWindow(1) : find(viewWindow==0)+cellStruct{currCell}.meta.responseWindow(2));
         
         xresp = mean(postresponses,2);
         zscore = (xresp - meanbase) ./ stdbase;
@@ -108,12 +115,15 @@ for g = 1:numel(touchOrderFields)
         
         kxy{d} = xy;
         
-        
-        subplot(plotrow,plotcolumn,d);
-        shadedErrorBar(xy(:,1),xy(:,2),cibins,'-k');
-        %     scatter(xy(:,1),xy(:,2),[],[.7 .7 .7],'filled')
-        set(gca,'ytick',round(min(xy(:,2))-1):round(max(xy(:,2))+1),'ylim',[round(min(xy(:,2))-1) round(max(xy(:,2))+1)],...
-            'xlim',[min(xy(:,1)) max(xy(:,1))],'xtick',-20:20:60)
+        if willdisplay
+            figure(390+g)
+            subplot(plotrow,plotcolumn,d);
+            shadedErrorBar(xy(:,1),xy(:,2),cibins,'-k');
+            %     scatter(xy(:,1),xy(:,2),[],[.7 .7 .7],'filled')
+            set(gca,'ytick',round(min(xy(:,2))-1):round(max(xy(:,2))+1),'ylim',[round(min(xy(:,2))-1) round(max(xy(:,2))+1)],...
+                'xlim',[min(xy(:,1)) max(xy(:,1))],'xtick',-20:20:60)
+            axis square
+        end
         
         nxy = [normalize_var(x,0,1),y'];
         iy(:,d) = interp1(nxy(:,1),nxy(:,2),linspace(0,1,numInterpPts));
@@ -121,7 +131,7 @@ for g = 1:numel(touchOrderFields)
         modely(:,d) = interp1(normalize_var(x,0,1),y,linspace(0,1,numInterpPts));
         modelystd(:,d) = interp1(normalize_var(x,0,1),ystd,linspace(0,1,numInterpPts));
         
-        axis square
+       
         
         zs = nanmean(zraw,2);
         zs(isnan(zs))=[];
@@ -137,8 +147,10 @@ for g = 1:numel(touchOrderFields)
             
             [~,midx] = min(abs(diff(peaksig')));
             pw(d,:) = peaksig(midx,:);
-            figure(390+g);
-            hold on; scatter(xy(peaksig(midx,:),1),xy(peaksig(midx,:),2),[],'filled','g')
+            if willdisplay
+                figure(390+g);
+                hold on; scatter(xy(peaksig(midx,:),1),xy(peaksig(midx,:),2),[],'filled','g')
+            end
             
             raws=zs(pw(d,1):pw(d,2));
             pwzs(d,1:length(raws)) = raws;

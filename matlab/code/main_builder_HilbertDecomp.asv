@@ -1,3 +1,4 @@
+%Load dataset 
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat')
 
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat')
@@ -59,7 +60,8 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 %obvious colinearity between features
 % figure(62);clf
 % imagesc(corr(glmModel{datasample(1:length(glmModel),1)}.io.DmatXNormalized))
-% caxis([0 .7]) ; colorbar
+% caxis([0 .7]) ;colorbar
+% axis square; set(gca,'xtick',[],'ytick',[])
 
 for i =8
  i

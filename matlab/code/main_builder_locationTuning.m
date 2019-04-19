@@ -1,28 +1,28 @@
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat')
+%Load whisking and neural time series struct 
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat') %L5b excitatory cells
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat')
-%%
-% Top level parameters and definitions 
+%% Top level parameters and definitions 
 touchWindow = [-25:50]; %window for analyses around touch
 numInterpPts = 24; %used for stretching or shrinking tuning curves to within the same bounds for decoding object location
 
-touchCells = touchCell(U);
+touchCells = touchCell(U,'off');
 selectedCells = find(touchCells==1);
 
 % Structure for quantifying tuning and evaluating decoding 
 popV = touchFeatureBinned(U,touchWindow);
 
 % Defining touch response
-U = defTouchResponse(U,.99);
+U = defTouchResponse(U,.99,'off');
 %% Plotter for feature tuning around touch window
 gaussFilt = 1; %smoothing function for tuning plots
 whichTouches = fields(popV{1});
 fieldsList = fields(popV{1}.allTouches);
 touchFeatureBinned_plotter(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,gaussFilt)
 
-%% Plotter for object location tuning
+%% Quantifiying object location tuning
 fieldsList = fields(popV{1}.allTouches);
-tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow);
+tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
 
 %optional raster of FRs for tuned cells. 
 for d = 1
@@ -48,8 +48,9 @@ glmnetOpt.xfoldCV = 5;
 glmnetOpt.numIterations = 10;
 
 %design matrix for feature in fields list
-fieldsList = fields(popV{1});
-[mdl.io.X, mdl.io.Y.normal, mdl.io.Y.shuffled] = designMatrixBuilder_touchFeature(U,popV,selectedCells,fieldsList{1},touchWindow,numInterpPts);
+fieldsList = fields(popV{1}.allTouches);
+whichTouches = fields(popV{1});
+[mdl.io.X, mdl.io.Y.normal, mdl.io.Y.shuffled] = designMatrixBuilder_touchFeature(U,popV,selectedCells,fieldsList{1},whichTouches(1),touchWindow,numInterpPts);
 
 %multinomial model for decoding location 
 mdl = multinomialModel(mdl,mdl.io.X,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points

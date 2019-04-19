@@ -15,12 +15,15 @@ for i = 1:length(glmModel)
     touchResp = array.meta.responseWindow;
     
     %PLOTTING BASIS FUNCTIONS
-    %     figure(480);clf
-    %     subplot(2,1,1)
-    %     plot(glmModel{i}.modelParams.buildIndices,glmModel{1}.basisFunctions.touch,'k')
-    %     subplot(2,1,2)
-    %     plot(glmModel{i}.modelParams.buildIndices,glmModel{1}.basisFunctions.features,'k')
-    %
+        figure(480);clf
+        subplot(2,1,1)
+        plot(glmModel{i}.modelParams.buildIndices,glmModel{1}.basisFunctions.touch)
+        set(gca,'ytick',[0 .5 1],'xtick',-25:25:50,'xlim',[-25 50])
+        title('touch filter basis functions')
+        subplot(2,1,2)
+        plot(glmModel{i}.modelParams.buildIndices,glmModel{1}.basisFunctions.features)
+        set(gca,'ytick',[0 .5 1],'xtick',-25:25:50,'xlim',[-25 50])
+        title('stimulus filter basis functions')
     %PLOTTING FOR time from touch onset
     %     figure(800);subplot(5,6,i)
     
