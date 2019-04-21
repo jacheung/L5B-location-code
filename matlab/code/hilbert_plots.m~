@@ -183,14 +183,14 @@ for i = 1:length(glmModel)
     interIdx = ismember(zresp{2}(:,1),modeled);
     interIdx2 = ismember(zresp{3}(:,1),raw);
     
+    xlabel('angle at touch');ylabel('z-scored response')
+    title(['original(black) | training(blue) | modeled(red). expVar=' num2str(corr(zresp{1}(interIdx,2),zresp{2}(interIdx2,2)).^2)])
+    
     [zresp{2}(interIdx,1) zresp{3}(interIdx2,1)]
     
     expVar(i) = corr(zresp{2}(interIdx,2),zresp{3}(interIdx2,2)).^2;
-
-    xlabel('angle at touch');ylabel('z-scored response')
-    title(['original(black) | training(blue) | modeled(red). expVar=' num2str(expVar(i) )])
     
-
+    
     hold on;subplot(3,3,[8 9])
     coeffsToPlot = fields(glmModel{i}.coeffs);
     for u = 2:length(coeffsToPlot)
