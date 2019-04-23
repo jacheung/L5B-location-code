@@ -235,6 +235,4 @@ for i = 1:length(glmModel)
     print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\' glmModel{i}.name '\hilbert_' num2str(i)],'-dpng')
 end
 
-%%
-
-expVar*100
+%

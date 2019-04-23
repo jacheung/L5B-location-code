@@ -33,10 +33,11 @@ for p = 1:glmnetOpt.numIterations
     
     %Check that design matrix is properly indexed when we split to test
     %and train set
-    %             figure(19);clf
-    %             numTrials = 5;
-    %             startTouch = datasample(1:length(trainIdxStart)-numTrials,1);
-    %             imagesc(trainDmatX(76*startTouch+1:(76*startTouch+1)+76.*numTrials,:))
+                figure(19);clf
+                numTrials = 3;
+                startTouch = datasample(1:length(trainIdxStart)-numTrials,1);
+                imagesc(trainDmatX(76*startTouch+1:(76*startTouch+1)+76.*numTrials,:))
+                set(gca,'xtick',[],'ytick',[])
     
     cv = cvglmnet(trainDmatX,trainDmatY,'binomial',glmnetOpt,[],glmnetOpt.xfoldCV);
     

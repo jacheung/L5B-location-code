@@ -1,6 +1,6 @@
 %Load whisking and neural time series struct 
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat') %L5b excitatory cells
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
+% load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
 touchWindow = [-25:50]; %window for analyses around touch
@@ -22,7 +22,7 @@ touchFeatureBinned_plotter(U,popV,selectedCells,fieldsList(1),whichTouches,touch
 
 %% Quantifiying object location tuning
 fieldsList = fields(popV{1}.allTouches);
-tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
+tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches(1),touchWindow,'on');
 
 %optional raster of FRs for tuned cells. 
 for d = 1

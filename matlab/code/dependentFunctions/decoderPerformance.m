@@ -7,6 +7,7 @@ imagesc(predProb)
 caxis([0 max(predProb(:))])
 set(gca,'xtick',[],'ytick',[])
 xlabel('predicted');ylabel('true')
+title(['chance = ' num2str(1/length(mdl.gof.confusionMatrix))])
 colorbar
 axis square
 
