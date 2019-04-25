@@ -22,7 +22,7 @@ Initial script for compiling behavioral choice, whisking time series, and neural
 This script compiles whisking and neural time series data into figures for viewing of object location at touch representation. 
 
 #### main_builder_hilbert
-This script is responsible for transforming whisking data structure into a design matrix and utilizing a binomial model for predicting firing rates around touch. Basis functions and lags are responsible for capturing the delay and time cours eof neural response. These parameters can be modulated. <br /> 
+This script is responsible for transforming whisking data structure into a design matrix and utilizing a binomial model with ElasticNet regularization for predicting firing rates around touch. Basis functions and lags are responsible for capturing the delay and time course of neural responses from stimulus onsets. These parameters can be modulated within the script. <br /> 
 
 Sample of the basis functions used and the correlation between features in the design matrix are shown below.
 ![Alt text](./pictures/sampleCorrelationDmatX.png)
