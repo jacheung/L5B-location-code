@@ -43,7 +43,7 @@ for i = 1:length(glmModel)
     tr1 = find(BI == array.meta.responseWindow(1));
     tr2 = find(BI == array.meta.responseWindow(2));
     
-    touchCorr(i) = corr(rawResponse(tr1:tr2),modeledResponse(tr1:tr2));
+    touchCorr(i) = corr(rawResponse,modeledResponse);
     
     title(['original(black) | modeled(red). Touch response. Rsqd = ' num2str( touchCorr(i).^2)]);
     set(gca,'xtick',[])
@@ -85,26 +85,26 @@ for i = 1:length(glmModel)
     
     subplot(3,3,4)
     imagesc(imgaussfilt(selRawMat,gaussFilt,'padding','replicate'));
-    %     caxis([0 prctile(selRawMat(:),99)])
+%     caxis([0 prctile(selRawMat(:),tuningPrctile)])
     hold on;plot([find(BI==0)-1 find(BI==0)-1],[size(glmModel{i}.heat.matrixRaw,1) 0],'w:')
     set(gca,'ytick',1:anglePlotSpacing:length(selThetaBins),'yticklabel', selThetaBins(1:anglePlotSpacing:length(selThetaBins)),'ydir','normal',...
         'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
     ylabel('angle at touch')
     title('training tuning curve')
-    hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
-    hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
+    hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 max(selThetaBins)+1],'r-.')
+    hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 max(selThetaBins)+1],'r-.')
     
     subplot(3,3,7)
     imagesc(imgaussfilt(selMdlMat,gaussFilt,'padding','replicate'));
-    caxis([0 prctile(selMdlMat(:),tuningPrctile)]) %cap limit at 99th percentile in case of outliers in predictions
+%     caxis([0 prctile(selMdlMat(:),tuningPrctile)]) %cap limit at 99th percentile in case of outliers in predictions
     hold on;plot([find(BI==0)-1 find(BI==0)-1],[size(glmModel{i}.heat.matrixRaw,1) 0],'w:')
     set(gca,'ytick',1:anglePlotSpacing:length(selThetaBins),'yticklabel', selThetaBins(1:anglePlotSpacing:length(selThetaBins)),'ydir','normal',...
         'xtick',(0:25:length(BI)),'xticklabel',[min(BI):25:max(BI)],'xlim',[0 length(BI)])
     xlabel('time from touch onset (ms)')
     ylabel('angle at touch')
     title('modeled tuning curve')
-    hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[0 length(selThetaBins)+1],'r-.')
-    hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[0 length(selThetaBins)+1],'r-.')
+    hold on; plot([find(BI==touchResp(1)) find(BI==touchResp(1))],[min(selThetaBins) max(selThetaBins)+1],'r-.')
+    hold on; plot([find(BI==touchResp(2)) find(BI==touchResp(2))],[min(selThetaBins) max(selThetaBins)+1],'r-.')
     
     %     hold on; plot([selIdx(1) selIdx(1)],[0 30],'-.w')
     %     hold on; plot([selIdx(end) selIdx(end)],[0 30],'-.w')
@@ -236,5 +236,15 @@ for i = 1:length(glmModel)
 end
 
 %%
+figure(56);clf
+scatter((touchCorr.^2)*100,expVar*100)
+set(gca,'xtick',0:25:100,'ytick',0:25:100)
+hold on; plot([0 100],[50 50],'-.k')
+hold on; plot([50 50],[0 100'],'-.k')
+xlabel('touch response explained variance (%)');
+ylabel('object location tuning explained variance (%)');
 
-expVar*100
+highPredAccuracy = intersect(find(((touchCorr.^2)*100)>50),find((expVar*100)>50));
+
+
+axis square

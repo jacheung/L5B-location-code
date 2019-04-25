@@ -33,13 +33,14 @@ for p = 1:glmnetOpt.numIterations
     
     %Check that design matrix is properly indexed when we split to test
     %and train set
-                figure(19);clf
-                numTrials = 3;
-                startTouch = datasample(1:length(trainIdxStart)-numTrials,1);
-                imagesc(trainDmatX(76*startTouch+1:(76*startTouch+1)+76.*numTrials,:))
-                set(gca,'xtick',[],'ytick',[])
-    
+    %                 figure(19);clf
+    %                 numTrialsToPlot = 3;
+    %                 startTouch = datasample(1:length(trainIdxStart)-numTrialsToPlot,1);
+    %                 imagesc(trainDmatX(length(glmnetOpt.buildIndices)*startTouch+1:(length(glmnetOpt.buildIndices)*startTouch+1)+length(glmnetOpt.buildIndices).*numTrialsToPlot,:))
+    %                 set(gca,'xtick',[],'ytick',[])
+    %
     cv = cvglmnet(trainDmatX,trainDmatY,'binomial',glmnetOpt,[],glmnetOpt.xfoldCV);
+    cvglmnetPlot(cv)
     
     fitLambda = cv.lambda_1se;
     iLambda = find(cv.lambda == cv.lambda_1se);
@@ -111,11 +112,11 @@ coeffsIter = cell2mat(sFitCoeffs);
 mdl.coeffs.raw = cell2mat(sFitCoeffs);
 
 
-featureLagsEnds = [cumsum(mdl.io.selectedFeatures.dims)+1]; 
+featureLagsEnds = [cumsum(mdl.io.selectedFeatures.dims)+1];
 featureLagsStarts = [2 cumsum(mdl.io.selectedFeatures.dims)+2];
 
 for j = 1:length(featureLagsEnds)
-mdl.coeffs.(mdl.io.selectedFeatures.name{j}) = mean(coeffsIter(featureLagsStarts(j):featureLagsEnds(j),:),2); 
+    mdl.coeffs.(mdl.io.selectedFeatures.name{j}) = mean(coeffsIter(featureLagsStarts(j):featureLagsEnds(j),:),2);
 end
 
 mdl.raw.spikes = reshape(DmatY,length(glmnetOpt.buildIndices),length(DmatY)/length(glmnetOpt.buildIndices))';

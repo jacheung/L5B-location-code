@@ -13,7 +13,7 @@ selectedCells = find(touchCells==1);
 popV = touchFeatureBinned(U,touchWindow);
 
 % Defining touch response
-U = defTouchResponse(U,.99,'off');
+U = defTouchResponse(U,.99,'on');
 %% Plotter for feature tuning around touch window
 gaussFilt = 1; %smoothing function for tuning plots
 whichTouches = fields(popV{1});
@@ -25,10 +25,10 @@ fieldsList = fields(popV{1}.allTouches);
 tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches(1),touchWindow,'on');
 
 %optional raster of FRs for tuned cells. 
-for d = 1
+for d = 13
     figure(8);clf
-    allSpks = squeeze(U{tunedCellsIdx(d)}.R_ntk);
-    [~,idx] = sort(U{tunedCellsIdx(d)}.meta.motorPosition);
+    allSpks = squeeze(U{tunedCellsIdx{1}(d)}.R_ntk);
+    [~,idx] = sort(U{tunedCellsIdx{1}(d)}.meta.motorPosition);
     allSpks = allSpks(:,idx);
     for k = 1:size(allSpks,2)
         st = find(allSpks(:,k)==1);

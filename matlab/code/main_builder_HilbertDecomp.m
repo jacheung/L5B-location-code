@@ -40,7 +40,7 @@ basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwid
 glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
 
 %GLMdesign Matrix Set-up
-fileName = 'glmModelTMP';
+fileName = 'glmModelFullInterp';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
