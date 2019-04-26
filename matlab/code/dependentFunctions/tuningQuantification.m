@@ -1,4 +1,4 @@
-function tunedCells = tuningQuantification(cellStruct,popV,selectedCells,variableFields,touchOrderFields,viewWindow,displayOpt)
+function tuningStruct = tuningQuantification(cellStruct,popV,selectedCells,variableFields,touchOrderFields,viewWindow,displayOpt)
 
 %% ZSCORE CONVERSION and tuning width
 
@@ -15,6 +15,8 @@ if (willdisplay)
     plotrow = rc(1);
     plotcolumn = rc(2);
 end
+
+tunedCellMat =  nan(length(touchOrderFields),length(popV));
 
 for g = 1:numel(touchOrderFields)
     
@@ -126,12 +128,6 @@ for g = 1:numel(touchOrderFields)
         end
         
         nxy = [normalize_var(x,0,1),y'];
-        iy(:,d) = interp1(nxy(:,1),nxy(:,2),linspace(0,1,numInterpPts));
-        
-        modely(:,d) = interp1(normalize_var(x,0,1),y,linspace(0,1,numInterpPts));
-        modelystd(:,d) = interp1(normalize_var(x,0,1),ystd,linspace(0,1,numInterpPts));
-        
-       
         
         zs = nanmean(zraw,2);
         zs(isnan(zs))=[];
@@ -161,5 +157,10 @@ for g = 1:numel(touchOrderFields)
     
     
     ocellidx = find(~isnan(pw(:,1)));
-    tunedCells{g} = selectedCells(ocellidx);
+    tunedCellMat(g,selectedCells(ocellidx)) = 1;
 end
+
+tuningStruct.rowFeatNames = touchOrderFields;
+tuningStruct.matrix = tunedCellMat; 
+
+
