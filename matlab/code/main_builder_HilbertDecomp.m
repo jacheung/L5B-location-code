@@ -62,7 +62,7 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 % caxis([0 .7]) ;colorbar
 % axis square; set(gca,'xtick',[],'ytick',[])
 
-for i =8
+for i =13
  i
  glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
  glmModel{i}.meta = tunedCellsIdx{1}(i);

@@ -43,7 +43,7 @@ for p = 1:glmnetOpt.numIterations
     cvglmnetPlot(cv)
     
     fitLambda = cv.lambda_1se;
-    iLambda = find(cv.lambda == cv.lambda_1se);
+    iLambda = find(cv.lambda == fitLambda);
     fitCoeffs = [cv.glmnet_fit.a0(iLambda) ; cv.glmnet_fit.beta(:,iLambda)];
     predicts = cvglmnetPredict(cv,testDmatX,fitLambda); % this outputs testDmatX * fitCoeffs
     predProb = sigmoid(predicts); %this is the sigmoid of predicts which means the probabilities

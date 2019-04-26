@@ -232,10 +232,7 @@ subplot(1,2,2);
  xlabel('degrees from raw tuning');ylabel('number of cells')
 
  %goodness of fit of ol tuning and variance explained
- figure(131);clf
- scatter(devExplained,expVar)
-axis square
-xlabel('devExplained');ylabel('rsqd of OL tuning')
+ 
  
 
 %% goodness of fit!

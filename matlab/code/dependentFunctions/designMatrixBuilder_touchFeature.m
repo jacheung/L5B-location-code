@@ -12,7 +12,6 @@ for g = 1:numel(touchOrderFields)
     
     for d = 1:length(selectedCells)
         
-        
         currCell = selectedCells(d);
         
         counts = popV{currCell}.(touchOrderFields{g}).(variableFields).counts;
