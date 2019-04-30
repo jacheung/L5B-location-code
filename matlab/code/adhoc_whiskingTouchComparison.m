@@ -25,9 +25,9 @@ whisking = whisking_general(U,'off');
 %% comparison 
 naiveVSexpert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
-wEXCOL = intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1)) ;
-wINHOL = intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1)) ;
-nsOL = intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0)) ;
+wEXCOL = numel(intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(OLtune.matrix(1,:) == 1)) ;
+wINHOL = numel(intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1))) ./ numel(find(OLtune.matrix(1,:) == 1));
+nsOL = numel(intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0))) ./ numel(find(OLtune.matrix(1,:) == 1));
 
 
 

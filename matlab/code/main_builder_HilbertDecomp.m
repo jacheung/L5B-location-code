@@ -17,10 +17,10 @@ U = defTouchResponse(U,.99,'off');
 %% Plotter for object location tuning
 whichTouches = fields(popV{1});
 fieldsList = fields(popV{1}.allTouches);
-tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
+tunedCells = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
 
 %% Builder for identifying hilbert components that generate tuning
-selectedArray = U(tunedCellsIdx{1});
+selectedArray = U(find(tunedCells.mat(1,:)==1));
 
 %GLMNET parameters
 glmnetOpt = glmnetSet;
