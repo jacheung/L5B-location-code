@@ -17,7 +17,7 @@ U = defTouchResponse(U,.99,'off');
 %% Quantifying object location tuning
 whichTouches = fields(popV{1});
 fieldsList = fields(popV{1}.allTouches);
-OLtune = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
+tuneStruct = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
 
 %% Quantifying whisking tuning
 whisking = whisking_general(U,'off');
@@ -25,9 +25,9 @@ whisking = whisking_general(U,'off');
 %% comparison 
 naiveVSexpert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
-wEXCOL = numel(intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(OLtune.matrix(1,:) == 1)) ;
-wINHOL = numel(intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1))) ./ numel(find(OLtune.matrix(1,:) == 1));
-nsOL = numel(intersect(find(OLtune.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0))) ./ numel(find(OLtune.matrix(1,:) == 1));
+wEXCOL = numel(intersect(find(tuneStruct.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(tuneStruct.matrix(1,:) == 1)) ;
+wINHOL = numel(intersect(find(tuneStruct.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1))) ./ numel(find(tuneStruct.matrix(1,:) == 1));
+nsOL = numel(intersect(find(tuneStruct.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0))) ./ numel(find(tuneStruct.matrix(1,:) == 1));
 
 
 
