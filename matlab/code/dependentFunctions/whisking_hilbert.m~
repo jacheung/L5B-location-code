@@ -5,10 +5,9 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
     | strcmp(displayOpt,'off'));
 %%
 numBins = 20; 
-pThreshold = 0.01; 
-%numInterpPts = 100; 
+pThreshold = 0.05; 
 
-whiskingCells = find(whisking.matrix(1,:)==-1);
+whiskingCells = find(whisking.matrix(1,:)==1);
 
 for i = 1:length(whiskingCells)
     currArray = array{whiskingCells(i)};
@@ -61,7 +60,7 @@ for i = 1:length(whiskingCells)
         end
     end
 
-    %tmp = interp1(average_stimulus(:,1),average_response(:,1),linspace(min(average_stimulus(:,1)),max(average_stimulus(:,1)),numInterpPts));
+    interp1(average_stimulus(:,1),average_response(:,1)
     
     
     if willdisplay

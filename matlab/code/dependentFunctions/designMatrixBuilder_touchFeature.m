@@ -58,7 +58,7 @@ for g = 1:numel(touchOrderFields)
         
         
         x = str2num(cell2mat(stats.gnames));
-        x=bounds(x)';
+        x = bounds(x)';
         y = stats.means;
         
         zstd = nanstd(zraw,[],2);
