@@ -153,7 +153,7 @@ for g = 1:numel(touchOrderFields)
             pwtheta(d,:) = x(pw(d,:));
         end
         
-        tuningXYerr{d} = [xy cibins];
+        tuningXYErr{d} = [xy cibins];
     end
     
     
@@ -161,10 +161,10 @@ for g = 1:numel(touchOrderFields)
     tunedCellMat(g,selectedCells(ocellidx)) = 1;
     
     tuningStruct.valueNames = {'stimulus', 'zresp','CIbins'};
-    tuningStruct.values.(touchOrderFields{g}) = tuningXYerr; 
+    tuningStruct.values{g} = tuningXYerr; 
 end
 
-tuningStruct.populationQuant.rowFeatNames = touchOrderFields;
-tuningStruct.populationQuant.matrix = tunedCellMat; 
+tuningStruct.rowFeatNames = touchOrderFields;
+tuningStruct.matrix = tunedCellMat; 
 
 
