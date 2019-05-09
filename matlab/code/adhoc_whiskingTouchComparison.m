@@ -17,7 +17,7 @@ U = defTouchResponse(U,.99,'off');
 %% Quantifying object location tuning
 whichTouches = fields(popV{1});
 fieldsList = fields(popV{1}.allTouches);
-tuneStruct = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
+tuneStruct = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'on');
 
 %% Quantifying whisking tuning
 whisking = whisking_general(U,'off');

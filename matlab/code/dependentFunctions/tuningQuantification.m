@@ -51,48 +51,35 @@ for g = 1:numel(touchOrderFields)
         xresp = mean(postresponses,2);
         zscore = (xresp - meanbase) ./ stdbase;
         
-        for k = 1:size(postresponses,1)
-            spkT = find(postresponses(k,:)==1);
-            if ~isempty(spkT) & numel(spkT)>1
-                ISI = diff(spkT);
-                CV(k) = std(ISI)./mean(ISI);
-            else
-                CV(k) = 0;
-            end
-        end
+        [sortedZscores,~,~] = binslin(thetavect,zscore,'equalE',numel(bounds),bounds(1),bounds(end));
+        [sortedRawResponse] = binslin(thetavect,xresp,'equalE',numel(bounds),bounds(1),bounds(end)); 
         
-        [sorted,~,~] = binslin(thetavect,zscore,'equalE',numel(bounds),bounds(1),bounds(end));
-        [CVsorted,~,~] = binslin(thetavect,CV','equalE',numel(bounds),bounds(1),bounds(end));
-        
-        
-        samps = cellfun(@numel,sorted);
+        samps = cellfun(@numel,sortedZscores);
         selBins = find(samps>sum(samps)./100);
         
-        for p=1:length(selBins)
-            CVpop(p,:) = [bounds(selBins(p)) mean(CVsorted{selBins(p)})];
-        end
+        znanmat = cell2nanmat(sortedZscores);
+        zraw = znanmat(:,selBins);
         
+        rrnanmat = cell2nanmat(sortedRawResponse); 
+        rRaw = znanmat(:,selBins); 
         
-        zraw = nan(length(sorted),2000);
-        for b = 1:length(sorted)
-            if sum(b == selBins)>0
-                currvals = sorted{b};
-                if ~isempty(sorted{b})
-                    zraw(b,1:length(currvals)) = currvals';
-                end
-            end
-        end
+%         zraw = nan(length(sortedZscores),2000);
+%         for b = 1:length(sortedZscores)
+%             if sum(b == selBins)>0
+%                 currvals = sortedZscores{b};
+%                 if ~isempty(sortedZscores{b})
+%                     zraw(b,1:length(currvals)) = currvals';
+%                 end
+%             end
+%         end
+%         
         
-        
-        [p,~,stats]=anova1(zraw',[],'off');
+        [~,~,stats]=anova1(zraw,[],'off');
         vals =multcompare(stats,[],'off');
-        popzscore{d} = cellfun(@mean,sorted);
-        otune(d)=p;
-        
         
         x=cellfun(@str2num,stats.gnames);
         
-        %CI BINS
+        %CI BINS for zscores
         cibins = nan(size(x,1),1);
         
         SEMg = nanstd(zraw,[],2) ./ sqrt(sum(~isnan(zraw),2));
@@ -153,14 +140,14 @@ for g = 1:numel(touchOrderFields)
             pwtheta(d,:) = x(pw(d,:));
         end
         
-        tuningXYerr{d} = [xy cibins];
+        tuningXYerr{d} = [xy cibins ];
     end
     
     
     ocellidx = find(~isnan(pw(:,1)));
     tunedCellMat(g,selectedCells(ocellidx)) = 1;
     
-    tuningStruct.valueNames = {'stimulus', 'zresp','CIbins'};
+    tuningStruct.valueNames = {'stimulus', 'zresp','CIbinsZ','rawResp','CIbinsrR'};
     tuningStruct.values.(touchOrderFields{g}) = tuningXYerr; 
 end
 
