@@ -28,6 +28,6 @@ Sample of the basis functions used and the correlation between features in the d
 ![Alt text](./pictures/sampleCorrelationDmatX.png)
 
 
-#### hilbert_plots
+#### hilbert_plots (CURRENTLY IN BUILD 190509)
 This script compiles the optimized binomial models of neural activity around touch and generates the below figures for analysis. 
 ![Alt text](./pictures/sampleModeledHilbert.png)
