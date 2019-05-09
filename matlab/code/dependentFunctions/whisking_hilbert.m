@@ -46,8 +46,7 @@ for i = 1:length(whiskingCells)
         compare_matrix = cell2nanmat(response{j});
         p = anova1(compare_matrix,[],'off');
         
-        if p<pThreshold
-            
+        if p<pThreshold     
             [~,maxIdx] = max(average_response(:,j));
             peakResponse = compare_matrix(:,maxIdx);
             peakResponse = peakResponse(~isnan(peakResponse)); 

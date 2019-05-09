@@ -57,26 +57,25 @@ for g = 1:numel(touchOrderFields)
         samps = cellfun(@numel,sortedZscores);
         selBins = find(samps>sum(samps)./100);
         
-        znanmat = cell2nanmat(sortedZscores);
-        zraw = znanmat(:,selBins);
+        zraw = transpose(cell2nanmat(sortedZscores));
+        rrnanmat = transpose(cell2nanmat(sortedRawResponse)); 
         
-        rrnanmat = cell2nanmat(sortedRawResponse); 
-        rRaw = znanmat(:,selBins); 
+        selBinMat = nan(size(zraw));
+        selBinMat(selBins,:) = 1;
         
-%         zraw = nan(length(sortedZscores),2000);
-%         for b = 1:length(sortedZscores)
-%             if sum(b == selBins)>0
-%                 currvals = sortedZscores{b};
-%                 if ~isempty(sortedZscores{b})
-%                     zraw(b,1:length(currvals)) = currvals';
-%                 end
-%             end
-%         end
-%         
+        zraw = zraw .* selBinMat; 
+        rraw = rrnanmat .* selBinMat; 
+
+        rawmeanresp =  nanmean(rraw,2);
+        rawmeanresp = rawmeanresp(~isnan(rawmeanresp));
+        rawSEM = nanstd(rraw,[],2) ./ sqrt(sum(~isnan(rraw),2)); 
+        rawSEM = rawSEM(~isnan(rawSEM));
         
-        [~,~,stats]=anova1(zraw,[],'off');
+        %sig calculation 
+        [pZ,~,stats]=anova1(zraw',[],'off');
+        pRaw = anova1(rraw',[],'off');
+        
         vals =multcompare(stats,[],'off');
-        
         x=cellfun(@str2num,stats.gnames);
         
         %CI BINS for zscores
@@ -140,14 +139,14 @@ for g = 1:numel(touchOrderFields)
             pwtheta(d,:) = x(pw(d,:));
         end
         
-        tuningXYerr{d} = [xy cibins ];
+        tuningXYerr{d} = [xy cibins rawmeanresp rawSEM];
     end
     
     
     ocellidx = find(~isnan(pw(:,1)));
     tunedCellMat(g,selectedCells(ocellidx)) = 1;
     
-    tuningStruct.valueNames = {'stimulus', 'zresp','CIbinsZ','rawResp','CIbinsrR'};
+    tuningStruct.valueNames = {'stimulus', 'Zresponse','ZCIBins','meanResponse','responseSEM'};
     tuningStruct.values.(touchOrderFields{g}) = tuningXYerr; 
 end
 

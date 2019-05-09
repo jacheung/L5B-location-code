@@ -58,17 +58,21 @@ for g = 1:numel(touchOrderFields)
         selBins = find(samps>sum(samps)./100);
         
         zraw = transpose(cell2nanmat(sortedZscores));
+        rrnanmat = transpose(cell2nanmat(sortedRawResponse)); 
+        
         selBinMat = nan(size(zraw));
         selBinMat(selBins,:) = 1;
-        zraw = zraw .* selBinMat; 
-
         
-        rrnanmat = tranpose(cell2nanmat(sortedRawResponse)); 
+        zraw = zraw .* selBinMat; 
         rraw = rrnanmat .* selBinMat; 
 
+        rawmeanresp =  mean(rraw,2);
+        rawSEM = nanstd(rraw,[],2) ./ sqrt(sum(~isnan(rraw),2)); 
         
         %sig calculation 
-        [~,~,stats]=anova1(zraw',[],'off');
+        [pZ,~,stats]=anova1(zraw',[],'off');
+        pRaw = anova1(rraw',[],'off');
+        
         vals =multcompare(stats,[],'off');
         x=cellfun(@str2num,stats.gnames);
         
@@ -133,14 +137,14 @@ for g = 1:numel(touchOrderFields)
             pwtheta(d,:) = x(pw(d,:));
         end
         
-        tuningXYerr{d} = [xy cibins ];
+        tuningXYerr{d} = [xy cibins rawmeanresp rawSEM];
     end
     
     
     ocellidx = find(~isnan(pw(:,1)));
     tunedCellMat(g,selectedCells(ocellidx)) = 1;
     
-    tuningStruct.valueNames = {'stimulus', 'zresp','CIbinsZ','rawResp','CIbinsrR'};
+    tuningStruct.valueNames = {'stimulus', 'zresp','CIbinsZ','meanResponse','responseSEM'};
     tuningStruct.values.(touchOrderFields{g}) = tuningXYerr; 
 end
 
