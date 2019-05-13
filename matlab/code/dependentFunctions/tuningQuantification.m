@@ -24,8 +24,7 @@ for g = 1:numel(touchOrderFields)
     pw=fr;
     pwzs = nan(length(selectedCells),50);
     pwtheta = nan(length(selectedCells),2);
-    numInterpPts = 16;
-    
+
     for d = 1:length(selectedCells)
         
         %ZSCORREEEEE
@@ -40,8 +39,7 @@ for g = 1:numel(touchOrderFields)
         for k = 1:length(ranges)
             thetavect = [thetavect ;ones(counts(k),1).*ranges(k)];
         end
-        tvectNorm = normalize_var(thetavect,-1,1);
-        
+
         allspikes = cell2mat(popV{currCell}.(touchOrderFields{g}).(variableFields{1}).raw);
         meanbase = mean(mean(allspikes(:,1:find(viewWindow==0)),2));
         stdbase = std(mean(allspikes(:,1:find(viewWindow==0)),2));
@@ -140,6 +138,9 @@ for g = 1:numel(touchOrderFields)
         end
         
         tuningXYerr{d} = [xy cibins rawmeanresp rawSEM];
+        tuningZraw{d} = zraw;
+        tuningRraw{d} = rraw; 
+        tuningStimulus{d} = x; 
     end
     
     
@@ -148,6 +149,9 @@ for g = 1:numel(touchOrderFields)
     
     tuningStruct.valueNames = {'stimulus', 'Zresponse','ZCIBins','meanResponse','responseSEM'};
     tuningStruct.values.(touchOrderFields{g}) = tuningXYerr; 
+    tuningStruct.zResponse.(touchOrderFields{g}) = tuningZraw; 
+    tuningStruct.rResponse.(touchOrderFields{g}) = tuningRraw; 
+    tuningStruct.stimulus.(touchOrderFields{g}) = tuningStimulus; 
 end
 
 tuningStruct.populationQuant.rowFeatNames = touchOrderFields;
