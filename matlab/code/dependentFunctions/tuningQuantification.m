@@ -53,7 +53,7 @@ for g = 1:numel(touchOrderFields)
         [sortedRawResponse] = binslin(thetavect,xresp,'equalE',numel(bounds),bounds(1),bounds(end)); 
         
         samps = cellfun(@numel,sortedZscores);
-        selBins = find(samps>sum(samps)./100);
+        selBins = samps>(sum(samps)./100);
         
         zraw = transpose(cell2nanmat(sortedZscores));
         rrnanmat = transpose(cell2nanmat(sortedRawResponse)); 

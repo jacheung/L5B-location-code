@@ -32,9 +32,16 @@ for i = 1:length(whiskingCells)
     
     inputX = [filt_amplitude(:) filt_midpoint(:) filt_phase(:) filt_angle(:)];
     
+    
+   
     for k = 1:size(inputX,2)
         [response{k},stimulus{k}] = binslin(inputX(:,k),filt_spikes(:),'equalE',numBins,min(inputX(:,k)), max(inputX(:,k)));
     end
+    
+    for k = 1:size(inputX,2)
+        [sortedZscores,~,~] = binslin(inputX(:,k),filt_spikes(:),'equalE',numel(bounds),bounds(1),bounds(end));
+    end
+    
     
     average_response = cell2mat(cellfun(@(x) cellfun(@nanmean,x), response,'uniformoutput',0));
     average_stimulus = cell2mat(cellfun(@(x) cellfun(@nanmean,x), stimulus,'uniformoutput',0));
