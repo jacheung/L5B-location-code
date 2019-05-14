@@ -1,14 +1,14 @@
-%Load whisking and neural time series struct
+%Load whisking and neural time series struct 
 clear
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b excitatory cells
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
-%% Top level parameters and definitions
+%% Top level parameters and definitions 
 touchWindow = [-25:50]; %window for analyses around touch
 
 touchCells = touchCell(U,'off');
 selectedCells = find(touchCells==1);
 
-% Structure for quantifying tuning and evaluating decoding
+% Structure for quantifying tuning and evaluating decoding 
 popV = touchFeatureBinned(U,touchWindow);
 
 % Defining touch response
@@ -28,30 +28,28 @@ hilbertWhisking = whisking_hilbert(U,popV,'off');
 fieldsToCompare = fields(tuneStruct.R_ntk.allTouches);
 selectedCells = find(touchCells==1); %look at only touch cells because those are the only ones w/ OL tuning
 
-for g = 3
+for g = 1:length(fieldsToCompare)
+    currField = fieldsToCompare{g};
+    currTArray = tuneStruct.R_ntk.allTouches.(fieldsToCompare{g}); 
+    currWArray = hilbertWhisking.R_ntk.(fieldsToCompare{g}); 
     
-    currTArray = tuneStruct.R_ntk.allTouches.(fieldsToCompare{g});
-    currWArray = hilbertWhisking.R_ntk.(fieldsToCompare{g});
-    stimulus = hilbertWhisking.S_ctk.(fieldsToCompare{g});
-    
-    chosenTArrays = currTArray(selectedCells);
-    TouchR = cellfun(@(x) nanmean(x,2),chosenTArrays,'uniformoutput',0);
-    TouchSEM = cellfun(@(x) nanstd(x,[],2) ./ sqrt(sum(~isnan(x),2)),chosenTArrays,'uniformoutput',0);
-    chosenWArrays = currWArray(selectedCells);
-    WhiskR = cellfun(@(x) nanmean(x,1),chosenWArrays,'uniformoutput',0);
-    WhiskSEM = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),chosenWArrays,'uniformoutput',0);
-    
-    for i = 1:length(WhiskR)
-        figure(23+g);subplot(4,8,i)
-        shadedErrorBar(stimulus,TouchR{i}*1000,TouchSEM{i}*1000,'b')
-        hold on; shadedErrorBar(stimulus,WhiskR{i}*1000,WhiskSEM{i}*1000,'r')
-        xBounds = stimulus(~isnan(TouchR{i}*1000));
-        set(gca,'xlim',[min(xBounds) max(xBounds)])
-    end
-    
-    suptitle(fieldsToCompare{g})
+chosenTArrays = currTArray(selectedCells);
+angleTouchR = cellfun(@(x) nanmean(x,2),chosenTArrays,'uniformoutput',0);
+angleTouchSEM = cellfun(@(x) nanstd(x,[],2) ./ sqrt(sum(~isnan(x),2)),chosenTArrays,'uniformoutput',0);
+chosenWArrays = currWArray(selectedCells);
+angleWhiskR = cellfun(@(x) nanmean(x,1),chosenWArrays,'uniformoutput',0);
+angleWhiskSEM = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),chosenWArrays,'uniformoutput',0);
+
+for i = 1:length(angleWhiskR)
+    figure(23);clf
+    shadedErrorBar(hilbertWhisking.S_ctk.(fieldsToCompare{g}),angleTouchR{i}*1000,angleTouchSEM{i}*1000,'b')
+    hold on; shadedErrorBar(hilbertWhisking.S_ctk.angle,angleWhiskR{i}*1000,angleWhiskSEM{i}*1000,'r')
+    xBounds = hilbertWhisking.S_ctk.angle(~isnan(angleTouchR{i}*1000)); 
+    set(gca,'xlim',[min(xBounds) max(xBounds)])
+    pause
 end
-%% comparison
+
+%% comparison 
 naiveVSexpert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
 wEXCOL = numel(intersect(find(tuneStruct.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(tuneStruct.matrix(1,:) == 1)) ;
