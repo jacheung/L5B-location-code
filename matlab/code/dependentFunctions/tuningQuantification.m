@@ -154,8 +154,8 @@ for t = 1:length(variableFields)
         tuningStruct.R_ntk.(touchOrderFields{g}).(variableFields{t}) = tuningRraw;
         tuningStruct.S_ctk.(variableFields{t})  = mean([bounds(1:end-1);bounds(2:end)]); 
     end
-    tuningStruct.populationQuant.(touchOrderFields{g}).rowFeatNames = touchOrderFields;
-    tuningStruct.populationQuant.(touchOrderFields{g}).matrix = tunedCellMat;
+    tuningStruct.populationQuant.(variableFields{t}).rowFeatNames = touchOrderFields;
+    tuningStruct.populationQuant.(variableFields{t}).matrix = tunedCellMat;
     
     
 end

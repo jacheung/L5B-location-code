@@ -20,7 +20,7 @@ fieldsList = fields(popV{1}.allTouches);
 tuneStruct = tuningQuantification(U,popV,selectedCells,fieldsList([ 1 3 4 5]),whichTouches,touchWindow,'off');
 
 %% Quantifying whisking tuning
-whisking = whisking_general(U,'off');
+% whisking = whisking_general(U,'off');
 
 hilbertWhisking = whisking_hilbert(U,popV,'off');
 
@@ -41,37 +41,34 @@ for g = 1:4
     WhiskR = cellfun(@(x) nanmean(x,1),chosenWArrays,'uniformoutput',0);
     WhiskSEM = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),chosenWArrays,'uniformoutput',0);
     
-%     for i = 1:length(WhiskR)
-%         figure(23+g);subplot(4,8,i)
-%         shadedErrorBar(stimulus,TouchR{i}*1000,TouchSEM{i}*1000,'b')
-%         hold on; shadedErrorBar(stimulus,WhiskR{i}*1000,WhiskSEM{i}*1000,'r')
-%         xBounds = stimulus(~isnan(TouchR{i}*1000));
-%         set(gca,'xlim',[min(xBounds) max(xBounds)])
-%         
-%     end
-%     
-%     suptitle(fieldsToCompare{g})
-%     print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{g}],'-dpng')
-%     
+    for i = 1:length(WhiskR)
+        figure(23+g);subplot(4,8,i)
+        shadedErrorBar(stimulus,TouchR{i}*1000,TouchSEM{i}*1000,'b')
+        hold on; shadedErrorBar(stimulus,WhiskR{i}*1000,WhiskSEM{i}*1000,'r')
+        xBounds = stimulus(~isnan(TouchR{i}*1000));
+        set(gca,'xlim',[min(xBounds) max(xBounds)])
+        
+    end
     
-    figure(30);
+    suptitle(fieldsToCompare{g})
+    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{g}],'-dpng')
+    
+    
+    figure(30);clf
     subplot(2,2,g)
-    scatter(cell2mat(WhiskR)*1000,cell2mat(TouchR')*1000,'k')
+    scatter(cell2mat(WhiskR)*1000,cell2mat(TouchR')*1000)
     allMat = [(cell2mat(WhiskR)*1000)' ; cell2mat(TouchR')*1000];
-    minMax(1) = min(allMat)
-    minMax(2) = prctile(allMat,99); 
-    hold on; plot(minMax,minMax,'-.k')
-    set(gca,'xlim',minMax,'ylim',minMax)
-    axis square
-    title(fieldsToCompare{g})
+    [minMax(1) ,minMax(2)] = bounds(allMat)
+    hold on; plot(minMax,bounds(allMat),'-.k')
+    set(gca,'xlim',bounds(allMat),'ylim',bounds(allMat))
     
 end
 %% comparison
 naiveVSexpert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
-wEXCOL = numel(intersect(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1)) ;
-wINHOL = numel(intersect(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1))) ./ numel(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1));
-nsOL = numel(intersect(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0))) ./ numel(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1));
+wEXCOL = numel(intersect(find(tuneStruct.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(tuneStruct.matrix(1,:) == 1)) ;
+wINHOL = numel(intersect(find(tuneStruct.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1))) ./ numel(find(tuneStruct.matrix(1,:) == 1));
+nsOL = numel(intersect(find(tuneStruct.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0))) ./ numel(find(tuneStruct.matrix(1,:) == 1));
 
 
 
