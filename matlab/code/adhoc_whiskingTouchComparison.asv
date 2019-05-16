@@ -54,6 +54,7 @@ for g = 1:4
         else
              shadedErrorBar(stimulus,TouchR{i}*1000,TouchSEM{i}*1000,'k')
         end
+        
         if WHilbertTuning{g}(i)<pThresh
              hold on; shadedErrorBar(stimulus,WhiskR{i}*1000,WhiskSEM{i}*1000,'r')
         else
@@ -62,9 +63,14 @@ for g = 1:4
         xBounds = stimulus(~isnan(TouchR{i}*1000));
         set(gca,'xlim',[min(xBounds) max(xBounds)])
         
-        if g == 4
-            set(gca,'xlim',[-pi pi])
+        if strcmp(fieldsToCompare{g},'phase')
+            set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
         end
+        
+        if WHilbertTuning{g}(i)<pThresh & THilbertTuning{g}(i)<pThresh
+            title(num2str(corr((WhiskR{i}*1000)',TouchR{i}*1000,'rows','complete')));
+        end
+        
     end
     suptitle(fieldsToCompare{g})
     print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{g}],'-dpng')
@@ -89,7 +95,7 @@ end
 Ttmp = cell2mat(THilbertTuning')<.01;
 Wtmp = cell2mat(WHilbertTuning')<.01;
 
-intersect(find(Ttmp(1,:)==1),find(Wtmp(1,:)==1))
+
 %% comparison
 naiveVSexpert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
@@ -111,7 +117,7 @@ wINHnanOL = numel(intersect(find(isnan(tuneStruct.populationQuant.theta.matrix(1
 nsnanOL = numel(intersect(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == 0))) ./ numel(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:))));
 
 subplot(2,2,2);pie([wEXCnanOL wINHnanOL nsnanOL],{'whisking EXC','whisking INH','whisking ns'})
-title(['OL cells = ' num2str(numel(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:)))) )])
+title(['nonOL cells = ' num2str(numel(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:)))) )])
 
 
 wEXCexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 1))) ./ numel(find(whisking.matrix(1,:) == 1));
