@@ -24,7 +24,7 @@ whisking = whisking_general(U,'off');
 
 hilbertWhisking = whisking_hilbert(U,popV,'off');
 
-%% comparison adHoc
+%% comparison between whisking and touch for touchCells 
 fieldsToCompare = fields(tuneStruct.R_ntk.allTouches);
 selectedCells = find(touchCells==1); %look at only touch cells because those are the only ones w/ OL tuning
 pThresh = 0.01; 
@@ -136,6 +136,6 @@ nsexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 0
 nsnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==0);
 
 %% all neuron compariosn 
-OLtuning = [nan(1,sum(~(touchCells==1))) (THilbertTuning{1}<pThresh)];
+OLtuning = [nan(4,sum(~(touchCells==1))) (cell2mat(THilbertTuning')<pThresh)];
 [~,idx] = sort(touchCells);
 comparisonMat = [touchCells(idx) ;whisking.matrix(:,idx) ; OLtuning];

@@ -67,16 +67,12 @@ for t = 1:length(variableFields)
             
             %sig calculation
             [pZ,~,stats]=anova1(zraw',[],'off');
-            pRaw = anova1(rraw',[],'off');
-            
-            [t g d] 
-            
+   
             vals =multcompare(stats,[],'off');
             x=cellfun(@str2num,stats.gnames);
             
             %CI BINS for zscores
             cibins = nan(size(x,1),1);
-            
             SEMg = nanstd(zraw,[],2) ./ sqrt(sum(~isnan(zraw),2));
             for i = 1:length(x)
                 rawx = zraw(x(i),:);
@@ -87,29 +83,18 @@ for t = 1:length(variableFields)
             
             
             y = stats.means;
-            %     ytune(x,d) = y;  %FOR PHASE
-            
-            x=bounds(x)';
-            
-            
-            zstd = nanstd(zraw,[],2);
-            ystd = zstd(~isnan(zstd))';
-            
+            x= bounds(x)';
+
             xy = [x y'];
-            
-            kxy{d} = xy;
-            
+
             if willdisplay
                 figure(390+g)
                 subplot(plotrow,plotcolumn,d);
                 shadedErrorBar(xy(:,1),xy(:,2),cibins,'-k');
-                %     scatter(xy(:,1),xy(:,2),[],[.7 .7 .7],'filled')
                 set(gca,'ytick',round(min(xy(:,2))-1):round(max(xy(:,2))+1),'ylim',[round(min(xy(:,2))-1) round(max(xy(:,2))+1)],...
                     'xlim',[min(xy(:,1)) max(xy(:,1))],'xtick',-20:20:60)
                 axis square
             end
-            
-            nxy = [normalize_var(x,0,1),y'];
             
             zs = nanmean(zraw,2);
             zs(isnan(zs))=[];
@@ -135,21 +120,13 @@ for t = 1:length(variableFields)
                 pwtheta(d,:) = x(pw(d,:));
             end
             
-            tuningXYerr{selectedCells(d)} = [xy cibins rawmeanresp rawSEM];
-            tuningZraw{selectedCells(d)} = zraw;
+%             tuningXYerr{selectedCells(d)} = [xy cibins rawmeanresp rawSEM];
+%             tuningZraw{selectedCells(d)} = zraw;
             tuningRraw{selectedCells(d)} = rraw;
-            tuningStimulus{selectedCells(d)} = x;
-        end
-        
-        
+
+        end  
         ocellidx = find(~isnan(pw(:,1)));
         tunedCellMat(g,selectedCells(ocellidx)) = 1;
-        %
-        %     tuningStruct.valueNames = {'stimulus', 'Zresponse','ZCIBins','meanResponse','responseSEM'};
-        %     tuningStruct.values.(touchOrderFields{g}) = tuningXYerr;
-        %     tuningStruct.zResponse.(touchOrderFields{g}) = tuningZraw;
-        %     tuningStruct.rResponse.(touchOrderFields{g}) = tuningRraw;
-        %     tuningStruct.stimulus.(touchOrderFields{g}) = tuningStimulus;
         
         tuningStruct.R_ntk.(touchOrderFields{g}).(variableFields{t}) = tuningRraw;
         tuningStruct.S_ctk.(variableFields{t})  = mean([bounds(1:end-1);bounds(2:end)]); 
