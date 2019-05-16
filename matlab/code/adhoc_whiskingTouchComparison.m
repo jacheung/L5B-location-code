@@ -27,9 +27,12 @@ hilbertWhisking = whisking_hilbert(U,popV,'off');
 %% comparison adHoc
 fieldsToCompare = fields(tuneStruct.R_ntk.allTouches);
 selectedCells = find(touchCells==1); %look at only touch cells because those are the only ones w/ OL tuning
+pThresh = 0.01; 
+THilbertTuning = cell(1,length(fieldsToCompare));
+WHilbertTuning = cell(1,length(fieldsToCompare));
 
 for g = 1:4
-    
+    figure(23);clf;
     currTArray = tuneStruct.R_ntk.allTouches.(fieldsToCompare{g});
     currWArray = hilbertWhisking.R_ntk.(fieldsToCompare{g});
     stimulus = hilbertWhisking.S_ctk.(fieldsToCompare{g});
@@ -40,46 +43,88 @@ for g = 1:4
     chosenWArrays = currWArray(selectedCells);
     WhiskR = cellfun(@(x) nanmean(x,1),chosenWArrays,'uniformoutput',0);
     WhiskSEM = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),chosenWArrays,'uniformoutput',0);
-    
-%     for i = 1:length(WhiskR)
-%         figure(23+g);subplot(4,8,i)
-%         shadedErrorBar(stimulus,TouchR{i}*1000,TouchSEM{i}*1000,'b')
-%         hold on; shadedErrorBar(stimulus,WhiskR{i}*1000,WhiskSEM{i}*1000,'r')
-%         xBounds = stimulus(~isnan(TouchR{i}*1000));
-%         set(gca,'xlim',[min(xBounds) max(xBounds)])
-%         
-%     end
-%     
-%     suptitle(fieldsToCompare{g})
-%     print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{g}],'-dpng')
-%     
-    
-    figure(30);
-    subplot(2,2,g)
-    scatter(cell2mat(WhiskR)*1000,cell2mat(TouchR')*1000,'k')
-    allMat = [(cell2mat(WhiskR)*1000)' ; cell2mat(TouchR')*1000];
-    minMax(1) = min(allMat)
-    minMax(2) = prctile(allMat,99); 
-    hold on; plot(minMax,minMax,'-.k')
-    set(gca,'xlim',minMax,'ylim',minMax)
-    axis square
-    title(fieldsToCompare{g})
+   
+    for i = 1:length(WhiskR)
+        [THilbertTuning{g}(i),~,~] = anova1(chosenTArrays{i}',[],'off');
+        [WHilbertTuning{g}(i),~,~] = anova1(chosenWArrays{i},[],'off');
+        
+        subplot(4,8,i)
+        if THilbertTuning{g}(i)<pThresh
+             shadedErrorBar(stimulus,TouchR{i}*1000,TouchSEM{i}*1000,'b')
+        else
+             shadedErrorBar(stimulus,TouchR{i}*1000,TouchSEM{i}*1000,'k')
+        end
+        if WHilbertTuning{g}(i)<pThresh
+             hold on; shadedErrorBar(stimulus,WhiskR{i}*1000,WhiskSEM{i}*1000,'r')
+        else
+             hold on; shadedErrorBar(stimulus,WhiskR{i}*1000,WhiskSEM{i}*1000,'k')
+        end 
+        xBounds = stimulus(~isnan(TouchR{i}*1000));
+        set(gca,'xlim',[min(xBounds) max(xBounds)])
+        
+        if g == 4
+            set(gca,'xlim',[-pi pi])
+        end
+    end
+    suptitle(fieldsToCompare{g})
+    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{g}],'-dpng')
+% 
+%     figure(30);
+%     subplot(2,2,g)
+%     allMat = [(cell2mat(WhiskR)*1000)' cell2mat(TouchR')*1000];
+%     allMat = allMat(~sum(isnan(allMat),2),:); 
+%     scatter(allMat(:,1),allMat(:,2),'k')
+%     minMax(1) = min(allMat(:));
+%     minMax(2) = prctile(allMat(:),99);
+%     hold on; plot(minMax,minMax,'-.k')
+%     set(gca,'xlim',minMax,'ylim',minMax)
+%     axis square
+%     title(fieldsToCompare{g})
+%     xlabel('whisking FR');ylabel('touch FR')
     
 end
+
+
+
+Ttmp = cell2mat(THilbertTuning')<.01;
+Wtmp = cell2mat(WHilbertTuning')<.01;
+
+intersect(find(Ttmp(1,:)==1),find(Wtmp(1,:)==1))
 %% comparison
 naiveVSexpert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
+
+OLexpert = numel(intersect(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1),find(naiveVSexpert==1))) ./ nansum(tuneStruct.populationQuant.theta.matrix(1,:) == 1);
+OLnaive = numel(intersect(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1),find(naiveVSexpert==0))) ./ nansum(tuneStruct.populationQuant.theta.matrix(1,:) == 1);
+figure(100);clf
+subplot(2,2,1);pie([OLexpert OLnaive],{'expert','naive'})
+title(['OL cells = ' num2str(nansum(tuneStruct.populationQuant.theta.matrix(1,:) == 1))])
 
 wEXCOL = numel(intersect(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1)) ;
 wINHOL = numel(intersect(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1))) ./ numel(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1));
 nsOL = numel(intersect(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0))) ./ numel(find(tuneStruct.populationQuant.theta.matrix(1,:) == 1));
 
+subplot(2,2,1);pie([wEXCOL wINHOL nsOL],{'whisking EXC','whisking INH','whisking ns'})
+title(['OL cells = ' num2str(nansum(tuneStruct.populationQuant.theta.matrix(1,:) == 1))])
+
+wEXCnanOL = numel(intersect(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == 1))) ./ numel(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:)))) ;
+wINHnanOL = numel(intersect(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == -1))) ./ numel(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:))));
+nsnanOL = numel(intersect(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == 0))) ./ numel(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:))));
+
+subplot(2,2,2);pie([wEXCnanOL wINHnanOL nsnanOL],{'whisking EXC','whisking INH','whisking ns'})
+title(['nonOL cells = ' num2str(numel(find(isnan(tuneStruct.populationQuant.theta.matrix(1,:)))) )])
 
 
-wEXCexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 1))) ./ sum(naiveVSexpert==1);
-wEXCnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 1))) ./ sum(naiveVSexpert==0);
+wEXCexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 1))) ./ numel(find(whisking.matrix(1,:) == 1));
+wEXCnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 1))) ./ numel(find(whisking.matrix(1,:) == 1));
+subplot(2,2,3);pie([wEXCexpert wEXCnaive],{'expert','naive'})
+title(['whisking EXC cells = ' num2str(numel(find(whisking.matrix(1,:) == 1)))])
 
-wINHexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == -1))) ./ sum(naiveVSexpert==1);
-wINHnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == -1))) ./ sum(naiveVSexpert==0);
+
+wINHexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == -1))) ./ numel(find(whisking.matrix(1,:) == -1));
+wINHnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == -1))) ./ numel(find(whisking.matrix(1,:) == -1));
+subplot(2,2,4);pie([wINHexpert wINHnaive],{'expert','naive'})
+title(['whisking INH cells = ' num2str(numel(find(whisking.matrix(1,:) == -1)))])
+
 
 nsexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==1);
 nsnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==0);

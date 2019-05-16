@@ -20,7 +20,7 @@ for rec=1:length(U)
     for g = 1:numel(touchOrder)
         %%
         avail_fields = tVar.(touchOrder{g}).varNames;
-        bounds = [{[-100:2:100]} {[-9750:125:9750]} {[-100:2:100]}  {[-100:2:100]}  {linspace(pi*-1,pi,13)} {[-.95:.05:.95]}];
+        bounds = [{[-100:2:100]} {[-9750:125:9750]} {[-100:2:100]}  {[-100:2:100]}  {linspace(pi*-1,pi,12)} {[-.95:.05:.95]}];
         for d = [1 2 3 4 5 6] %for variables 1:6
             if d == 2
                 [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).variables(:,d),tVar.allTouches.spikeMat,'equalE',numel(bounds{d})+1,-10000,10000);
