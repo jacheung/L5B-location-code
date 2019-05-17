@@ -52,7 +52,8 @@ end
    
 %%
 %Design matrix for ALL touches
-varDesign = zeros(numel(touchOnIdx),6);%theta 1, amp 2, setpoint 3, phase 4, max curvature 5, vel 6
+varDesign = zeros(numel(touchOnIdx),7);%theta 1, amp 2, setpoint 3, phase 4, max curvature 5, vel 6
+touchTnums = ceil(touchOnIdx./array.t); 
 for i = 1:length(touchOnIdx)
     varDesign(i,1)=array.S_ctk(1,touchOnIdx(i)); %theta at touch
     varDesign(i,3)=array.S_ctk(3,touchOnIdx(i)); %amp at at touch
@@ -63,6 +64,7 @@ for i = 1:length(touchOnIdx)
     varDesign(i,6)=kwin(maxidx); %use idx to pull max kappa
     varDesign(i,2)=mean(array.S_ctk(2,touchOnIdx(i)-5:touchOnIdx(i)-1)); %finds mean of velocity (-4:-1ms) before touch
 end
+varDesign(:,7) = array.meta.motorPosition(touchTnums);
 
 
 %building design matrix(features)for PRELICK(excluding any before answer period) touches 
@@ -70,37 +72,30 @@ prevarDesign=cell(1,length(preTOnIdx));
 vars=[1 3 4 5];
 for k=1:length(preTOnIdx)
     for g = 1:length(vars)
-    prevarDesign{k}(:,vars(g))=array.S_ctk(vars(g),preTOnIdx{k},k); %just find val of theta, amp,setpoint, and phase at touch
+        prevarDesign{k}(:,vars(g))=array.S_ctk(vars(g),preTOnIdx{k},k); %just find val of theta, amp,setpoint, and phase at touch
     end
     for f=1:length(preTOnIdx{k}) %for each individual touch during that trial
         kappawin=preTOnIdx{k}(f):preTOffIdx{k}(f); %window for max kappa extraction (touchOn:touchOff)
         velwin=preTOnIdx{k}(f)-5:preTOnIdx{k}(f)-1; %window for mean vel pre touch extraction (touchON-5:touchOn-1)
         prevarDesign{k}(f,6)=max(abs(array.S_ctk(6,kappawin,k)));
         prevarDesign{k}(f,2)=nanmean(array.S_ctk(2,velwin,k));
+        prevarDesign{k}(f,7) = array.meta.motorPosition(k);
     end
 end
-
-%mash variables and spikes into a single matrix
-% allTouches=horzcat(vartouch,spikesAligned);
-
-% preDecision=cellfun(@(x,y) cat(2,x,y), vardesign,prevarAligned,'uniformoutput',0); %structure that still maintains trial, where each cell = 1 trial, could use in future for go/nogo/hit/miss/etc... analysi
-% preDecision=preDecision(~cellfun('isempty',preDecision)); %remove empty cells  
-% preDecision=cat(1,preDecision{:});
-
 
 prevarDesign= prevarDesign(~cellfun('isempty',prevarDesign)); %remove empty cells  
 preSpikesAligned = prevarAligned(~cellfun('isempty',prevarAligned));
 post=ismember(varDesign,cell2mat(prevarDesign'),'rows');
 
-tVar.allTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature'};
+tVar.allTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature','motorPosition'};
 tVar.allTouches.variables = varDesign; 
 tVar.allTouches.spikeMat = spikesAligned;
 
-tVar.preDecisionTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature'};
+tVar.preDecisionTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature','motorPosition'};
 tVar.preDecisionTouches.variables = cell2mat(prevarDesign');
 tVar.preDecisionTouches.spikeMat = cell2mat(preSpikesAligned'); 
 
-tVar.postDecisionTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature'};
+tVar.postDecisionTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature','motorPosition'};
 tVar.postDecisionTouches.variables = varDesign(~post,:);
 tVar.postDecisionTouches.spikeMat = spikesAligned(~post,:); 
 

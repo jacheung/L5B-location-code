@@ -62,14 +62,16 @@ meanMCC = cellfun(@(x) cellfun(@mean,x) , mcc,'uniformoutput',0);
 choicePred.rowNames = {'mean FR pre decision','spike train pre decision','mouse accuracy'}; 
 choicePred.mat = [cell2mat(meanMCC') ; cellfun(@(x) mean(x.meta.trialCorrect),U)];
 
-%% using the mean fr or spike train from pole onset to average pole down to decode pole location
+%% Across what timescales is object locatoin decoding best decoded from? 
+%using the mean fr or spike train from pole onset to average pole down to decode pole location
 
 glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0;
 glmnetOpt.alpha = 0.05;
 glmnetOpt.xfoldCV = 3;
 glmnetOpt.numIterations = 5;
-testRsqd = cell(1,2); 
+RsqdTrialResponses = cell(1,2); 
+RsqdTouchResponses = cell(1,2); 
 
 for i = 1:length(U)
     disp(['iterating for cell ' num2str(i) '/' num2str(length(U))])
@@ -107,12 +109,54 @@ for i = 1:length(U)
             SSR = sum((predicts-mean(DmatY)).^2);
             SSE = sum((testDmatY-predicts).^2);
             SSTO = SSR + SSE;
-            testRsqd{g}{i}(d) = SSR./SSTO;
+            RsqdTrialResponses{g}{i}(d) = SSR./SSTO;
         end
     end
     
 end
 
-meanRsqd = cellfun(@(x) cellfun(@mean,x) , testRsqd,'uniformoutput',0);
+meanTrialRsqd = cellfun(@(x) cellfun(@mean,x) , RsqdTrialResponses,'uniformoutput',0);
 
-tmp = cell2mat(meanRsqd');
+
+%using the mean fr of all responses per trial OR each touch individually 
+viewWindow = -25:50; 
+U = defTouchResponse(U,.99,'off');
+for i = 1:length(U) 
+    if isfield(U{i}.meta,'responseWindow')
+        disp(['iterating for cell ' num2str(i) '/' num2str(length(U))])
+        
+        tV = atTouch_sorter(U{i},viewWindow);
+        
+        spikeTrainResponse = tV.allTouches.spikeMat(:,find(viewWindow==0)+U{i}.meta.responseWindow(1) : find(viewWindow==0)+U{i}.meta.responseWindow(2));
+        meanResponse = nanmean(spikeTrainResponse,2);
+        
+        DmatX = {meanResponse,spikeTrainResponse};
+        DmatY = tV.allTouches.variables(:,1); %angle at touch
+        
+        for g = 1:length(DmatX)
+            for d = 1:glmnetOpt.numIterations
+                [trainIdx,testIdx] = randomizedIndices(DmatY,.7);
+                
+                trainDmatX = DmatX{g}(trainIdx',:);
+                testDmatX = DmatX{g}(testIdx',:);
+                trainDmatY = DmatY(trainIdx',:);
+                testDmatY = DmatY(testIdx',:);
+                
+                cv = cvglmnet(trainDmatX,trainDmatY,'gaussian',glmnetOpt,[],glmnetOpt.xfoldCV);
+                
+                fitLambda = cv.lambda_1se;
+                iLambda = find(cv.lambda == fitLambda);
+                fitCoeffs = [cv.glmnet_fit.a0(iLambda) ; cv.glmnet_fit.beta(:,iLambda)];
+                predicts = cvglmnetPredict(cv,testDmatX,fitLambda); % this outputs testDmatX * fitCoeffs
+                
+                SSR = sum((predicts-mean(DmatY)).^2);
+                SSE = sum((testDmatY-predicts).^2);
+                SSTO = SSR + SSE;
+                RsqdTouchResponses{g}{i}(d) = SSR./SSTO;
+            end
+        end
+    end
+end
+    
+    
+
