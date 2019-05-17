@@ -135,7 +135,75 @@ title(['whisking INH cells = ' num2str(numel(find(whisking.matrix(1,:) == -1)))]
 nsexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==1);
 nsnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==0);
 
-%% all neuron compariosn 
+%% neurons and their ability to decode choice 
+%using average fr from pOnset to first lick 
+
+glmnetOpt = glmnetSet;
+glmnetOpt.standardize = 0;
+glmnetOpt.alpha = 0.05;
+glmnetOpt.xfoldCV = 5;
+glmnetOpt.numIterations = 5;
+mcc = cell(1,length(U)); 
+
+for i = 1:length(U)
+    if strcmp(U{i}.meta.layer,'BVL5b')
+        
+        disp(['iterating for cell ' num2str(i) '/' num2str(length(U))])
+        
+        masks = maskBuilder(U{i});
+        spks = squeeze(U{i}.R_ntk);
+        
+        meanPreDFR = (nanmean(spks.* masks.onsettolick) * 1000)';
+        spikeTrainPreDecision = (spks.* masks.onsettoMedianlick)';
+        selectedTPs = sum((~isnan(spikeTrainPreDecision)),1) == U{i}.k; 
+        spikeTrainPreDecision = spikeTrainPreDecision(:,selectedTPs);
+        
+        DmatX = spikeTrainPreDecision; 
+        DmatY = ~(masks.nonlickTrials)';
+        
+        if sum(DmatY==0) < 5
+            disp(['skipping cell ' num2str(i) ' because not enough non-lick trials'])
+        else
+            for d = 1:glmnetOpt.numIterations
+                [trainIdx,testIdx] = stratifiedIndices(DmatY,.7);
+                
+                trainDmatX = DmatX(cell2mat(trainIdx'));
+                testDmatX = DmatX(cell2mat(testIdx'));
+                trainDmatY = DmatY(cell2mat(trainIdx'));
+                testDmatY = DmatY(cell2mat(testIdx'));
+                
+                cv = cvglmnet(trainDmatX,trainDmatY,'binomial',glmnetOpt,[],glmnetOpt.xfoldCV);
+                
+                fitLambda = cv.lambda_1se;
+                iLambda = find(cv.lambda == fitLambda);
+                fitCoeffs = [cv.glmnet_fit.a0(iLambda) ; cv.glmnet_fit.beta(:,iLambda)];
+                predicts = cvglmnetPredict(cv,testDmatX,fitLambda); % this outputs testDmatX * fitCoeffs
+                predProb = sigmoid(predicts); %this is the sigmoid of predicts which means the probabilities
+                
+                mcc{i}(d) = mccCalculator(testDmatY,predProb>.5);
+            end
+        end
+    end
+    
+end
+
+%or using the spike sequence from pole onset to median lick time. 
+
+
+
+%% all neuron comparison 
+fieldsToCompare = fields(tuneStruct.R_ntk.allTouches);
+for g = 1:4
+    currArrays = hilbertWhisking.R_ntk.(fieldsToCompare{g});
+    for i = 1:length(U)
+        [FullWhiskTuning{g}(i),~,~] = anova1(currArrays{i},[],'off');
+    end
+end
+
+hilbertWhiskTuning = cell2mat(FullWhiskTuning')<pThresh;
+
 OLtuning = [nan(4,sum(~(touchCells==1))) (cell2mat(THilbertTuning')<pThresh)];
 [~,idx] = sort(touchCells);
-comparisonMat = [touchCells(idx) ;whisking.matrix(:,idx) ; OLtuning];
+comparisonMat = [touchCells(idx) ;whisking.matrix(:,idx) ; hilbertWhiskTuning(:,idx) ; OLtuning];
+
+%add choice decoding too?
