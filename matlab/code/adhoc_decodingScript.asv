@@ -119,8 +119,7 @@ meanTrialRsqd = cellfun(@(x) cellfun(@mean,x) , RsqdTrialResponses,'uniformoutpu
 
 %using the mean fr of all responses per trial OR each touch individually 
 viewWindow = -25:50; 
-U = defTouchResponse(U,.99,'on');
-popPredicts = cell(1,length(U));
+U = defTouchResponse(U,.99,'off');
 for i = 1:length(U) 
     if isfield(U{i}.meta,'responseWindow')
         disp(['iterating for cell ' num2str(i) '/' num2str(length(U))])
@@ -128,7 +127,7 @@ for i = 1:length(U)
         tV = atTouch_sorter(U{i},viewWindow);
         
         spikeTrainResponse = tV.allTouches.spikeMat(:,find(viewWindow==0)+U{i}.meta.responseWindow(1) : find(viewWindow==0)+U{i}.meta.responseWindow(2)); %capture responses within tuch response window
-%         spikeTrainResponse = tV.allTouches.spikeMat(:,find(viewWindow==0)+5: find(viewWindow==0)+35); %use all responses from 5:35ms post touch
+        spikeTrainResponse = tV.allTouches.spikeMat(:,find(viewWindow==0)+5: find(viewWindow==0)+35); %use all responses from 5:35ms post touch
         meanResponse = nanmean(spikeTrainResponse,2);
         motors = tV.allTouches.variables(:,7);
         Umotors = unique(motors);
@@ -157,14 +156,13 @@ for i = 1:length(U)
                 fitCoeffs = [cv.glmnet_fit.a0(iLambda) ; cv.glmnet_fit.beta(:,iLambda)];
                 predicts = cvglmnetPredict(cv,testDmatX,fitLambda); % this outputs testDmatX * fitCoeffs
                 
-               tXp = [ testDmatY predicts];
+                popPredicts = 
                 
                 SSR = sum((predicts-mean(DmatY{g})).^2);
                 SSE = sum((testDmatY-predicts).^2);
                 SSTO = SSR + SSE;
                 RsqdTouchResponses{g}{i}(d) = SSR./SSTO;
             end
-             popPredicts{i}{g} = tXp;
         end
     end
 end

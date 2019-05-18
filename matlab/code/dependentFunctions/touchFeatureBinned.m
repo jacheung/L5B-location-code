@@ -4,12 +4,12 @@
 function popV = touchFeatureBinned(U,viewWindow)
 
 popV = cell(length(U),1);
-%viewWindow : range around touch to view spikes (default -25:50ms) 
-
+preDecisionTouches = preDecisionTouchMat(U);
+    
 for rec=1:length(U)
-    countThresh = 10; %min touch in each bin to be considered
+    countThresh = 5; %min touch in each bin to be considered
 
-    [tVar] = atTouch_sorter(U{rec},viewWindow);
+    [tVar] = atTouch_sorter(U{rec},viewWindow,preDecisionTouches{rec});
     
     % Run this line below if you want to look at ret touches.
     %varspikes(varspikes(:,5)<0,:)=[];
@@ -23,13 +23,13 @@ for rec=1:length(U)
         bounds = [{[-100:2:100]} {[-9750:125:9750]} {[-100:2:100]}  {[-100:2:100]}  {linspace(pi*-1,pi,12)} {[-.95:.05:.95]}];
         for d = [1 2 3 4 5 6] %for variables 1:6
             if d == 2
-                [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).variables(:,d),tVar.allTouches.spikeMat,'equalE',numel(bounds{d})+1,-10000,10000);
+                [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).S_ctk(:,d),tVar.allTouches.R_ntk,'equalE',numel(bounds{d})+1,-10000,10000);
             elseif d == 5
-                [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).variables(:,d),tVar.allTouches.spikeMat,'equalX',numel(bounds{d})+1);
+                [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).S_ctk(:,d),tVar.allTouches.R_ntk,'equalX',numel(bounds{d})+1);
             elseif d == 6
-                [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).variables(:,d),tVar.allTouches.spikeMat,'equalE',numel(bounds{d})+1,-1,1);
+                [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).S_ctk(:,d),tVar.allTouches.R_ntk,'equalE',numel(bounds{d})+1,-1,1);
             else
-                [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).variables(:,d),tVar.allTouches.spikeMat,'equalE',numel(bounds{d})+1,-100,100);
+                [sorted, sortedBy ,~]=binslin(tVar.(touchOrder{g}).S_ctk(:,d),tVar.allTouches.R_ntk,'equalE',numel(bounds{d})+1,-100,100);
             end
             
             binrange = bounds{d};

@@ -12,5 +12,5 @@ for k = 1:size(allSpks,2)
         scatter(st,ones(length(st),1).*k,[],'.k')
     end
 end
-set(gca,'ylim',[1 U{d}.k])
+set(gca,'ylim',[1 array.k])
 ylabel('sorted trials from near to far')

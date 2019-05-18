@@ -58,10 +58,17 @@ for rec=1:length(U)
             if isempty(endPoint)
                 endPoint = tps(end);
             end
-            U{rec}.meta.responseWindow=[startPoint endPoint];
+            
             if willdisplay
                 hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
             end
+            
+            %used below to eliminate touch responses that are sig but way
+            %too small. 
+            if mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) > 2
+                U{rec}.meta.responseWindow=[startPoint endPoint];
+            end
+            
         end
     end
     
