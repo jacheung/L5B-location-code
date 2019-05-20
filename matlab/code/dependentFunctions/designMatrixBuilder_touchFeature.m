@@ -8,30 +8,46 @@ plotcolumn = rc(2);
 
 bounds = popV{1}.allTouches.(variableFields).bounds;
 
+preDecisionTouches = preDecisionTouchMat(U);
+
 for g = 1:numel(touchOrderFields)
+    
+    modelYtouch = nan(numInterpPts,length(selectedCells));
+    modelYtouchstd = nan(numInterpPts,length(selectedCells));
+    modelYavail = nan(numInterpPts,length(selectedCells));
+    modelYavailstd = nan(numInterpPts,length(selectedCells));
     
     for d = 1:length(selectedCells)
         
         currCell = selectedCells(d);
         
+        %Response in pole availWindow
+        masks = maskBuilder(U{currCell});
+        motors = normalize_var(U{currCell}.meta.motorPosition,-1,1);
+        spikes = squeeze(U{currCell}.R_ntk);
+        availResponses = nanmean(spikes.*masks.availtoMeanOffset) * 1000;
+        [sortedAvail,sortedByAvail,~] = binslin(motors',availResponses','equalE',11,-1,1);
+        
+        availMean = cellfun(@nanmean,sortedAvail); 
+        availSTD = cellfun(@nanstd,sortedAvail);
+     
+        modelYavail(:,d) = interp1(linspace(-.9,.9,10),availMean,linspace(-.9,.9,numInterpPts));
+        modelYavailstd(:,d) = interp1(linspace(-.9,.9,10),availSTD,linspace(-.9,.9,numInterpPts));
+        
+        %Touch ZSCORE response
         counts = popV{currCell}.(touchOrderFields{g}).(variableFields).counts;
         ranges = popV{currCell}.(touchOrderFields{g}).theta.range ;
         thetavect = [];
         for k = 1:length(ranges)
             thetavect = [thetavect ;ones(counts(k),1).*ranges(k)];
         end
-        tvectNorm = normalize_var(thetavect,-1,1);
         
-        
-        %ZSCORE calculation
         allspikes = cell2mat(popV{currCell}.(touchOrderFields{g}).theta.raw);
-        
         tOnset = find(viewWindow==0);
         responseWindow = U{currCell}.meta.responseWindow;
         meanbase = mean(mean(allspikes(:,1:tOnset),2));
         stdbase = std(mean(allspikes(:,1:tOnset),2));
         postresponses = allspikes(:,tOnset+responseWindow(1):tOnset+responseWindow(2));
-        
         
         xresp = mean(postresponses,2);
         zscore = (xresp - meanbase) ./ stdbase;
@@ -39,57 +55,69 @@ for g = 1:numel(touchOrderFields)
         [sorted,~,~] = binslin(thetavect,zscore,'equalE',numel(bounds),bounds(1),bounds(end));
         
         samps = cellfun(@numel,sorted);
-        selBins = find(samps>sum(samps)./100);
+        selBins = samps>sum(samps)./100;
         
-        
-        zraw = nan(length(sorted),2000);
-        for b = 1:length(sorted)
-            if sum(b == selBins)>0
-                currvals = sorted{b};
-                if ~isempty(sorted{b})
-                    zraw(b,1:length(currvals)) = currvals';
-                end
-            end
-        end
-        
-        
-        [p,~,stats]=anova1(zraw',[],'off');
-        vals =multcompare(stats,[],'off');
-        
-        
-        x = str2num(cell2mat(stats.gnames));
+        zraw = cell2nanmat(sorted)';
+        zraw = zraw(selBins,:);
+        [~,~,stats]=anova1(zraw',[],'off');
+
+        x = str2double(stats.gnames);
         x = bounds(x)';
         y = stats.means;
-        
         zstd = nanstd(zraw,[],2);
         ystd = zstd(~isnan(zstd))';
         
-        xy = [x y'];
+        modelYtouch(:,d) = interp1(normalize_var(x,0,1),y,linspace(0,1,numInterpPts));
+        modelYtouchstd(:,d) = interp1(normalize_var(x,0,1),ystd,linspace(0,1,numInterpPts));
         
-        %     kxy{d} = xy;
-        %     figure(390);subplot(plotrow,plotcolumn,d);
-        %     scatter(xy(:,1),xy(:,2),[],[.7 .7 .7],'filled')
-        %     set(gca,'ytick',round(min(xy(:,2))-1):round(max(xy(:,2))+1),'ylim',[round(min(xy(:,2))-1) round(max(xy(:,2))+1)],...
-        %         'xlim',[min(xy(:,1)) max(xy(:,1))],'xtick',-20:20:60)
+        %Each touch raw touch response      
+        tV = atTouch_sorter(U{currCell},viewWindow,preDecisionTouches{currCell});
         
-        %     nxy = [normalize_var(x,0,1),y'];
-        %     iy(:,d) = interp1(nxy(:,1),nxy(:,2),linspace(0,1,numInterpPts));
-        %
-        modelY(:,d) = interp1(normalize_var(x,0,1),y,linspace(0,1,numInterpPts));
-        modelYstd(:,d) = interp1(normalize_var(x,0,1),ystd,linspace(0,1,numInterpPts));
+        spikeTrainResponse = tV.allTouches.R_ntk(:,find(viewWindow==0)+U{currCell}.meta.responseWindow(1) : find(viewWindow==0)+U{currCell}.meta.responseWindow(2)); %capture responses within tuch response window
+%       spikeTrainResponse = tV.allTouches.spikeMat(:,find(viewWindow==0)+5: find(viewWindow==0)+35); %use all responses from 5:35ms post touch
+        meanResponse = nanmean(spikeTrainResponse,2)*1000;
+        motors = normalize_var(tV.allTouches.S_ctk(:,7),-1,1);
         
+        [sortedTouch,~,~] = binslin(motors,meanResponse,'equalE',11,-1,1);
+       
+        touchMean = cellfun(@nanmean,sortedTouch); 
+        touchSTD = cellfun(@nanstd,sortedTouch);
+       
+        modelYrawTouch(:,d) = interp1(linspace(-.9,.9,10),touchMean,linspace(-.9,.9,numInterpPts));
+        modelYrawTouchstd(:,d) = interp1(linspace(-.9,.9,10),touchSTD,linspace(-.9,.9,numInterpPts));
         
+        %Mean of each all touches response 
+        Umotors = unique(motors);
+        allTouchMean = nan(length(Umotors),1);
+        for q = 1:length(Umotors)
+            allTouchMean(q) = mean(meanResponse(find(motors == Umotors(q))));
+        end
+        
+        [sortedTouchMean,~,~] = binslin(Umotors,allTouchMean,'equalE',11,-1,1);
+       
+        alltouchMean = cellfun(@nanmean,sortedTouchMean); 
+        alltouchSTD = cellfun(@nanstd,sortedTouchMean);
+       
+        modelYrawAllTouch(:,d) = interp1(linspace(-.9,.9,10),alltouchMean,linspace(-.9,.9,numInterpPts));
+        modelYrawAllTouchstd(:,d) = interp1(linspace(-.9,.9,10),alltouchSTD,linspace(-.9,.9,numInterpPts));
+
     end
     
+    xNames = {'responseAvail','responseTouchZ','responseTouchR','responseAllTouchR'};
+    Xs = {modelYavail,modelYtouch,modelYrawTouch,modelYrawAllTouch};
+    XsSTD = {modelYavailstd,modelYtouchstd,modelYrawTouchstd,modelYrawAllTouchstd}; 
     
-    resampNum = 500;
-    resampX = nan(size(modelY,1)*resampNum,size(modelY,2));
-    for i = 1:resampNum
-        resampX(size(modelY,1)*(i-1)+1:size(modelY,1)*(i-1)+size(modelY,1),:) =  normrnd(modelY,modelYstd);
+    for f = 1:length(Xs)
+        resampNum = 500;
+        resampX = nan(size(Xs{f},1)*resampNum,size(Xs{f},2));
+        for i = 1:resampNum
+            resampX(size(Xs{f},1)*(i-1)+1:size(Xs{f},1)*(i-1)+size(Xs{f},1),:) =  normrnd(Xs{f},XsSTD{f});
+        end
+        
+        DmatX.(xNames{f}) = resampX;
     end
-    DmatX = resampX;
     
-    DmatYnorm = repmat([1:size(modelY,1)]',resampNum,1);
+    DmatYnorm = repmat([1:size(modelYtouch,1)]',resampNum,1);
     randshuff = randperm(length(DmatYnorm));
     DmatYshuff = DmatYnorm(randshuff);
 end

@@ -119,13 +119,15 @@ meanTrialRsqd = cellfun(@(x) cellfun(@mean,x) , RsqdTrialResponses,'uniformoutpu
 
 %using the mean fr of all responses per trial OR each touch individually 
 viewWindow = -25:50; 
-U = defTouchResponse(U,.99,'on');
+U = defTouchResponse(U,.99,'off');
 popPredicts = cell(1,length(U));
+preDecisionTouches = preDecisionTouchMat(U);
+
 for i = 1:length(U) 
     if isfield(U{i}.meta,'responseWindow')
         disp(['iterating for cell ' num2str(i) '/' num2str(length(U))])
         
-        tV = atTouch_sorter(U{i},viewWindow);
+        tV = atTouch_sorter(U{i},viewWindow,preDecisionTouches{i});
         
         spikeTrainResponse = tV.allTouches.spikeMat(:,find(viewWindow==0)+U{i}.meta.responseWindow(1) : find(viewWindow==0)+U{i}.meta.responseWindow(2)); %capture responses within tuch response window
 %         spikeTrainResponse = tV.allTouches.spikeMat(:,find(viewWindow==0)+5: find(viewWindow==0)+35); %use all responses from 5:35ms post touch

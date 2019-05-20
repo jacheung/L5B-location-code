@@ -54,7 +54,22 @@ whichTouches = fields(popV{1});
 [mdl.io.X, mdl.io.Y.normal, mdl.io.Y.shuffled] = designMatrixBuilder_touchFeature(U,popV,selectedCells,fieldsList{1},whichTouches(1),touchWindow,numInterpPts);
 
 %multinomial model for decoding location 
-mdl = multinomialModel(mdl,mdl.io.X,mdl.io.Y.shuffled,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+
+mdl = multinomialModel(mdl,mdl.io.X.responseTouchZ,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+
+
+mdl = multinomialModel(mdl,mdl.io.X.responseAvail,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+selectedArray = popV(selectedCells); 
+decoderPerformance(mdl,selectedArray)
+
+
+mdl = multinomialModel(mdl,mdl.io.X.responseTouchR,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+selectedArray = popV(selectedCells); 
+decoderPerformance(mdl,selectedArray)
+
+
+mdl = multinomialModel(mdl,mdl.io.X.responseAllTouchR,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+selectedArray = popV(selectedCells); 
 decoderPerformance(mdl,selectedArray)
 
 
