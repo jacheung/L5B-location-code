@@ -57,6 +57,10 @@ whichTouches = fields(popV{1});
 
 mdl = multinomialModel(mdl,mdl.io.X.responseTouchZ,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 
+mdl = multinomialModel(mdl,mdl.io.X.outside_pole,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+selectedArray = popV(selectedCells); 
+decoderPerformance(mdl,selectedArray)
+
 
 mdl = multinomialModel(mdl,mdl.io.X.responseAvail,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 selectedArray = popV(selectedCells); 

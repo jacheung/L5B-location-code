@@ -26,13 +26,25 @@ for g = 1:numel(touchOrderFields)
         motors = normalize_var(U{currCell}.meta.motorPosition,-1,1);
         spikes = squeeze(U{currCell}.R_ntk);
         availResponses = nanmean(spikes.*masks.availtoMeanOffset) * 1000;
-        [sortedAvail,sortedByAvail,~] = binslin(motors',availResponses','equalE',11,-1,1);
+        [sortedAvail,~,~] = binslin(motors',availResponses','equalE',11,-1,1);
         
         availMean = cellfun(@nanmean,sortedAvail); 
         availSTD = cellfun(@nanstd,sortedAvail);
      
         modelYavail(:,d) = interp1(linspace(-.9,.9,10),availMean,linspace(-.9,.9,numInterpPts));
         modelYavailstd(:,d) = interp1(linspace(-.9,.9,10),availSTD,linspace(-.9,.9,numInterpPts));
+        
+        %null response outside pole availWindow
+        outside = double(isnan(masks.availtoMeanOffset)); 
+        outside(outside==0) = nan; 
+        outsideResponses = nanmean(spikes.*outside) * 1000;
+        [sortedOutside,~,~] = binslin(motors',outsideResponses','equalE',11,-1,1);
+        
+        outMean = cellfun(@nanmean,sortedOutside); 
+        outSTD = cellfun(@nanstd,sortedOutside);
+     
+        modelYout(:,d) = interp1(linspace(-.9,.9,10),outMean,linspace(-.9,.9,numInterpPts));
+        modelYoutstd(:,d) = interp1(linspace(-.9,.9,10),outSTD,linspace(-.9,.9,numInterpPts));
         
         %Touch ZSCORE response
         counts = popV{currCell}.(touchOrderFields{g}).(variableFields).counts;
@@ -103,9 +115,9 @@ for g = 1:numel(touchOrderFields)
 
     end
     
-    xNames = {'responseAvail','responseTouchZ','responseTouchR','responseAllTouchR'};
-    Xs = {modelYavail,modelYtouch,modelYrawTouch,modelYrawAllTouch};
-    XsSTD = {modelYavailstd,modelYtouchstd,modelYrawTouchstd,modelYrawAllTouchstd}; 
+    xNames = {'outside_pole','pole_avail','touch_responseZ','touch_responseR','trialMean_touch_responseR'};
+    Xs = {modelYout,modelYavail,modelYtouch,modelYrawTouch,modelYrawAllTouch};
+    XsSTD = {modelYoutstd,modelYavailstd,modelYtouchstd,modelYrawTouchstd,modelYrawAllTouchstd}; 
     
     for f = 1:length(Xs)
         resampNum = 500;
