@@ -7,7 +7,7 @@ function mdl = multinomialModel(mdl,DmatX,DmatY,glmnetOpt)
     %check and toss nan trials 
    keepCells = sum(isnan(DmatX))>0;
    DmatX = DmatX(:,~keepCells); 
-   if ~isempty(find(keepCells==0))
+   if ~isempty(find(keepCells==1))
        disp(['removing cell ' num2str(find(keepCells==1)) ' because nan interpolated points'])
    end
             

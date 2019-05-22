@@ -45,8 +45,10 @@ end
 glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0; %set to 0 b/c already standardized
 glmnetOpt.alpha = 0.95;
-glmnetOpt.xfoldCV = 5;
-glmnetOpt.numIterations = 10;
+glmnetOpt.xfoldCV = 4;
+glmnetOpt.numIterations = 5;
+
+numInterpPts = 20;
 
 %design matrix for feature in fields list
 fieldsList = fields(popV{1}.allTouches);
@@ -55,25 +57,36 @@ whichTouches = fields(popV{1});
 
 %multinomial model for decoding location 
 
-mdl = multinomialModel(mdl,mdl.io.X.responseTouchZ,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+% mdl = multinomialModel(mdl,mdl.io.X.responseTouchZ,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
+DmatX = (mdl.io.X.outside_pole - nanmean(mdl.io.X.outside_pole)) ./ nanstd(mdl.io.X.outside_pole); %standardization
+mdlnull = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 
-mdl = multinomialModel(mdl,mdl.io.X.outside_pole,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
-selectedArray = popV(selectedCells); 
-decoderPerformance(mdl,selectedArray)
+DmatX = (mdl.io.X.pole_avail - nanmean(mdl.io.X.pole_avail)) ./ nanstd(mdl.io.X.pole_avail); %standardization
+mdlavail = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 
+DmatX = (mdl.io.X.touch_responseR - nanmean(mdl.io.X.touch_responseR)) ./ nanstd(mdl.io.X.touch_responseR); %standardization
+mdlpertouch = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 
-mdl = multinomialModel(mdl,mdl.io.X.responseAvail,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
-selectedArray = popV(selectedCells); 
-decoderPerformance(mdl,selectedArray)
+DmatX = (mdl.io.X.trialMean_touch_responseR - nanmean(mdl.io.X.trialMean_touch_responseR)) ./ nanstd(mdl.io.X.trialMean_touch_responseR); %standardization
+mdlmeantouch = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 
+DmatX = (mdl.io.X.trialMean_touch_responseR - nanmean(mdl.io.X.trialMean_touch_responseR)) ./ nanstd(mdl.io.X.trialMean_touch_responseR); %standardization
+mdlmeantouchShuff = multinomialModel(mdl,DmatX,mdl.io.Y.shuffled,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 
-mdl = multinomialModel(mdl,mdl.io.X.responseTouchR,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
-selectedArray = popV(selectedCells); 
-decoderPerformance(mdl,selectedArray)
+selectedArray = popV(selectedCells);
+decoderPerformance(mdlmeantouchShuff,selectedArray)
 
+mdls = {mdlnull,mdlavail,mdlpertouch,mdlmeantouch,mdlmeantouchShuff};
+for d = 1:length(mdls)
+    meanError(d) = mean(abs(mdls{d}.io.trueXpredicted(:,1) - mdls{d}.io.trueXpredicted(:,2)));
+    stdError(d) = std(abs(mdls{d}.io.trueXpredicted(:,1) - mdls{d}.io.trueXpredicted(:,2)));
+    
+    errs(:,d) = abs(mdls{d}.io.trueXpredicted(:,1) - mdls{d}.io.trueXpredicted(:,2)); 
+end
 
-mdl = multinomialModel(mdl,mdl.io.X.responseAllTouchR,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
-selectedArray = popV(selectedCells); 
-decoderPerformance(mdl,selectedArray)
+figure(100);clf
+errorbar(1:length(mdls),meanError*.25,stdError*.25,'ko')
+set(gca,'xlim',[0 length(mdls)+1],'xtick',1:length(mdls),'xticklabel',{'out','in','perTouch','trialTouches','shuffled'},'ytick',0:1:3)
+ylabel('distance (mm) from correct location')
 
 
