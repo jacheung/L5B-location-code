@@ -4,7 +4,7 @@ function mdl = multinomialModel(mdl,DmatX,DmatY,glmnetOpt)
     pred = cell(glmnetOpt.numIterations,1); 
     true = cell(glmnetOpt.numIterations,1); 
     
-    %check and toss nan trials 
+   %check and toss nan trials 
    keepCells = sum(isnan(DmatX))>0;
    DmatX = DmatX(:,~keepCells); 
    if ~isempty(find(keepCells==1))
@@ -39,6 +39,7 @@ function mdl = multinomialModel(mdl,DmatX,DmatY,glmnetOpt)
         %% GLM model fitting
         %xFold CV to find optimal lambda for regularization
         cv = cvglmnet(trainDmatX, trainDmatY, 'multinomial', glmnetOpt, [], glmnetOpt.xfoldCV);
+%         cvglmnetPlot(cv)
         fitLambda = cv.lambda_1se;
         iLambda = find(cv.lambda == cv.lambda_1se);
         mdl.fitCoeffs{h} = [cv.glmnet_fit.a0(:,iLambda)' ; cell2mat(cellfun(@(x) x(:,iLambda),cv.glmnet_fit.beta,'uniformoutput',false))];
