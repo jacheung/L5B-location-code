@@ -6,8 +6,8 @@ figure;
 subplot(1,2,1)
 predProb = mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix); 
 imagesc(predProb)
-% caxis([0 max(predProb(:))])
-caxis([0 .4])
+caxis([0 max(predProb(:))])
+% caxis([0 .4])
 set(gca,'xtick',[],'ytick',[])
 xlabel('predicted');ylabel('true')
 title(['chance = ' num2str(chance)])

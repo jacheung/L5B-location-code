@@ -63,7 +63,7 @@ naiveCells = selectedCells(selectedCells<29)
 % mdl = multinomialModel(mdl,mdl.io.X.responseTouchZ,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 clear mdlnull
 DmatX = mdl.io.X.outside_pole;
-% DmatX = (mdl.io.X.outside_pole - nanmean(mdl.io.X.outside_pole)) ./ nanstd(mdl.io.X.outside_pole); %standardization
+DmatX = (mdl.io.X.outside_pole - nanmean(mdl.io.X.outside_pole)) ./ nanstd(mdl.io.X.outside_pole); %standardization
 mdlnull = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt); 
 
 DmatX = (mdl.io.X.pole_avail - nanmean(mdl.io.X.pole_avail)) ./ nanstd(mdl.io.X.pole_avail); %standardization
@@ -110,10 +110,9 @@ DmatY = mdl.io.Y.normal;
 mdlavail = multinomialModel(mdl,DmatX(:),DmatY,glmnetOpt); 
 decoderPerformance(mdlavail,selectedArray)
 
-
 clear mdlmeantouchShuff
 DmatX = sum(mdl.io.X.trialMean_touch_responseR,2);
-DmatY = mdl.io.Y.normal 
+DmatY = mdl.io.Y.normal ;
 mdlmeantouchShuff = multinomialModel(mdl,DmatX(:),DmatY,glmnetOpt); 
 selectedArray = popV(selectedCells);
 decoderPerformance(mdlmeantouchShuff,selectedArray)

@@ -14,11 +14,11 @@ for g = 1:numel(touchOrderFields)
         masks = maskBuilder(U{currCell});
         motors = normalize_var(U{currCell}.meta.motorPosition,-1,1);
         spikes = squeeze(U{currCell}.R_ntk);
-        %         spikes = reshape(spikes(randperm(numel(spikes))),size(spikes));
-%         spikes = zeros(size(spikes));
-%         percTot = .01
-%         spikes(datasample( 1:numel(spikes), round(percTot*numel(spikes)))) = 1;
-%         
+%         spikes = reshape(spikes(randperm(numel(spikes))),size(spikes));
+        spikes = zeros(size(spikes));
+        percTot = .01
+        spikes(datasample(1:numel(spikes), round(percTot*numel(spikes)))) = 1;
+
         %null response outside pole availWindow
         pOnset = round(mean(U{currCell}.meta.poleOnset)*1000);
         outsideResponses = nanmean(spikes(1:pOnset,:))*1000;
@@ -31,6 +31,8 @@ for g = 1:numel(touchOrderFields)
         
         DmatX.outside_pole(:,d) = selOutside(:);
         DmatX.outside_poleShuffled(:,d) = selOutside(randperm(length(selOutside(:))))';
+        
+        [p(d)] = anova1(selOutside,[],'off');
         
         %Response in pole availWindow
         inside = double(isnan(masks.avail));

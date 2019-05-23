@@ -9,7 +9,8 @@ numInterpPts = 24; %used for stretching or shrinking tuning curves to within the
 touchCells = touchCell(U,'off');
 selectedCells = find(touchCells==1);
 
-% Structure for quantifying tuning and evaluating decoding 
+% Structure for quantifying tuning 
+and evaluating decoding 
 popV = touchFeatureBinned(U,touchWindow);
 
 % Defining touch response
@@ -42,7 +43,7 @@ glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
 %GLMdesign Matrix Set-up
 fileName = 'glmModelFullInterp';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+    load(['C :\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
     glmModel = [];
     [glmModel] = designMatrixBlocks(selectedArray,glmnetOpt,glmModel);
