@@ -44,8 +44,8 @@ end
 glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0; %set to 0 b/c already standardized
 glmnetOpt.alpha = 0.95;
-glmnetOpt.xfoldCV = 4;
-glmnetOpt.numIterations = 5;
+glmnetOpt.xfoldCV = 3;
+glmnetOpt.numIterations = 10;
 
 numInterpPts = 10;
 
@@ -53,16 +53,18 @@ numInterpPts = 10;
 fieldsList = fields(popV{1}.allTouches);
 whichTouches = fields(popV{1});
 
+% selectedCells = 1:length(U)
 selectedCells = find(touchCells==1);
-expCells = selectedCells(selectedCells>=29)
-naiveCells = selectedCells(selectedCells<29)
-[mdl.io.X, mdl.io.Y.normal, mdl.io.Y.shuffled] = designMatrixBuilder_touchFeature(U,selectedCells,whichTouches(1),touchWindow,numInterpPts);
+layersID = cellfun(@(x) x.meta.layer(1),U);
+diffID = strfind(layersID,'NB');
+expCells = selectedCells(selectedCells>diffID);
+naiveCells = selectedCells(selectedCells<=diffID);
+
+
+[mdl.io.X, mdl.io.Y.normal] = designMatrixBuilder_touchFeature(U,selectedCells,whichTouches(1),touchWindow,numInterpPts);
 
 %multinomial model for decoding location 
-
-% mdl = multinomialModel(mdl,mdl.io.X.responseTouchZ,mdl.io.Y.normal,glmnetOpt); %normalizing all model tuning to within x num interpolation points
 clear mdlnull
-DmatX = mdl.io.X.outside_pole;
 DmatX = (mdl.io.X.outside_pole - nanmean(mdl.io.X.outside_pole)) ./ nanstd(mdl.io.X.outside_pole); %standardization
 mdlnull = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt); 
 
@@ -75,45 +77,25 @@ mdlpertouch = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt);
 DmatX = (mdl.io.X.trialMean_touch_responseR - nanmean(mdl.io.X.trialMean_touch_responseR)) ./ nanstd(mdl.io.X.trialMean_touch_responseR); %standardization
 mdlmeantouch = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt); 
 
+DmatX = (mdl.io.X.trialSum_touch_responseR - nanmean(mdl.io.X.trialSum_touch_responseR)) ./ nanstd(mdl.io.X.trialSum_touch_responseR); %standardization
+mdltouchSum = multinomialModel(mdl,DmatX,mdl.io.Y.normal,glmnetOpt); 
+
 DmatX = (mdl.io.X.trialMean_touch_responseR - nanmean(mdl.io.X.trialMean_touch_responseR)) ./ nanstd(mdl.io.X.trialMean_touch_responseR); %standardization
-mdlmeantouchShuff = multinomialModel(mdl,DmatX,mdl.io.Y.shuffled,glmnetOpt); 
+shuffDmatX = reshape(DmatX(randperm(numel(DmatX))),size(DmatX)); 
+mdlmeantouchShuff = multinomialModel(mdl,shuffDmatX,mdl.io.Y.normal,glmnetOpt); 
 
 selectedArray = popV(selectedCells);
-decoderPerformance(mdlnull,selectedArray)
+decoderPerformance(mdltouchSum,selectedArray)
 
-mdls = {mdlnull,mdlavail,mdlpertouch,mdlmeantouch,mdlmeantouchShuff};
+mdls = {mdlmeantouchShuff,mdlnull,mdlpertouch,mdlavail,mdlmeantouch,mdltouchSum};
 for d = 1:length(mdls)
     meanError(d) = mean(abs(mdls{d}.io.trueXpredicted(:,1) - mdls{d}.io.trueXpredicted(:,2)));
     stdError(d) = std(abs(mdls{d}.io.trueXpredicted(:,1) - mdls{d}.io.trueXpredicted(:,2)));
     
     errs(:,d) = abs(mdls{d}.io.trueXpredicted(:,1) - mdls{d}.io.trueXpredicted(:,2)); 
 end
-
 figure(100);clf
-errorbar(1:length(mdls),meanError,stdError,'ko')
-set(gca,'xlim',[0 length(mdls)+1],'xtick',1:length(mdls),'xticklabel',{'out','in','perTouch','trialTouches','shuffled'},'ytick',0:1:5)
+errorbar(1:length(mdls),meanError,stdError ./ sqrt(glmnetOpt.numIterations),'ko')
+set(gca,'xlim',[0 length(mdls)+1],'xtick',1:length(mdls),'xticklabel',{'shuffled','out','perTouch','in','meanTrialtouch','sumTrial'},'ytick',1:length(mdls))
 ylabel('distance (mm) from correct location')
-
-
-
-
-clear mdlnull
-DmatX = sum(mdl.io.X.outside_pole,2);
-DmatY = mdl.io.Y.normal;
-% DmatX = (mdl.io.X.outside_pole - nanmean(mdl.io.X.outside_pole)) ./ nanstd(mdl.io.X.outside_pole); %standardization
-mdlnull = multinomialModel(mdl,DmatX(:),DmatY,glmnetOpt); 
-decoderPerformance(mdlnull,selectedArray)
-
-clear mdlnull
-DmatX = sum(mdl.io.X.pole_avail,2);
-DmatY = mdl.io.Y.normal;
-mdlavail = multinomialModel(mdl,DmatX(:),DmatY,glmnetOpt); 
-decoderPerformance(mdlavail,selectedArray)
-
-clear mdlmeantouchShuff
-DmatX = sum(mdl.io.X.trialMean_touch_responseR,2);
-DmatY = mdl.io.Y.normal ;
-mdlmeantouchShuff = multinomialModel(mdl,DmatX(:),DmatY,glmnetOpt); 
-selectedArray = popV(selectedCells);
-decoderPerformance(mdlmeantouchShuff,selectedArray)
 

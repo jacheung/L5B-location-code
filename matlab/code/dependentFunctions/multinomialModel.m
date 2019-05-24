@@ -34,13 +34,11 @@ for h = 1:glmnetOpt.numIterations
     trainDmatY = DmatY(trainIdx,:);
     testDmatX = DmatX(testIdx,:);
     testDmatY = DmatY(testIdx,:);
-    
-    
-    tmpShuffle = randperm(length(trainDmatY));
+
     
     %% GLM model fitting
     %xFold CV to find optimal lambda for regularization
-    cv = cvglmnet(trainDmatX(tmpShuffle,:), trainDmatY(tmpShuffle), 'multinomial', glmnetOpt, [], glmnetOpt.xfoldCV);
+    cv = cvglmnet(trainDmatX, trainDmatY, 'multinomial', glmnetOpt, [], glmnetOpt.xfoldCV);
     %         cvglmnetPlot(cv)
     fitLambda = cv.lambda_1se;
     iLambda = find(cv.lambda == cv.lambda_1se);
@@ -59,10 +57,7 @@ for h = 1:glmnetOpt.numIterations
     mdl.gof.modelAccuracy(h) = mean(true{h} == (pred{h}));
     %deviance calculation from binopdf. Not sure how to calculate
     %with a multinomial model
-    fullLL = sum(log(binopdf(testDmatY,1,pred{h})));
-    nullLL = sum(log(binopdf(testDmatY,1,(ones(length(pred{h}),1)*mu))));
-    saturatedLL = sum(log(binopdf(testDmatY,1,testDmatY)));
-    fitDevExplainedFull(p) = 1 - (saturatedLL-fullLL)/(saturatedLL-nullLL)';
+    
     
 end
 
