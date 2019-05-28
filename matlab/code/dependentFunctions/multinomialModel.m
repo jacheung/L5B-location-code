@@ -9,6 +9,9 @@ keepCells = sum(isnan(DmatX))>0;
 DmatX = DmatX(:,~keepCells);
 if ~isempty(find(keepCells==1))
     disp(['removing cell ' num2str(find(keepCells==1)) ' because nan interpolated points'])
+    if sum(keepCells==1) == numel(keepCells)
+        error('All predictors have nan values in columns. Fix input matrix before continuing.')
+    end
 end
 
 

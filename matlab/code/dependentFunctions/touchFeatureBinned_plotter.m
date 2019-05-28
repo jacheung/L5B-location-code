@@ -13,7 +13,7 @@ for g = 1:numel(touchOrderFields)
         array = cellStruct{currCell};
         
         %toss touches out that are >10 degree difference from nearest bin.
-        toKeep = diff(popV{currCell}.(touchOrderFields{g}).(variableFields{1}).range)<10;
+        toKeep = diff(popV{currCell}.allTouches.(variableFields{1}).range)<10;
         if ~isempty(find(toKeep==0))
             toKeep(find(toKeep==0):end) = 0;
         end

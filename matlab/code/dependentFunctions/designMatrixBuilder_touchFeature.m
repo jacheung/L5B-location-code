@@ -85,8 +85,8 @@ for g = 1:numel(touchOrderFields)
             allTouchMean = nan(length(Umotors),1);
             allTouchSum = nan(length(Umotors),1);
             for q = 1:length(Umotors)
-                allTouchMean(q) = mean(meanResponse(find(motors == Umotors(q))));
-                allTouchSum(q) =  sum(spikeTrainResponse(find(motors == Umotors(q)),:),'all');
+                allTouchMean(q) = nanmean(meanResponse(find(motors == Umotors(q))));
+                allTouchSum(q) =  nansum(spikeTrainResponse(find(motors == Umotors(q)),:),'all');
             end
             [~,bootsam] = bootstrp(50,@corr,allTouchMean,Umotors);
             resampMotors = Umotors(bootsam);

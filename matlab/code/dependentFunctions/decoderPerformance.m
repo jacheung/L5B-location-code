@@ -1,4 +1,4 @@
-function decoderPerformance(mdl,selectedArray)
+function decoderPerformance(mdl)
 
 chance = 1/length(mdl.gof.confusionMatrix); 
 
@@ -25,7 +25,7 @@ set(gca,'ylim',[0 .75])
 xlabel('distance of prediction from true');
 ylabel('proportion of trials')
 
-% 
+% DEPRECATED 190524 since no longer doing angles 
 % sampledSpanPerCell = cellfun(@(x) (max(x.allTouches.theta.range) - min(x.allTouches.theta.range)),selectedArray);
 % binResolutionMean = (mean(sampledSpanPerCell)./size(predProb,1)); 
 % binResolutionStDev = (std(sampledSpanPerCell)./size(predProb,1));
