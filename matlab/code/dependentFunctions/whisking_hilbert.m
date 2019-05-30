@@ -43,7 +43,7 @@ for i = 1:length(array)
         if k ~= 3
         [response{k},stimulus{k}] = binslin(inputX(:,k),filt_spikes(:),'equalE',numel(bigBounds),bigBounds(1),bigBounds(end));
         else
-        [response{k},stimulus{k}] = binslin(inputX(:,k),filt_spikes(:),'equalE',numel(littleBounds),littleBounds(1),littleBounds(end));    
+        [response{k},stimulus{k}] = binslin(inputX(:,k),filt_spikes(:),'equalE',numel(littleBounds)+1,littleBounds(1),littleBounds(end));    
         end
     end
    
@@ -97,7 +97,7 @@ for i = 1:length(array)
     hilbertWhisking.cellVarNames = {'amplitude','midpoint','phase','angle'};
     hilbertWhisking.S_ctk.amp = mean([bigBounds(1:end-1);bigBounds(2:end)]);
     hilbertWhisking.S_ctk.midpoint = mean([bigBounds(1:end-1);bigBounds(2:end)]); 
-    hilbertWhisking.S_ctk.phase = mean([littleBounds(1:end-1);littleBounds(2:end)]); 
+    hilbertWhisking.S_ctk.phase = littleBounds; %mean([littleBounds(1:end-1);littleBounds(2:end)]); 
     hilbertWhisking.S_ctk.theta = mean([bigBounds(1:end-1);bigBounds(2:end)]); 
     hilbertWhisking.R_ntk.amp{i}  = raw_response{1}; 
     hilbertWhisking.R_ntk.midpoint{i} = raw_response{2};

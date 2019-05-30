@@ -19,7 +19,7 @@ for rec=1:length(U)
     touchIdx= [find(array.S_ctk(9,:,:)==1) ; find(array.S_ctk(12,:,:)==1)];
     spks = squeeze(array.R_ntk);
     
-    blIdx = window(1:find(window==0));
+    blIdx = window(find(window==-25):find(window==0));
     
     touchSpks = spks(touchIdx+window);
     touchSpksShuff = spks(touchIdx+blIdx);

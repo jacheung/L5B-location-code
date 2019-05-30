@@ -45,8 +45,14 @@ for t = 1:length(variableFields)
             xresp = mean(postresponses,2);
             zscore = (xresp - meanbase) ./ stdbase;
             
-            [sortedZscores,~,~] = binslin(thetavect,zscore,'equalE',numel(bounds),bounds(1),bounds(end));
-            [sortedRawResponse] = binslin(thetavect,xresp,'equalE',numel(bounds),bounds(1),bounds(end));
+            if strcmp(variableFields{t},'phase')
+                [sortedZscores,~,~] = binslin(thetavect,zscore,'equalE',numel(bounds)+1,bounds(1),bounds(end));
+                [sortedRawResponse] = binslin(thetavect,xresp,'equalE',numel(bounds)+1,bounds(1),bounds(end));
+            else
+                [sortedZscores,~,~] = binslin(thetavect,zscore,'equalE',numel(bounds),bounds(1),bounds(end));
+                [sortedRawResponse] = binslin(thetavect,xresp,'equalE',numel(bounds),bounds(1),bounds(end));
+            end
+            
             
             samps = cellfun(@numel,sortedZscores);
             selBins = samps>(sum(samps)./100);
