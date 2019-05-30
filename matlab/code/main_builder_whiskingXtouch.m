@@ -160,61 +160,61 @@ for i = 1:4
     xlabel('whisking pref');ylabel('touch pref')
 end
 
-
-%% comparison
-naiveVSexpert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
-
-OLexpert = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(naiveVSexpert==1))) ./ nansum(hilbertTouch.populationQuant.theta.matrix(1,:) == 1);
-OLnaive = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(naiveVSexpert==0))) ./ nansum(hilbertTouch.populationQuant.theta.matrix(1,:) == 1);
-figure(100);clf
-subplot(2,2,1);pie([OLexpert OLnaive],{'expert','naive'})
-title(['OL cells = ' num2str(nansum(hilbertTouch.populationQuant.theta.matrix(1,:) == 1))])
-
-wEXCOL = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1)) ;
-wINHOL = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1))) ./ numel(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1));
-nsOL = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0))) ./ numel(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1));
-
-subplot(2,2,1);pie([wEXCOL wINHOL nsOL],{'whisking EXC','whisking INH','whisking ns'})
-title(['OL cells = ' num2str(nansum(hilbertTouch.populationQuant.theta.matrix(1,:) == 1))])
-
-wEXCnanOL = numel(intersect(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == 1))) ./ numel(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:)))) ;
-wINHnanOL = numel(intersect(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == -1))) ./ numel(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))));
-nsnanOL = numel(intersect(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == 0))) ./ numel(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))));
-
-subplot(2,2,2);pie([wEXCnanOL wINHnanOL nsnanOL],{'whisking EXC','whisking INH','whisking ns'})
-title(['nonOL cells = ' num2str(numel(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:)))) )])
-
-
-wEXCexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 1))) ./ numel(find(whisking.matrix(1,:) == 1));
-wEXCnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 1))) ./ numel(find(whisking.matrix(1,:) == 1));
-subplot(2,2,3);pie([wEXCexpert wEXCnaive],{'expert','naive'})
-title(['whisking EXC cells = ' num2str(numel(find(whisking.matrix(1,:) == 1)))])
-
-
-wINHexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == -1))) ./ numel(find(whisking.matrix(1,:) == -1));
-wINHnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == -1))) ./ numel(find(whisking.matrix(1,:) == -1));
-subplot(2,2,4);pie([wINHexpert wINHnaive],{'expert','naive'})
-title(['whisking INH cells = ' num2str(numel(find(whisking.matrix(1,:) == -1)))])
-
-
-nsexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==1);
-nsnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==0);
-
-
-%% all neuron comparison 
-fieldsToCompare = fields(hilbertTouch.R_ntk.allTouches);
-for g = 1:4
-    currArrays = hilbertWhisking.R_ntk.(fieldsToCompare{g});
-    for i = 1:length(U)
-        [FullWhiskTuning{g}(i),~,~] = anova1(currArrays{i},[],'off');
-    end
-end
-
-hilbertWhiskTuning = cell2mat(FullWhiskTuning')<pThresh;
-
-OLtuning = [nan(4,sum(~(touchCells==1))) (cell2mat(THilbertTuning')<pThresh)];
-[~,idx] = sort(touchCells);
-comparisonMat = [touchCells(idx) ;whisking.matrix(:,idx) ; hilbertWhiskTuning(:,idx) ; OLtuning];
-
-%add choice decoding too?
+% 
+% %% comparison
+% naiveVSexpert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
+% 
+% OLexpert = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(naiveVSexpert==1))) ./ nansum(hilbertTouch.populationQuant.theta.matrix(1,:) == 1);
+% OLnaive = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(naiveVSexpert==0))) ./ nansum(hilbertTouch.populationQuant.theta.matrix(1,:) == 1);
+% figure(100);clf
+% subplot(2,2,1);pie([OLexpert OLnaive],{'expert','naive'})
+% title(['OL cells = ' num2str(nansum(hilbertTouch.populationQuant.theta.matrix(1,:) == 1))])
+% 
+% wEXCOL = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == 1))) ./ numel(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1)) ;
+% wINHOL = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == -1))) ./ numel(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1));
+% nsOL = numel(intersect(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1),find(whisking.matrix(1,:) == 0))) ./ numel(find(hilbertTouch.populationQuant.theta.matrix(1,:) == 1));
+% 
+% subplot(2,2,1);pie([wEXCOL wINHOL nsOL],{'whisking EXC','whisking INH','whisking ns'})
+% title(['OL cells = ' num2str(nansum(hilbertTouch.populationQuant.theta.matrix(1,:) == 1))])
+% 
+% wEXCnanOL = numel(intersect(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == 1))) ./ numel(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:)))) ;
+% wINHnanOL = numel(intersect(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == -1))) ./ numel(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))));
+% nsnanOL = numel(intersect(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))),find(whisking.matrix(1,:) == 0))) ./ numel(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:))));
+% 
+% subplot(2,2,2);pie([wEXCnanOL wINHnanOL nsnanOL],{'whisking EXC','whisking INH','whisking ns'})
+% title(['nonOL cells = ' num2str(numel(find(isnan(hilbertTouch.populationQuant.theta.matrix(1,:)))) )])
+% 
+% 
+% wEXCexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 1))) ./ numel(find(whisking.matrix(1,:) == 1));
+% wEXCnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 1))) ./ numel(find(whisking.matrix(1,:) == 1));
+% subplot(2,2,3);pie([wEXCexpert wEXCnaive],{'expert','naive'})
+% title(['whisking EXC cells = ' num2str(numel(find(whisking.matrix(1,:) == 1)))])
+% 
+% 
+% wINHexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == -1))) ./ numel(find(whisking.matrix(1,:) == -1));
+% wINHnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == -1))) ./ numel(find(whisking.matrix(1,:) == -1));
+% subplot(2,2,4);pie([wINHexpert wINHnaive],{'expert','naive'})
+% title(['whisking INH cells = ' num2str(numel(find(whisking.matrix(1,:) == -1)))])
+% 
+% 
+% nsexpert = numel(intersect(find(naiveVSexpert==1),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==1);
+% nsnaive = numel(intersect(find(naiveVSexpert==0),find(whisking.matrix(1,:) == 0))) ./ sum(naiveVSexpert==0);
+% 
+% 
+% %% all neuron comparison 
+% fieldsToCompare = fields(hilbertTouch.R_ntk.allTouches);
+% for g = 1:4
+%     currArrays = hilbertWhisking.R_ntk.(fieldsToCompare{g});
+%     for i = 1:length(U)
+%         [FullWhiskTuning{g}(i),~,~] = anova1(currArrays{i},[],'off');
+%     end
+% end
+% 
+% hilbertWhiskTuning = cell2mat(FullWhiskTuning')<pThresh;
+% 
+% OLtuning = [nan(4,sum(~(touchCells==1))) (cell2mat(THilbertTuning')<pThresh)];
+% [~,idx] = sort(touchCells);
+% comparisonMat = [touchCells(idx) ;whisking.matrix(:,idx) ; hilbertWhiskTuning(:,idx) ; OLtuning];
+% 
+% %add choice decoding too?
 
