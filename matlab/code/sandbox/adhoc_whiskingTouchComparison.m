@@ -91,6 +91,8 @@ for g = 1:4
         else
              shadedErrorBar(stimulus,TouchR{i}*1000,TouchSEM{i}*1000,'k')
              Ttune{g}(i)  = nan;
+             Tresolution{g}(i) = nan;
+             Wresolution{g}(i) = nan;
         end
         
         
