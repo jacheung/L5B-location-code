@@ -24,6 +24,8 @@ whisking = whisking_general(U,'off');
 hilbertWhisking = whisking_hilbert(U,popV,'off');
 
 %% modulation index 
+% not sure if this is useful. Followed the calculation that Curtis and
+% Kleinfeld 2009 used. (max(response) - min(response) ./ mean(response)
 selectedCells = find(touchCells==1); %look at only touch cells because those are the only ones w/ OL tuning
 wt_modulationIndex(hilbertTouch,hilbertWhisking,selectedCells)
 
@@ -132,28 +134,29 @@ for g = 1:4
 end
 
 figure(9);clf
-subplot(2,2,4)
-scatter(WHtune{4},Ttune{4});
-set(gca,'xtick',-pi:pi/2:pi,'ytick',-pi:pi/2:pi,'ylim',[-pi pi],'xlim',[-pi pi]...
-    ,'xticklabel',{'-\pi','-\pi/2','0','\pi/2','\pi'},'yticklabel',{'-\pi','-\pi/2','0','\pi/2','\pi'})
-axis square
-wts = find(~isnan(WHtune{4}));
-tts = find(~isnan(Ttune{4}));
-hold on; plot([-pi pi],[-pi pi],'-.k')
-title([fieldsToCompare{4} ' n=' num2str(numel(intersect(wts,tts))) ' pairs'])
-xlabel('whisking pref');ylabel('touch pref')
-
-for i = 1:3
-    subplot(2,2,i)
-    scatter(WHtune{i},Ttune{i});
-    [minmax(1) minmax(2)] = bounds([WHtune{i} Ttune{i}]);
-    set(gca,'xlim',minmax,'ylim',minmax)
-    hold on;plot(minmax,minmax,'-.k')
-    axis square
+for i = 1:4
+    HilbVals = {WHtune{i},Ttune{i},Wresolution{i},Tresolution{i}};
+    tmpVals = cell2mat(cellfun(@(x) ~isnan(x) .* (1:size(x,2)),HilbVals,'uniformoutput',0)');
+    keepIdx = find((1:length(tmpVals)) - mean(tmpVals) == 0);
     
-    wts = find(~isnan(WHtune{i}));
-    tts = find(~isnan(Ttune{i}));
-    title([fieldsToCompare{i} ' n=' num2str(numel(intersect(wts,tts))) ' pairs'])
+    subplot(2,2,i)
+    for d = 1:length(keepIdx)
+        hold on; errorbar(HilbVals{1}(keepIdx(d)),HilbVals{2}(keepIdx(d)),HilbVals{3}(keepIdx(d)),'horizontal','ko')
+        hold on; errorbar(HilbVals{1}(keepIdx(d)),HilbVals{2}(keepIdx(d)),HilbVals{4}(keepIdx(d)),'vertical','ko')
+    end
+    
+    if i ~= 4
+        [minmax(1), minmax(2)] = bounds([WHtune{i} Ttune{i}]);
+        set(gca,'xlim',minmax,'ylim',minmax)
+        hold on;plot(minmax,minmax,'-.k')
+        
+    else
+        set(gca,'xtick',-pi:pi/2:pi,'ytick',-pi:pi/2:pi,'ylim',[-pi pi],'xlim',[-pi pi]...
+            ,'xticklabel',{'-\pi','-\pi/2','0','\pi/2','\pi'},'yticklabel',{'-\pi','-\pi/2','0','\pi/2','\pi'})
+        hold on; plot([-pi pi],[-pi pi],'-.k')
+    end
+    axis square
+    title([fieldsToCompare{i} ' n=' num2str(numel(keepIdx)) ' units'])
     xlabel('whisking pref');ylabel('touch pref')
 end
 
