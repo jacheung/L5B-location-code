@@ -27,7 +27,6 @@ glmnetOpt.alpha = 0.95;
 glmnetOpt.xfoldCV = 3;
 glmnetOpt.numIterations = 3;
 
-mdl = cell(length(U),1);
 % figure;histogram(cell2mat(cellfun(@(x)
 % sum(~isnan(x)),hilbertWhisking.R_ntk.phase,'uniformoutput',0)))
 % %distribution of num samples in each bin
@@ -54,14 +53,13 @@ for i = 1:length(U)
     boostedDmatY{i} = repmat(1:size(cellfeature,2),resampNum,1);
 end
     
+numCellsToSample = [100 150 175 250 500 750 1000];
 
-selCells = datasample(1:length(U),numCellsToSample(g));
+selCells = datasample(1:length(U),max(numCellsToSample));
 resampCells = boostedDmatX(selCells);
 shiftTuningDmatX = cellfun(@(x) x(:,circshift(1:size(x,2),randperm(size(x,2)))),resampCells,'uniformoutput',0);
 shuffledResponseDmatX = cellfun(@(x) x(randperm(size(x,1)),:),shiftTuningDmatX,'uniformoutput',0);
 
-
-numCellsToSample = [100 250 500 750 1000];
 decodingResolutionMean = zeros(1,length(numCellsToSample)); 
 decodingResolutionSEM = zeros(1,length(numCellsToSample)); 
 
@@ -95,20 +93,4 @@ ylabel('decoding resolution (degrees of phase)')
 
 
 
-    
-
-
-
-
-
-    
-    
-    
-
-
-
-
-
-
-
-[glmModel] = designMatrixBuilder_whisking(mdl,glmnetOpt,hilbertWhisking);
+   
