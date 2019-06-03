@@ -25,14 +25,18 @@ glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0; %set to 0 b/c already standardized
 glmnetOpt.alpha = 0.95;
 glmnetOpt.xfoldCV = 3;
-glmnetOpt.numIterations = 10;
+glmnetOpt.numIterations = 3;
 
 mdl = cell(length(U),1);
 % figure;histogram(cell2mat(cellfun(@(x)
 % sum(~isnan(x)),hilbertWhisking.R_ntk.phase,'uniformoutput',0)))
 % %distribution of num samples in each bin
 %using the median number of samples in each bin to dictate resampling size
-resampNum = round(nanmedian(cell2mat(cellfun(@(x) sum(~isnan(x)),hilbertWhisking.R_ntk.phase,'uniformoutput',0))));
+% resampNum = round(nanmedian(cell2mat(cellfun(@(x) sum(~isnan(x)),hilbertWhisking.R_ntk.phase,'uniformoutput',0))));
+resampNum = 4000; 
+
+boostedDmatX = cell(1,length(U)); 
+boostedDmatY = cell(1,length(U));
 
 for i = 1:length(U)
     cellfeature = hilbertWhisking.R_ntk.phase{i};
@@ -51,16 +55,43 @@ for i = 1:length(U)
 end
     
 
-numCellsToSample = 2;
-selCells = datasample(1:length(U),numCellsToSample);
-selCellsDmatX = boostedDmatX(selCells);
-selCellsDmatY = boostedDmatY{selCells(1)};
-DmatX = cell2mat(cellfun(@(x) x(:),selCellsDmatX,'uniformoutput',0));
-DmatY = selCellsDmatY(:);
+selCells = datasample(1:length(U),numCellsToSample(g));
+resampCells = boostedDmatX(selCells);
+shiftTuningDmatX = cellfun(@(x) x(:,circshift(1:size(x,2),randperm(size(x,2)))),resampCells,'uniformoutput',0);
+shuffledResponseDmatX = cellfun(@(x) x(randperm(size(x,1)),:),shiftTuningDmatX,'uniformoutput',0);
 
 
+numCellsToSample = [100 250 500 750 1000];
+decodingResolutionMean = zeros(1,length(numCellsToSample)); 
+decodingResolutionSEM = zeros(1,length(numCellsToSample)); 
 
+for g = 1:length(numCellsToSample)
+    selCells = datasample(1:length(shuffledResponseDmatX),numCellsToSample(g));
+    selCellsDmatX = shuffledResponseDmatX(selCells);
 
+    selCellsDmatY = boostedDmatY{1};
+    
+    DmatX = cell2mat(cellfun(@(x) x(:),selCellsDmatX,'uniformoutput',0));
+    DmatX = (DmatX - mean(DmatX)) ./ std(DmatX); %standardization
+    DmatY = selCellsDmatY(:);
+    
+    mdl.io.X = DmatX;
+    mdl.io.Y.normal = DmatY;
+    
+    mdl = multinomialModel(mdl,DmatX,DmatY,glmnetOpt);
+    decoderPerformance(mdl)
+    
+    binResolution = 360/numel(unique(DmatY));
+    decodingResolutionMean(g) = mean(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) * binResolution;
+    decodingResolutionSEM(g) = (std(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) ./ glmnetOpt.numIterations) * binResolution;
+    
+end
+
+figure(23);clf
+shadedErrorBar(numCellsToSample,decodingResolutionMean,decodingResolutionSEM,'k')
+set(gca,'ylim',[0 160],'xlim',[0 1000])
+xlabel('number of cells')
+ylabel('decoding resolution (degrees of phase)')
 
 
 
