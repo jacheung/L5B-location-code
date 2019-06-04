@@ -95,6 +95,9 @@ for i = 1:length(array)
     end
     
     hilbertWhisking.cellVarNames = {'amplitude','midpoint','phase','angle'};
+    hilbertWhisking.S_ctk.raw{i} = inputX;
+    hilbertWhisking.R_ntk.raw{i} = filt_spikes; 
+    
     hilbertWhisking.S_ctk.amp = mean([bigBounds(1:end-1);bigBounds(2:end)]);
     hilbertWhisking.S_ctk.midpoint = mean([bigBounds(1:end-1);bigBounds(2:end)]); 
     hilbertWhisking.S_ctk.phase = littleBounds; %mean([littleBounds(1:end-1);littleBounds(2:end)]); 

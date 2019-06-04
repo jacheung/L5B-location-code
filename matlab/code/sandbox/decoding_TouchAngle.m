@@ -13,14 +13,22 @@ popV = touchFeatureBinned(U,touchWindow);
 
 % Defining touch response
 U = defTouchResponse(U,.99,'off');
-
-%% phase at touch tuning
+%% angle at touch tuning
 preDecisionTouches = preDecisionTouchMat(U);
-phaseBins = 12; %would recommend even numbers;
+angleBins = 12; %would recommend even numbers;
 for rec = 1:length(U)
  [tVar] = atTouch_sorter(U{rec},touchWindow,preDecisionTouches{rec});
  
- phase = tVar.allTouches.S_ctk(:,5);
+ ub = prctile(tVar.allTouches.S_ctk(:,1),99);
+ lb = prctile(tVar.allTouches.S_ctk(:,1),1);
+ rawAngle = tVar.allTouches.S_ctk(:,1);
+ rawAngle(rawAngle>ub) = ub; 
+ rawAngle(rawAngle<lb) = lb; 
+ 
+ [minT,maxT] = bounds(rawAngle);
+ 
+ angle = normalize_var(rawAngle,-1,1);
+ 
  if isfield(U{rec}.meta,'responseWindow')
      tResponse = U{rec}.meta.responseWindow+find(touchWindow==0) ;
  else
@@ -28,9 +36,10 @@ for rec = 1:length(U)
  end
   response = mean(tVar.allTouches.R_ntk(:,tResponse(1):tResponse(2)),2);
  
- [sorted,sby] = binslin(phase,response,'equalE',phaseBins+1,-pi,pi);
- hilbertTouch.R_ntk.phase{rec} = cell2nanmat(sorted);
- hilbertTouch.S_ctk.phase = linspace(-pi,pi,phaseBins);
+ [sorted,sby] = binslin(angle,response,'equalE',angleBins+1,-1,1);
+ hilbertTouch.R_ntk.angle{rec} = cell2nanmat(sorted);
+ hilbertTouch.S_ctk.angle = linspace(-1,1,angleBins);
+ hilbertTouch.S_ctk.angleRaw(rec) = maxT-minT;
 end
 
 %% decoding touch position by phase
@@ -38,15 +47,15 @@ end
 glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0; %set to 0 b/c already standardized
 glmnetOpt.alpha = 0.95;
-glmnetOpt.xfoldCV = 3;
+glmnetOpt.xfoldCV = 5;
 glmnetOpt.numIterations = 10;
 
 %using the median number of samples in each bin to dictate resampling size
-resampNumTMP = cell2mat(cellfun(@(x) sum(~isnan(x)),hilbertTouch.R_ntk.phase(selectedCells),'uniformoutput',0)');
+resampNumTMP = cell2mat(cellfun(@(x) sum(~isnan(x)),hilbertTouch.R_ntk.angle(selectedCells),'uniformoutput',0)');
 %visualing sampling distribution across all cells
-figure(9);clf;shadedErrorBar(linspace(-pi,pi,12),mean(resampNumTMP),std(resampNumTMP))
-set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'},'xlim',[-pi pi])
-ylabel('mean num samples')
+% figure(9);clf;shadedErrorBar(linspace(-pi,pi,12),mean(resampNumTMP),std(resampNumTMP))
+% set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'},'xlim',[-pi pi])
+% ylabel('mean num samples')
 
 resampNum = round(mean(resampNumTMP(:)));
 
@@ -54,7 +63,7 @@ boostedDmatX = cell(1,length(selectedCells));
 
 %resampling all touch bins to have the same number of "touches"
 for i = 1:length(selectedCells)
-    cellfeature = hilbertTouch.R_ntk.phase{selectedCells(i)};
+    cellfeature = hilbertTouch.R_ntk.angle{selectedCells(i)};
     
     if sum(sum(~isnan(cellfeature))==0)>0
         disp(['skipping cell ' num2str(selectedCells(i)) ' because unsampled bin'])
@@ -76,7 +85,7 @@ end
 %circularly permuting data for varied tunings and shuffling data for
 %variability
 
-numCellsToSample = [5 10 15 20 30 40 50 75 100 250 500 750 1000];
+numCellsToSample = [5 10 15 20 30 40 50 75 100];
 
 selCells = datasample(1:length(selectedCells),max(numCellsToSample));
 resampCells = boostedDmatX(selCells);
@@ -103,24 +112,14 @@ for g = 1:length(numCellsToSample)
      mdl = multinomialModel(mdl,DmatX,DmatY,glmnetOpt);
 %     decoderPerformance(mdl)
 %     
-    binResolution = 360/numel(unique(DmatY));
+    binResolution = mean(hilbertTouch.S_ctk.angleRaw(selectedCells)./numel(unique(DmatY)));
     decodingResolutionMean(g) = mean(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) * binResolution;
     decodingResolutionSEM(g) = (std(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) ./ glmnetOpt.numIterations) * binResolution;
     
 end
 
 figure(23);clf
-shadedErrorBar(numCellsToSample,decodingResolutionMean,decodingResolutionSEM,'k')
-set(gca,'ylim',[0 160],'xlim',[0 max(numCellsToSample)])
+shadedErrorBar(numCellsToSample,smooth(decodingResolutionMean),decodingResolutionSEM,'k')
+set(gca,'ylim',[0 10],'xlim',[0 max(numCellsToSample)])
 xlabel('number of cells')
-ylabel('decoding resolution (degrees of phase)')
-
-
-
-
-
-
-
-
-    
-
+ylabel('decoding resolution (degrees of angle)')
