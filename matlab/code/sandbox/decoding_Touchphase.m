@@ -22,7 +22,8 @@ for rec = 1:length(U)
  
  phase = tVar.allTouches.S_ctk(:,5);
  if isfield(U{rec}.meta,'responseWindow')
-     tResponse = U{rec}.meta.responseWindow+find(touchWindow==0) ;
+%      tResponse = U{rec}.meta.responseWindow+find(touchWindow==0) ;
+     tResponse = [-25 -5] + find(touchWindow==0); %control to find off touch responses
  else
      tResponse = [5 35] + find(touchWindow==0);
  end
@@ -48,7 +49,8 @@ figure(9);clf;shadedErrorBar(linspace(-pi,pi,12),mean(resampNumTMP),std(resampNu
 set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'},'xlim',[-pi pi])
 ylabel('mean num samples')
 
-resampNum = round(mean(resampNumTMP(:)));
+% resampNum = round(mean(resampNumTMP(:)));
+resampeNum = 50;
 
 boostedDmatX = cell(1,length(selectedCells)); 
 
@@ -88,6 +90,7 @@ decodingResolutionMean = zeros(1,length(numCellsToSample));
 decodingResolutionSEM = zeros(1,length(numCellsToSample)); 
 
 for g = 1:length(numCellsToSample)
+    
     selCells = datasample(1:length(shuffledResponseDmatX),numCellsToSample(g));
     selCellsDmatX = shuffledResponseDmatX(selCells);
 

@@ -20,14 +20,14 @@ hilbertWhisking = whisking_hilbert(U,popV,'off');
 
 %% decoding whisker position
 featureName = {'phase','theta'};
-numBins =20 ; %only for theta;
+numBins =12 ; %only for theta;
 
 % GLM model parameters
 glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0; %set to 0 b/c already standardized
 glmnetOpt.alpha = 0.95;
 glmnetOpt.xfoldCV = 3;
-glmnetOpt.numIterations = 10;
+glmnetOpt.numIterations = 3;
 
 
 %theta set up
@@ -47,9 +47,9 @@ thetaResponse = cellfun(@(x,y) binslin(x,y(:),'equalE',numBins+1,-1,1),theta,hil
 % %distribution of num samples in each bin
 %using the median number of samples in each bin to dictate resampling size
 % resampNum = round(nanmedian(cell2mat(cellfun(@(x) sum(~isnan(x)),hilbertWhisking.R_ntk.phase,'uniformoutput',0))));
-for k = 2
+for k = 1
     
-    resampNum = 4000;
+    resampNum = 1000;
     
     boostedDmatX = cell(1,length(U));
     boostedDmatY = cell(1,length(U));
@@ -74,7 +74,7 @@ for k = 2
         boostedDmatY = repmat(1:size(cellfeature,2),resampNum,1);
     end
     
-    numCellsToSample = [5 15 25 50 100];
+    numCellsToSample = [5 10 15 20 30 40 50 75 100];
     
     selCells = datasample(1:length(U),max(numCellsToSample));
     resampCells = boostedDmatX(selCells);
@@ -84,36 +84,45 @@ for k = 2
     decodingResolutionMean = zeros(1,length(numCellsToSample));
     decodingResolutionSEM = zeros(1,length(numCellsToSample));
     
+    sampleIterations = 10; 
+    true = cell(length(numCellsToSample),1); 
+    predicted = cell(length(numCellsToSample),1);     
     for g = 1:length(numCellsToSample)
+        
+        for u=1:sampleIterations
         selCells = datasample(1:length(shuffledResponseDmatX),numCellsToSample(g));
         selCellsDmatX = shuffledResponseDmatX(selCells);
-        
-        selCellsDmatY = boostedDmatY;
-        
         DmatX = cell2mat(cellfun(@(x) x(:),selCellsDmatX,'uniformoutput',0));
         DmatX = (DmatX - mean(DmatX)) ./ std(DmatX); %standardization
-        DmatY = selCellsDmatY(:);
+        
+        DmatY = boostedDmatY(:);
         
         mdl.io.X = DmatX;
         mdl.io.Y.normal = DmatY;
         
         mdl = multinomialModel(mdl,DmatX,DmatY,glmnetOpt);
-        decoderPerformance(mdl)
         
         if strcmp(featureName{k},'phase')
             binResolution = 360/numel(unique(DmatY));
         elseif strcmp(featureName{k},'theta')
             binResolution = mean(lims ./ numel(unique(DmatY)));
         end
-   
-        decodingResolutionMean(g) = mean(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) * binResolution;
-        decodingResolutionSEM(g) = (std(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) ./ glmnetOpt.numIterations) * binResolution;
+
+        true{g}(:,u) = mdl.io.trueXpredicted(:,1);
+        predicted{g}(:,u) = mdl.io.trueXpredicted(:,2); 
+
+        end
         
+
     end
     
+%  decodingResolutionMean(g) = mean(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) * binResolution;
+%  decodingResolutionSEM(g) = (std(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) ./ glmnetOpt.numIterations) * binResolution;
+        
+
     figure(23);clf
-    shadedErrorBar(numCellsToSample,decodingResolutionMean,decodingResolutionSEM,'k')
-    set(gca,'ylim',[0 20],'xlim',[0 100])
+    shadedErrorBar(numCellsToSample,smooth(decodingResolutionMean),decodingResolutionSEM,'k')
+    set(gca,'ylim',[0 160],'xlim',[0 100])
     xlabel('number of cells')
     ylabel('decoding resolution (degrees of phase)')
     
