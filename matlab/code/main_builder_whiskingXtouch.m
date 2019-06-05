@@ -48,10 +48,12 @@ for g = 1:4
     spacing = abs(stimulus(1)-stimulus(2));
     
     chosenTArrays = currTArray(selectedCells);
-    TouchR = cellfun(@(x) nanmean(x,2),chosenTArrays,'uniformoutput',0);
+%     TouchR = cellfun(@(x) nanmean(x,2),chosenTArrays,'uniformoutput',0);
+    TouchR = cellfun(@(x) normalize_var(nanmean(x,2),0,1),chosenTArrays,'uniformoutput',0);
     TouchSEM = cellfun(@(x) nanstd(x,[],2) ./ sqrt(sum(~isnan(x),2)),chosenTArrays,'uniformoutput',0);
     chosenWArrays = currWArray(selectedCells);
-    WhiskR = cellfun(@(x) nanmean(x,1),chosenWArrays,'uniformoutput',0);
+%     WhiskR = cellfun(@(x) nanmean(x,1),chosenWArrays,'uniformoutput',0);
+    WhiskR = cellfun(@(x) normalize_var(nanmean(x,1),0,1),chosenWArrays,'uniformoutput',0);
     WhiskSEM = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),chosenWArrays,'uniformoutput',0);
    
     for i = 1:length(WhiskR)
@@ -109,6 +111,7 @@ for g = 1:4
         end 
         xBounds = stimulus(~isnan(TouchR{i}*1000));
         set(gca,'xlim',[min(xBounds) max(xBounds)])
+        set(gca,'ytick',[])
         
         if strcmp(fieldsToCompare{g},'phase')
             set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
@@ -117,7 +120,7 @@ for g = 1:4
     end
     suptitle(fieldsToCompare{g})
     
-%     print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{g}],'-dpng')
+    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{g} '_normalized'],'-dpng')
 
 %     figure(30);
 %     subplot(2,2,g)

@@ -47,13 +47,16 @@ thetaResponse = cellfun(@(x,y) binslin(x,y(:),'equalE',numBins+1,-1,1),theta,hil
 % %distribution of num samples in each bin
 %using the median number of samples in each bin to dictate resampling size
 % resampNum = round(nanmedian(cell2mat(cellfun(@(x) sum(~isnan(x)),hilbertWhisking.R_ntk.phase,'uniformoutput',0))));
+
+ resampNum = 4000;
+    
 for k = 1
     
-    resampNum = 1000;
+
     
     boostedDmatX = cell(1,length(U));
     boostedDmatY = cell(1,length(U));
-    
+    %resampling spikes so all bins have equal sample sizes
     for i = 1:length(U)
         if strcmp(featureName{k},'phase')
             cellfeature = hilbertWhisking.R_ntk.phase{i};
@@ -74,26 +77,32 @@ for k = 1
         boostedDmatY = repmat(1:size(cellfeature,2),resampNum,1);
     end
     
-    numCellsToSample = [5 10 15 20 30 40 50 75 100];
+    numCellsToSample = [10 25 50 100];
     
+    %circularly permuting tuning so tuning curves are equally distributed
+    %across all sampled positions
     selCells = datasample(1:length(U),max(numCellsToSample));
     resampCells = boostedDmatX(selCells);
     shiftTuningDmatX = cellfun(@(x) x(:,circshift(1:size(x,2),randperm(size(x,2)))),resampCells,'uniformoutput',0);
-    shuffledResponseDmatX = cellfun(@(x) x(randperm(size(x,1)),:),shiftTuningDmatX,'uniformoutput',0);
+    variationDmatX = cellfun(@(x) x(randperm(size(x,1)),:),shiftTuningDmatX,'uniformoutput',0);
     
-    decodingResolutionMean = zeros(1,length(numCellsToSample));
-    decodingResolutionSEM = zeros(1,length(numCellsToSample));
+ 
     
-    sampleIterations = 10; 
+    sampleIterations = 10;  %number of iterations of used cells 
     true = cell(length(numCellsToSample),1); 
     predicted = cell(length(numCellsToSample),1);     
     for g = 1:length(numCellsToSample)
         
         for u=1:sampleIterations
-        selCells = datasample(1:length(shuffledResponseDmatX),numCellsToSample(g));
-        selCellsDmatX = shuffledResponseDmatX(selCells);
+        selCells = datasample(1:length(variationDmatX),numCellsToSample(g));
+        selCellsDmatX = variationDmatX(selCells);
+        
+        
         DmatX = cell2mat(cellfun(@(x) x(:),selCellsDmatX,'uniformoutput',0));
-        DmatX = (DmatX - mean(DmatX)) ./ std(DmatX); %standardization
+        DmatX = (DmatX - nanmean(DmatX)) ./ nanstd(DmatX); %standardization
+        
+        DmatX = DmatX(:,sum(isnan(DmatX))==0); 
+        DmatX = DmatX(reshape(randperm(numel(DmatX)),size(DmatX))); %shuffling Dmat X 
         
         DmatY = boostedDmatY(:);
         
@@ -112,7 +121,6 @@ for k = 1
         predicted{g}(:,u) = mdl.io.trueXpredicted(:,2); 
 
         end
-        
 
     end
     
