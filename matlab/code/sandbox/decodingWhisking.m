@@ -52,8 +52,6 @@ thetaResponse = cellfun(@(x,y) binslin(x,y(:),'equalE',numBins+1,-1,1),theta,hil
     
 for k = 1
     
-
-    
     boostedDmatX = cell(1,length(U));
     boostedDmatY = cell(1,length(U));
     %resampling spikes so all bins have equal sample sizes
@@ -102,7 +100,7 @@ for k = 1
         DmatX = (DmatX - nanmean(DmatX)) ./ nanstd(DmatX); %standardization
         
         DmatX = DmatX(:,sum(isnan(DmatX))==0); 
-        DmatX = DmatX(reshape(randperm(numel(DmatX)),size(DmatX))); %shuffling Dmat X 
+%         DmatX = DmatX(reshape(randperm(numel(DmatX)),size(DmatX))); %shuffling Dmat X 
         
         DmatY = boostedDmatY(:);
         
@@ -124,10 +122,9 @@ for k = 1
 
     end
     
-%  decodingResolutionMean(g) = mean(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) * binResolution;
-%  decodingResolutionSEM(g) = (std(abs(mdl.io.trueXpredicted(:,1) - mdl.io.trueXpredicted(:,2))) ./ glmnetOpt.numIterations) * binResolution;
-        
-
+    decodingResolutionMean = cellfun(@(x,y) mean(abs(x(:)-y(:))) * binResolution,true,predicted);
+    decodingResolutionSEM  = cellfun(@(x,y) std(abs(x(:)-y(:))) ./ sqrt(sampleIterations), true,predicted);
+  
     figure(23);clf
     shadedErrorBar(numCellsToSample,smooth(decodingResolutionMean),decodingResolutionSEM,'k')
     set(gca,'ylim',[0 160],'xlim',[0 100])

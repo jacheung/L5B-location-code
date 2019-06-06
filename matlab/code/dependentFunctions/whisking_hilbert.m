@@ -75,7 +75,7 @@ for i = 1:length(array)
 
     if willdisplay
         figure(8);clf
-        featureNames = {'amplitude','midpoint','phase','angle'};
+        featureNames = {'amp','midpoint','phase','angle'};
         for j = 1:size(average_response,2)
             subplot(2,2,j)
             shadedErrorBar(average_stimulus{j},average_response{j}*1000,SEM_response{j}*1000)
@@ -94,7 +94,7 @@ for i = 1:length(array)
         end
     end
     
-    hilbertWhisking.cellVarNames = {'amplitude','midpoint','phase','angle'};
+    hilbertWhisking.cellVarNames = {'amp','midpoint','phase','theta'};
     hilbertWhisking.S_ctk.raw{i} = inputX;
     hilbertWhisking.R_ntk.raw{i} = filt_spikes; 
     
