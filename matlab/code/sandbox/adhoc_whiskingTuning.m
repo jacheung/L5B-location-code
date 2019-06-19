@@ -20,8 +20,15 @@ hilbertWhisking = whisking_hilbert(U,popV,'off');
 %%
 [rc]= numSubplots(length(U))
 
+
+
 fieldsToCompare = hilbertWhisking.cellVarNames;
+
+WHilbertP = cell(1,numel(fieldsToCompare)); 
+peakResponse = cell(1,numel(fieldsToCompare)); 
+
 pctSamp = .01; 
+smoothParam = .7;
 for i = 1:4
     figure(230);clf
     featureMean = cellfun(@(x) nanmean(x),hilbertWhisking.R_ntk.(fieldsToCompare{i}),'uniformoutput',0);
@@ -38,60 +45,55 @@ for i = 1:4
 
         subplot(rc(1),rc(2),d);
         if strcmp(fieldsToCompare{i},'phase')
+            f = fit((1:numel(x))',(featureMean{d}.*1000)','smoothingspline','SmoothingParam',smoothParam);
+            fCI = fit((1:numel(x))',(CI{d}.*1000)','smoothingspline','SmoothingParam',smoothParam);
+            fitline = f(1:numel(x));
+            fCIline = fCI(1:numel(x)); 
+            
             bar(x,featureMean{d}.*1000,'facecolor',[.8 .8 .8])
-            hold on; shadedErrorBar(x,smooth(featureMean{d}.*1000,3),smooth(CI{d}(selBins{d}).*1000,3),'g')
+            hold on; shadedErrorBar(x,fitline,fCIline,'g')
             set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
+            
+            [~,idx] = max(fitline);
+            peakResponse{i}(d) = x(idx); 
         else
-            bar(1:sum(selBins{d}),featureMean{d}(selBins{d}).*1000,'facecolor',[.8 .8 .8])
-            hold on; shadedErrorBar(1:sum(selBins{d}),smooth(featureMean{d}(selBins{d}).*1000,3),smooth(CI{d}(selBins{d}).*1000,3),'g')
             xtv = x(selBins{d}); 
-            set(gca,'xtick',1:3:length(xtv),'xticklabel',xtv(1:3:end),'ylim',[0 (max(featureMean{d}(selBins{d}).*1000)+.01).*1.2])
+            
+            bar(xtv,featureMean{d}(selBins{d}).*1000,'facecolor',[.8 .8 .8])
+            f = fit(xtv',(featureMean{d}(selBins{d}).*1000)','smoothingspline','SmoothingParam',smoothParam);
+            fCI = fit(xtv',(CI{d}(selBins{d}).*1000)','smoothingspline','SmoothingParam',smoothParam);
+            fitline = f(xtv(1):xtv(end));
+            fCIline = fCI(xtv(1):xtv(end)); 
+            hold on; shadedErrorBar(xtv(1):xtv(end),fitline,fCIline,'g')
+           
+            set(gca,'xtick',xtv(1):3:xtv(end),'ylim',[0 (max(featureMean{d}(selBins{d}).*1000)+.01).*1.2])
+            
+            [~,idx] = max(fitline);
+            ranges = xtv(1):xtv(end);
+            peakResponse{i}(d) = ranges(idx); 
         end
     end
     
     suptitle(fieldsToCompare{i})
     
-   % print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} '_whisking'],'-dpng')
-   % print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} '_whisking'],'-depsc')
+%    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} '_whisking'],'-dpng')
+%    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} '_whisking'],'-depsc')
 end
 
 %%
 wOn = [find(whisking.matrix(1,:)==1) find(whisking.matrix(1,:)==-1)];
-%wOn = 1:length(U); 
-hilbTune = cell2mat(WHilbertP')<.01;
-
-
-ampOnly = intersect(find(hilbTune(1,:)),find(sum(hilbTune)==1));
-ampT = intersect(wOn,ampOnly);
-
-mpOnly = intersect(find(hilbTune(2,:)),find(sum(hilbTune)==1));
-mpT = intersect(wOn,mpOnly);
-
-pOnly = intersect(find(hilbTune(3,:)),find(sum(hilbTune)==1));
-pT = intersect(wOn,pOnly);
-
-angleOnly = intersect(find(hilbTune(4,:)),find(sum(hilbTune)==1));
-aT = intersect(wOn,angleOnly);
-
-for d = 0:4
-    tuned{d+1} = intersect(wOn,find(sum(hilbTune)==d))
-    tuneNum(d+1) = sum(numel(intersect(wOn,find(sum(hilbTune)==d))));
-end
-
-%%
 pTune = cell2mat(WHilbertP');
 chosenPTune = pTune(:,wOn)<.01; %looking only at cells that are whisking excited and inhibited. 
 
 ampOnly = intersect(find(chosenPTune(1,:)),find(sum(chosenPTune)==1));
 
-
 mpOnly = intersect(find(chosenPTune(2,:)),find(sum(chosenPTune)==1));
 
 pOnly = intersect(find(chosenPTune(3,:)),find(sum(chosenPTune)==1));
 
-
 angleOnly = intersect(find(chosenPTune(4,:)),find(sum(chosenPTune)==1));
 
+%to find bar/spline of above do wOn(angleOnly); 
 twofeats = find(sum(chosenPTune)==2);
 threefeats = find(sum(chosenPTune)==3);
 allfeats = find(sum(chosenPTune)==4);
@@ -106,34 +108,29 @@ set(gca,'xtick',1:4,'xticklabel',{'phase','amp','midpoint','angle'})
 
 
 
-%% bayesian adaptive regression spline fitting 
-[rc]= numSubplots(length(U))
+%% what degree are these tuned cells max firing at? 
+peaks = cell2mat(peakResponse');
+whisking_peaks = peaks(:,wOn);
 
-fieldsToCompare = hilbertWhisking.cellVarNames;
-pctSamp = .01; 
-for i = 3
-    featureMean = cellfun(@(x) nansum(x),hilbertWhisking.R_ntk.(fieldsToCompare{i}),'uniformoutput',0);
-    sampleSize = cellfun(@(x) sum(~isnan(x)),hilbertWhisking.R_ntk.(fieldsToCompare{i}),'uniformoutput',0);
-    selBins= cellfun(@(x) sum(~isnan(x))> round(sum(~isnan(x(:)))*pctSamp),hilbertWhisking.R_ntk.(fieldsToCompare{i}),'uniformoutput',0);
-    x = hilbertWhisking.S_ctk.(fieldsToCompare{i});
-     
+tunedAmp = whisking_peaks(1,chosenPTune(1,:));
+tunedMP = whisking_peaks(2,chosenPTune(2,:));
+tunedPhase = whisking_peaks(3,chosenPTune(3,:));
+tunedAngle = whisking_peaks(4,chosenPTune(4,:));
 
-    for g = 1:length(featureMean)
-        counts = featureMean{g}(selBins{g});
-        stim = x(selBins{g});
-        
-        if sum(counts)>numel(stim)
-            fit1 = barsP(counts,[stim(1) stim(end)],round(median(sampleSize{g}(selBins{g}))));
-            subplot(rc(1),rc(2),g)
-            
-            shadedErrorBar(stim,fit1.mean,abs(fit1.confBands(:,1) - fit1.mean),'g')
-        else
-            disp(['skipping cell ' num2str(g) ' b/c too few spikes'])
-        end
+figure(53);clf
+for i = 1:4
+    tuning = whisking_peaks(i,chosenPTune(i,:));
+    subplot(2,2,i);
+    if i ==3
+        histogram(tuning,-pi:pi/4:pi,'facecolor','k','facealpha',1)
+    else
+    histogram(tuning,min(tuning):4:max(tuning),'facecolor','k','facealpha',1)
     end
+    title(
 end
-        
-        
+    
+    
+    
 
 
 

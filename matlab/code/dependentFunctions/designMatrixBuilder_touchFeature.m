@@ -5,7 +5,7 @@ function [DmatX,DmatYnorm] = designMatrixBuilder_touchFeature(U,selectedCells,to
 % grab from each bin to use as the input design matrix.
 preDecisionTouches = preDecisionTouchMat(U);
 
-trialNumThreshold = 90; 
+trialNumThreshold = 90; %min number of trials to consider using that cell 
 numTperCell = cellfun(@(x) x.k,U(selectedCells));
 resampNum = round(mean(numTperCell(numTperCell>trialNumThreshold)./numInterpPts));
 
