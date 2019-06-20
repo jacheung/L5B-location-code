@@ -135,7 +135,33 @@ end
         
         
 
+%% slow x fast tuning 
+for g = 1:length(U)
+    phase = hilbertWhisking.S_ctk.raw{g}(:,3);
+    amp = hilbertWhisking.S_ctk.raw{g}(:,1);
+    midpoint = hilbertWhisking.S_ctk.raw{g}(:,2); 
+    angle = hilbertWhisking.S_ctk.raw{g}(:,4); 
+    spikes = hilbertWhisking.R_ntk.raw{g}(:);
+    spksT = find(spikes == 1);
+    noSpksT = find(spikes == 0); 
+    
+    featX = phase; 
+    featY = angle; 
+    featZ = phase; 
+    
+    if ~isempty(spksT)
+    figure(230);clf
+     hold on; scatter(featX(noSpksT),featY(noSpksT),'ko','markeredgecolor',[.9 .9 .9])
+    scatter(featX(spksT),featY(spksT),'ko','filled')
+    title(num2str(corr(featX(spksT),featY(spksT),'rows','complete')));
+    end
 
+    
+    pause
+    
+    
+end
+    
 
 
 
