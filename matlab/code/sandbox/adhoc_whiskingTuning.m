@@ -126,7 +126,7 @@ for i = 1:4
     else
     histogram(tuning,min(tuning):4:max(tuning),'facecolor','k','facealpha',1)
     end
-    title(
+    
 end
     
     
@@ -153,7 +153,6 @@ for g = 1:length(U)
     title(num2str(corr(featX(spksT),featY(spksT),'rows','complete')));
     end
 
-    
     pause
     
     
