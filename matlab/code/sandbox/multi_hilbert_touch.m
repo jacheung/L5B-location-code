@@ -21,7 +21,7 @@ for rec = 1:length(U)
 end
 
 %%
-for k = 3
+for k = 1:length(U)
     phase = hilbertTouch.S_ctk{k}(:,3); 
     amp = hilbertTouch.S_ctk{k}(:,1); 
     midpoint = hilbertTouch.S_ctk{k}(:,2); 
@@ -29,16 +29,26 @@ for k = 3
     
     
     responses = normalize_var(hilbertTouch.R_ntk{k},.05,.95);
-    [responseSort,idx] = sort(responses); 
+    [~,idx] = sort(responses); 
     
-    featX = phase(idx);
-    featY = amp(idx);
-    featZ = angle(idx); 
+    featX = amp;
+    featY = midpoint;
+    featZ = angle; 
     
-    colors = repmat(1 - responseSort,1,3); 
+    colors = repmat(1 - responses,1,3); 
     figure(2332);clf
     
-    scatter(featX,featY,100,colors,'filled');
+    scatter(featX(idx),featY(idx),100,colors(idx,:),'filled');
+    pause
+end
+
+%%
+for k = 1
+    dmatX = hilbertTouch.S_ctk{k};
+    nDmatX = (dmatX-nanmean(dmatX))./nanstd(dmatX);
     
+    y = hilbertTouch.R_ntk{k};
+    
+    fitlm(nDmatX,y)
 end
     
