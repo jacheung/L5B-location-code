@@ -20,8 +20,6 @@ hilbertWhisking = whisking_hilbert(U,popV,'off');
 %%
 [rc]= numSubplots(length(U))
 
-
-
 fieldsToCompare = hilbertWhisking.cellVarNames;
 
 WHilbertP = cell(1,numel(fieldsToCompare)); 
@@ -148,7 +146,7 @@ for g = 1:length(U)
     
     if ~isempty(spksT)
     figure(230);clf
-     hold on; scatter(featX(noSpksT),featY(noSpksT),'ko','markeredgecolor',[.9 .9 .9])
+    hold on; scatter(featX(noSpksT),featY(noSpksT),'ko','markeredgecolor',[.9 .9 .9])
     scatter(featX(spksT),featY(spksT),'ko','filled')
     title(num2str(corr(featX(spksT),featY(spksT),'rows','complete')));
     end
