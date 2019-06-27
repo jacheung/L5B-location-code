@@ -1,38 +1,11 @@
 
-%% Build feature at touch and response in touch response window 
-
-% Defining touch response
-U = defTouchResponse(U,.99,'off');
-
-% viewing window around touch 
-touchWindow = [-25:50];
-
-preDecisionTouches = preDecisionTouchMat(U);
-for rec = 1:length(U)
- [tVar] = atTouch_sorter(U{rec},touchWindow,preDecisionTouches{rec});
-
- if isfield(U{rec}.meta,'responseWindow')
-     tResponse = U{rec}.meta.responseWindow+find(touchWindow==0) ;
-%      tResponse = [-25 -5] + find(touchWindow==0); %control to find off touch responses
- else
-     tResponse = [5 35] + find(touchWindow==0);
- end
-  response = mean(tVar.allTouches.R_ntk(:,tResponse(1):tResponse(2)),2);
- 
-  hilbertTouch.S_ctk{rec} = tVar.allTouches.S_ctk(:,[3, 4, 5, 1]);
-  hilbertTouch.R_ntk{rec} = response; 
-  
-end
 
 %% 1 dimensional hilbert features
-
-%% Quantifying object location tuning
 touchCells = touchCell(U,'off');
 selectedCells = find(touchCells==1);
 whichTouches = fields(popV{1});
 fieldsList = fields(popV{1}.allTouches);
 hilbertTouch = tuningQuantification(U,popV,selectedCells,fieldsList([ 1 3 4 5]),whichTouches,touchWindow,'off');
-
 
 [rc]= numSubplots(length(U))
 
@@ -109,16 +82,35 @@ for i = 4
    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} 'touch'],'-depsc')
 end
 
-
-whichTouches = fields(popV{1});
-fieldsList = fields(popV{1}.allTouches);
-hilbertTouch = tuningQuantification(U,popV,selectedCells,fieldsList([ 1 3 4 5]),whichTouches,touchWindow,'off');
-
-            
-           
-
 %% %2dimensional or 3dimensional scatter of features at touch
+% Defining touch response
+U = defTouchResponse(U,.99,'off');
+
+% viewing window around touch 
+touchWindow = [-25:50];
+
+clear hilbertTouch 
+
+preDecisionTouches = preDecisionTouchMat(U);
+for rec = 1:length(U)
+ [tVar] = atTouch_sorter(U{rec},touchWindow,preDecisionTouches{rec});
+
+ if isfield(U{rec}.meta,'responseWindow')
+     tResponse = U{rec}.meta.responseWindow+find(touchWindow==0) ;
+%      tResponse = [-25 -5] + find(touchWindow==0); %control to find off touch responses
+ else
+     tResponse = [5 35] + find(touchWindow==0);
+ end
+  response = mean(tVar.allTouches.R_ntk(:,tResponse(1):tResponse(2)),2);
+ 
+  hilbertTouch.S_ctk{rec} = tVar.allTouches.S_ctk(:,[3, 4, 5, 1]);
+  hilbertTouch.R_ntk{rec} = response; 
+  
+end
+
 figure(2332);clf
+figure(123);clf
+figure(124);clf
 for k = 1:length(U)
     phase = hilbertTouch.S_ctk{k}(:,3);
     amp = hilbertTouch.S_ctk{k}(:,1);
@@ -126,6 +118,7 @@ for k = 1:length(U)
     angle = hilbertTouch.S_ctk{k}(:,4);
     
     responses = normalize_var(hilbertTouch.R_ntk{k},.05,.95);
+    rawResponses = hilbertTouch.R_ntk{k};
     [~,idx] = sort(responses);
     
     featX = phase;
@@ -138,16 +131,35 @@ for k = 1:length(U)
         figure(2332);subplot(6,10,k)
         scatter(featX(idx),featY(idx),50,colors(idx,:),'filled');
         set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
+        
+        protraction = phase<=0;
+        retraction = phase>0;
+        
+        bounds = popV{1}.allTouches.theta.bounds;
+        [pSorted ] = binslin(angle(protraction),rawResponses(protraction)*1000,'equalE',numel(bounds),bounds(1),bounds(end));
+        [rSorted ] = binslin(angle(retraction),rawResponses(retraction)*1000,'equalE',numel(bounds),bounds(1),bounds(end));
+        
+        pResponse = cellfun(@nanmean,pSorted);
+        pSEM = cellfun(@(x) nanstd(x)./numel(x),pSorted);
+        rResponse = cellfun(@nanmean,rSorted);
+        rSEM = cellfun(@(x) nanstd(x)./numel(x),rSorted);
+        x = linspace(-99,99,100); 
+        sampledBounds = x(~isnan(pSEM) + ~isnan(rSEM) > 0 );
+        
+        figure(123);subplot(6,10,k)
+%         shadedErrorBar(linspace(-99,99,100),smooth(pResponse),smooth(pSEM),'b');
+%         hold on; shadedErrorBar(linspace(-99,99,100),smooth(rResponse),smooth(rSEM),'r');
+        shadedErrorBar(linspace(-99,99,100),(pResponse),(pSEM),'b');
+        hold on; shadedErrorBar(linspace(-99,99,100),(rResponse),(rSEM),'r');
+        set(gca,'xlim',[min(sampledBounds) max(sampledBounds)])
+        
+         figure(124);subplot(6,10,k)
+%         shadedErrorBar(linspace(-99,99,100),smooth(pResponse),smooth(pSEM),'b');
+%         hold on; shadedErrorBar(linspace(-99,99,100),smooth(rResponse),smooth(rSEM),'r');
+        plot(linspace(-99,99,100),normalize_var((pResponse),0,1),'b');
+        hold on; plot(linspace(-99,99,100),normalize_var(rResponse,0,1),'r');
+        set(gca,'xlim',[min(sampledBounds) max(sampledBounds)])
+        
     end
+    
 end
-
-%%
-for k = 1
-    dmatX = hilbertTouch.S_ctk{k};
-    nDmatX = (dmatX-nanmean(dmatX))./nanstd(dmatX);
-    
-    y = hilbertTouch.R_ntk{k};
-    
-    fitlm(nDmatX,y)
-end
-    
