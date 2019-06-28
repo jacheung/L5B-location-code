@@ -94,18 +94,20 @@ for i = 1:length(array)
         end
     end
     
-    hilbertWhisking.cellVarNames = {'amp','midpoint','phase','theta'};
+    hilbertWhisking.cellVarNames = {'theta','amp','midpoint','phase'};
     hilbertWhisking.S_ctk.raw{i} = inputX;
     hilbertWhisking.R_ntk.raw{i} = filt_spikes; 
     
+    hilbertWhisking.S_ctk.theta = mean([bigBounds(1:end-1);bigBounds(2:end)]); 
     hilbertWhisking.S_ctk.amp = mean([bigBounds(1:end-1);bigBounds(2:end)]);
     hilbertWhisking.S_ctk.midpoint = mean([bigBounds(1:end-1);bigBounds(2:end)]); 
     hilbertWhisking.S_ctk.phase = littleBounds; %mean([littleBounds(1:end-1);littleBounds(2:end)]); 
-    hilbertWhisking.S_ctk.theta = mean([bigBounds(1:end-1);bigBounds(2:end)]); 
+   
+    hilbertWhisking.R_ntk.theta{i} = raw_response{4}; 
     hilbertWhisking.R_ntk.amp{i}  = raw_response{1}; 
     hilbertWhisking.R_ntk.midpoint{i} = raw_response{2};
     hilbertWhisking.R_ntk.phase{i} = raw_response{3};
-    hilbertWhisking.R_ntk.theta{i} = raw_response{4}; 
+    
     
 end
 

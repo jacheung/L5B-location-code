@@ -8,7 +8,6 @@ touchWindow = [-25:50]; %window for analyses around touch
 touchCells = touchCell(U,'off');
 selectedCells = find(touchCells==1);
 
-
 % Structure for quantifying tuning and evaluating decoding
 popV = touchFeatureBinned(U,touchWindow);
 
@@ -48,7 +47,7 @@ for i = 1:4
             fitline = f(1:numel(x));
             fCIline = fCI(1:numel(x)); 
             
-            bar(x,featureMean{d}.*1000,'facecolor',[.8 .8 .8])
+%             bar(x,featureMean{d}.*1000,'facecolor',[.8 .8 .8])
             hold on; shadedErrorBar(x,fitline,fCIline,'g')
             set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
             
@@ -57,7 +56,7 @@ for i = 1:4
         else
             xtv = x(selBins{d}); 
             
-            bar(xtv,featureMean{d}(selBins{d}).*1000,'facecolor',[.8 .8 .8])
+%             bar(xtv,featureMean{d}(selBins{d}).*1000,'facecolor',[.8 .8 .8])
             f = fit(xtv',(featureMean{d}(selBins{d}).*1000)','smoothingspline','SmoothingParam',smoothParam);
             fCI = fit(xtv',(CI{d}(selBins{d}).*1000)','smoothingspline','SmoothingParam',smoothParam);
             fitline = f(xtv(1):xtv(end));
@@ -83,13 +82,13 @@ wOn = [find(whisking.matrix(1,:)==1) find(whisking.matrix(1,:)==-1)];
 pTune = cell2mat(WHilbertP');
 chosenPTune = pTune(:,wOn)<.01; %looking only at cells that are whisking excited and inhibited. 
 
-ampOnly = intersect(find(chosenPTune(1,:)),find(sum(chosenPTune)==1));
+angleOnly = intersect(find(chosenPTune(1,:)),find(sum(chosenPTune)==1));
 
-mpOnly = intersect(find(chosenPTune(2,:)),find(sum(chosenPTune)==1));
+ampOnly = intersect(find(chosenPTune(2,:)),find(sum(chosenPTune)==1));
 
-pOnly = intersect(find(chosenPTune(3,:)),find(sum(chosenPTune)==1));
+mpOnly = intersect(find(chosenPTune(3,:)),find(sum(chosenPTune)==1));
 
-angleOnly = intersect(find(chosenPTune(4,:)),find(sum(chosenPTune)==1));
+pOnly = intersect(find(chosenPTune(4,:)),find(sum(chosenPTune)==1));
 
 %to find bar/spline of above do wOn(angleOnly); 
 twofeats = find(sum(chosenPTune)==2);
@@ -97,12 +96,12 @@ threefeats = find(sum(chosenPTune)==3);
 allfeats = find(sum(chosenPTune)==4);
 unmod = find(sum(chosenPTune)==0);
 
-plotSort = [unmod ampOnly mpOnly pOnly angleOnly twofeats threefeats allfeats];
+plotSort = [unmod angleOnly ampOnly mpOnly pOnly angleOnly twofeats threefeats allfeats];
 
 sortedMap = chosenPTune(:,plotSort);
 figure(9);clf
 imagesc(sortedMap')
-set(gca,'xtick',1:4,'xticklabel',{'phase','amp','midpoint','angle'})
+set(gca,'xtick',1:4,'xticklabel',fieldsToCompare)
 
 
 

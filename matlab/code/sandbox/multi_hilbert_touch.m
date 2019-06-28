@@ -1,12 +1,26 @@
-
+%Load whisking and neural time series struct
+clear
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b excitatory cells
+% load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% 1 dimensional hilbert features
+touchWindow = [-25:50]; %window for analyses around touch
+
 touchCells = touchCell(U,'off');
 selectedCells = find(touchCells==1);
+
+% Structure for quantifying tuning and evaluating decoding
+popV = touchFeatureBinned(U,touchWindow);
+
+% Defining touch response
+U = defTouchResponse(U,.99,'off');
+
+% Quantifying hilbert touch tuning
 whichTouches = fields(popV{1});
 fieldsList = fields(popV{1}.allTouches);
 hilbertTouch = tuningQuantification(U,popV,selectedCells,fieldsList([ 1 3 4 5]),whichTouches,touchWindow,'off');
 
+%%
 [rc]= numSubplots(length(U))
 
 fieldsToCompare = fields(hilbertTouch.R_ntk.allTouches);
@@ -17,7 +31,7 @@ peakResponse = cell(1,numel(fieldsToCompare));
 pctSamp = .01; 
 smoothParam = .7;
 alpha = .01; 
-for i = 4
+for i = 1:4
     figure(230);clf
     featureMean = cellfun(@(x) nanmean(x,2),hilbertTouch.R_ntk.allTouches.(fieldsToCompare{i}),'uniformoutput',0);
     featureSEM = cellfun(@(x) nanstd(x,[],2) ./ sqrt(sum(~isnan(x),2)),hilbertTouch.R_ntk.allTouches.(fieldsToCompare{i}),'uniformoutput',0);
@@ -73,14 +87,19 @@ for i = 4
                 ranges = xtv(1):xtv(end);
                 peakResponse{i}(d) = ranges(idx);
             end
+        else 
+            THilbertP{i}(d) = nan; 
         end
     end
     
     suptitle(fieldsToCompare{i})
     
-   print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} 'touch'],'-dpng')
-   print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} 'touch'],'-depsc')
+%    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} 'touch'],'-dpng')
+%    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} 'touch'],'-depsc')
 end
+
+OLcells = THilbertP{1}<alpha;
+
 
 %% %2dimensional or 3dimensional scatter of features at touch
 % Defining touch response
