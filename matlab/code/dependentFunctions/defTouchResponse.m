@@ -21,8 +21,7 @@ for rec=1:length(U)
     
     within_range = ~ (logical(sum((touchIdx + window) > numel(spks),2)) | logical(sum((touchIdx + window) < 0, 2)));
     touchIdx = touchIdx(within_range); 
-    
-    
+       
     blIdx = window(find(window==-25):find(window==0));
     
     touchSpks = spks(touchIdx+window);
@@ -62,15 +61,16 @@ for rec=1:length(U)
             if isempty(endPoint)
                 endPoint = tps(end);
             end
-            
-            if willdisplay
-                hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
-            end
+
             
             %used below to eliminate touch responses that are sig but way
-            %too small. 
-            if mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) > 2
+            %too small.
+            if mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) > 2 && endPoint - startPoint >= 4
                 U{rec}.meta.responseWindow=[startPoint endPoint];
+                
+                if willdisplay
+                    hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
+                end
             end
             
         end

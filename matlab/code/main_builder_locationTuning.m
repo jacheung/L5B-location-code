@@ -6,7 +6,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b e
 %% Top level parameters and definitions 
 viewWindow = [-25:50]; %window for analyses around touch
 
-touchCells = touchCell(U,'on');
+% touchCells = touchCell(U,'on');
 % selectedCells = find(touchCells==1);
 
 % Structure for quantifying tuning and evaluating decoding 
@@ -15,7 +15,7 @@ popV = touchFeatureBinned(U,viewWindow);
 % Defining touch response
 U = defTouchResponse(U,.99,'on');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)==1);
-selectedCells([19 22]) = [];
+selectedCells(17) = [];
 %% Plotter for feature tuning around touch window
 gaussFilt = 1; %smoothing function for tuning plots
 whichTouches = fields(popV{1});
