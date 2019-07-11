@@ -14,6 +14,9 @@ for rec=1:length(U)
     touchIdx= [find(U{rec}.S_ctk(9,:,:)==1) ; find(U{rec}.S_ctk(12,:,:)==1)];
     spks = squeeze(U{rec}.R_ntk);
     
+    within_range = ~ (logical(sum((touchIdx + window) > numel(spks),2)) | logical(sum((touchIdx + window) < 0, 2)));
+    touchIdx = touchIdx(within_range); 
+    
     touchSpks = spks(repmat(touchIdx,1,length(window))+repmat(window,size(touchIdx,1),1));
     sTrains(rec,:) = mean(touchSpks);
     blclose = mean(touchSpks(:,36:50),2);
@@ -30,10 +33,14 @@ for rec=1:length(U)
     blpr(2,:)=[mean(blmid) mean(prmid)];
     blpr(3,:)=[mean(blfar) mean(prfar)];
     
-    ttanalysis = logical([ttest2(blclose,prclose,'alpha',.01) ttest2(blmid,prmid,'alpha',.01) ttest2(blfar,prfar,'alpha',.01)]');
+    trClose = ttest2(blclose,prclose,'alpha',.01); 
+    trMid = ttest2(blmid,prmid,'alpha',.01);
+    trFar = ttest2(blfar,prfar,'alpha',.01);
+    trtest = [trClose trMid trFar];
+    trtest(isnan(trtest)) = 0;
+    ttanalysis = logical(trtest');
     
     if ismember(1,ttanalysis)
-        
         sigs = find(ttanalysis==1);
         diffs = blpr(sigs,2)-blpr(sigs,1) ;
         
@@ -44,6 +51,8 @@ for rec=1:length(U)
         else
             touchORnaw(rec) = 0; %NONTOUCH
         end
+    else
+        touchORnaw(rec) = 0; 
     end
     
 end

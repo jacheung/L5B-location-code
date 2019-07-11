@@ -26,7 +26,8 @@ peakResponse = cell(1,numel(fieldsToCompare));
 
 pctSamp = .01; 
 smoothParam = .7;
-for i = 1:4
+alpha = .01; 
+for i = 4
     figure(230);clf
     featureMean = cellfun(@(x) nanmean(x),hilbertWhisking.R_ntk.(fieldsToCompare{i}),'uniformoutput',0);
     featureSEM = cellfun(@(x) nanstd(x) ./ sqrt(sum(~isnan(x))),hilbertWhisking.R_ntk.(fieldsToCompare{i}),'uniformoutput',0);
@@ -45,36 +46,44 @@ for i = 1:4
             f = fit((1:numel(x))',(featureMean{d}.*1000)','smoothingspline','SmoothingParam',smoothParam);
             fCI = fit((1:numel(x))',(CI{d}.*1000)','smoothingspline','SmoothingParam',smoothParam);
             fitline = f(1:numel(x));
-            fCIline = fCI(1:numel(x)); 
+            fCIline = fCI(1:numel(x));
             
-%             bar(x,featureMean{d}.*1000,'facecolor',[.8 .8 .8])
-            hold on; shadedErrorBar(x,fitline,fCIline,'g')
+            %             bar(x,featureMean{d}.*1000,'facecolor',[.8 .8 .8])
+            if WHilbertP{i}(d) < alpha
+                hold on; shadedErrorBar(x,fitline,fCIline,'g')
+            else
+                hold on; shadedErrorBar(x,fitline,fCIline,'k')
+            end
             set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
             
             [~,idx] = max(fitline);
-            peakResponse{i}(d) = x(idx); 
+            peakResponse{i}(d) = x(idx);
         else
-            xtv = x(selBins{d}); 
+            xtv = x(selBins{d});
             
-%             bar(xtv,featureMean{d}(selBins{d}).*1000,'facecolor',[.8 .8 .8])
+            %             bar(xtv,featureMean{d}(selBins{d}).*1000,'facecolor',[.8 .8 .8])
             f = fit(xtv',(featureMean{d}(selBins{d}).*1000)','smoothingspline','SmoothingParam',smoothParam);
             fCI = fit(xtv',(CI{d}(selBins{d}).*1000)','smoothingspline','SmoothingParam',smoothParam);
             fitline = f(xtv(1):xtv(end));
-            fCIline = fCI(xtv(1):xtv(end)); 
-            hold on; shadedErrorBar(xtv(1):xtv(end),fitline,fCIline,'g')
-           
-            set(gca,'xtick',xtv(1):3:xtv(end),'ylim',[0 (max(featureMean{d}(selBins{d}).*1000)+.01).*1.2])
+            fCIline = fCI(xtv(1):xtv(end));
+            if WHilbertP{i}(d) < alpha
+                hold on; shadedErrorBar(xtv(1):xtv(end),fitline,fCIline,'g')
+            else
+                hold on; shadedErrorBar(xtv(1):xtv(end),fitline,fCIline,'k')
+            end
+            
+            set(gca,'xlim',[min(xtv) max(xtv)],'ylim',[0 (max(featureMean{d}(selBins{d}).*1000)+.01).*1.2])
             
             [~,idx] = max(fitline);
             ranges = xtv(1):xtv(end);
-            peakResponse{i}(d) = ranges(idx); 
+            peakResponse{i}(d) = ranges(idx);
         end
     end
     
     suptitle(fieldsToCompare{i})
     
-%    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} '_whisking'],'-dpng')
-%    print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} '_whisking'],'-depsc')
+   print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} '_whisking'],'-dpng')
+   print(['C:\Users\jacheung\Dropbox\LocationCode\Figures\hilbertCode\Hilbert_whiskingTouch\' fieldsToCompare{i} '_whisking'],'-depsc')
 end
 
 %%

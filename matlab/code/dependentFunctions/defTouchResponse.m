@@ -19,6 +19,10 @@ for rec=1:length(U)
     touchIdx= [find(array.S_ctk(9,:,:)==1) ; find(array.S_ctk(12,:,:)==1)];
     spks = squeeze(array.R_ntk);
     
+    within_range = ~ (logical(sum((touchIdx + window) > numel(spks),2)) | logical(sum((touchIdx + window) < 0, 2)));
+    touchIdx = touchIdx(within_range); 
+    
+    
     blIdx = window(find(window==-25):find(window==0));
     
     touchSpks = spks(touchIdx+window);

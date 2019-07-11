@@ -20,7 +20,28 @@ clear U
 layer = 'L5bInt';
 cellNum = [1:6];
 trialCutoffs = repmat([1 500],numel(cellNum),1);
+%% 
+clear 
+layer = 'Phil';
+cd(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\Projects\Characterization\' layer '\TArrays'])
+files = dir('*.mat');
+for y = 1:length(files)
+    fns_trials(y) = str2num(files(y).name(13:16));
+end
+
+cd(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\Projects\Characterization\' layer '\Contacts'])
+files = dir('*.mat');
+for y = 1:length(files)
+    fns_contacts(y) = str2num(files(y).name(7:10));
+end
+
+cellNum = intersect(fns_contacts,fns_trials);
+cellNum = cellNum(cellNum ~= 2075); %tmp removal because double cell and contact/T array lengths are different
+trialCutoffs = repmat([1 999],numel(cellNum),1);
+
 %%
+
+timeIdx_threshold = 4000; %this is the number of time points that must be present to use trial; 
 
 for cellStep = 1:length(cellNum)
     
@@ -41,6 +62,15 @@ for cellStep = 1:length(cellNum)
     [~,useTrials] = intersect(T.trialNums,T.whiskerTrialNums);
     useTrials = useTrials(useTrials >= trialCutoffs(cellStep,1) & useTrials <= trialCutoffs(cellStep,2));
     
+    %Trial checking to ensure both T array and contacts have same number of
+    %timepoints 
+    timeStamps = zeros(1,length(useTrials));
+    timeStampsContacts = zeros(1,length(useTrials));
+    for i = 1:length(useTrials)
+        timeStamps(i) = length(round(T.trials{useTrials(i)}.whiskerTrial.time{1}*1000)+1);
+        timeStampsContacts(i) = length(contacts{useTrials(i)}.M0combo{1});
+    end
+    useTrials = useTrials(timeStamps == timeStampsContacts);
     
     d.k = length(useTrials);
     d.u = 1;
@@ -53,7 +83,7 @@ for cellStep = 1:length(cellNum)
     traj = 1;
     
     
-    for i = 1:length(useTrials);
+    for i = 1:length(useTrials)
         display(i)
         timeIdx = round(T.trials{useTrials(i)}.whiskerTrial.time{traj}*1000)+1;
         
