@@ -45,11 +45,7 @@ for rec=1:length(U)
     inhibthreshIdx(inhibthreshIdx==1)= -1;
     inhibthreshIdx(1:find(window==0))=0;
     
-    if willdisplay
-        figure(3000);subplot(rc(1),rc(2),rec)
-        hold on; scatter(window,touchResponse*1000,'k')
-        hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'r-.')
-    end
+
     
     %Defining touch responses as a period between two points that are less
     %than 5ms apart.
@@ -61,7 +57,6 @@ for rec=1:length(U)
             if isempty(endPoint)
                 endPoint = tps(end);
             end
-
             
             %used below to eliminate touch responses that are sig but way
             %too small.
@@ -69,11 +64,23 @@ for rec=1:length(U)
                 U{rec}.meta.responseWindow=[startPoint endPoint];
                 
                 if willdisplay
+                    figure(3000);subplot(rc(1),rc(2),rec)
+                    hold on; bar(window,touchResponse*1000,'b','facealpha',.2,'edgealpha',.2);
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
+                    hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'r-.')
+                    set(gca,'xtick',-25:25:50)
                 end
+                
             end
-            
+        end
+    else
+        if willdisplay
+            figure(3000);subplot(rc(1),rc(2),rec)
+            hold on; bar(window,touchResponse*1000,'k','facealpha',.2,'edgealpha',.2);
+            hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'r-.')
+            set(gca,'xtick',-25:25:50)
         end
     end
+
     
 end

@@ -63,10 +63,10 @@ axis square
 figure(480);clf
 
 scatter( cellfun(@(y) y.meta.depth,U),cellfun(@(y) mean(y.R_ntk(:))*1000, U),'k')
-hold on; plot([700 700],[0 25],'-.k')
-hold on; plot([900 900],[0 25],'-.k')
+hold on; plot([700 700],[0 30],'-.k')
+hold on; plot([900 900],[0 30],'-.k')
 
-set(gca,'ytick',0:5:25,'xtick',600:100:1000)
+set(gca,'ytick',0:10:30,'xtick',600:100:1000,'xlim',[600 1000])
 ylabel('firing rate (hz)');
 xlabel('depth (um)')
 
