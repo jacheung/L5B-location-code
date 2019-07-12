@@ -15,14 +15,14 @@ end
 
 for rec=1:length(U)
     array = U{rec};
-    window = [-25:50];
+    window = [-50:50];
     touchIdx= [find(array.S_ctk(9,:,:)==1) ; find(array.S_ctk(12,:,:)==1)];
     spks = squeeze(array.R_ntk);
     
     within_range = ~ (logical(sum((touchIdx + window) > numel(spks),2)) | logical(sum((touchIdx + window) < 0, 2)));
     touchIdx = touchIdx(within_range); 
        
-    blIdx = window(find(window==-25):find(window==0));
+    blIdx = window(find(window==-50):find(window==0));
     
     touchSpks = spks(touchIdx+window);
     touchSpksShuff = spks(touchIdx+blIdx);
@@ -32,7 +32,7 @@ for rec=1:length(U)
     ts = tinv(confidenceThreshold,sum(~isnan(touchSpksShuff(:,1))));
     CI = SEM.*ts;
     
-    touchResponse = smooth(mean(touchSpks));
+    touchResponse = smooth(mean(touchSpks),5);
     excitThreshold = mean(touchSpksShuff(:)) + CI;
     inhibThreshold = mean(touchSpksShuff(:)) - CI;
     
@@ -53,7 +53,7 @@ for rec=1:length(U)
         tps = window(excitthreshIdx);
         if ~isempty(tps)
             startPoint = tps(1);
-            endPoint = tps(find(diff(diff(tps)<5)==-1,1,'first'));
+            endPoint = tps(find(diff(diff(tps)<10)==-1,1,'first'));
             if isempty(endPoint)
                 endPoint = tps(end);
             end

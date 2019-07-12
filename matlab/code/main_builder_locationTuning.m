@@ -13,9 +13,9 @@ viewWindow = [-25:50]; %window for analyses around touch
 popV = touchFeatureBinned(U,viewWindow);
 
 % Defining touch response
-U = defTouchResponse(U,.99,'on');
+U = defTouchResponse(U,.95,'on');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)==1);
-selectedCells(17) = [];
+% selectedCells(17) = [];
 %% Plotter for feature tuning around touch window
 gaussFilt = 1; %smoothing function for tuning plots
 whichTouches = fields(popV{1});

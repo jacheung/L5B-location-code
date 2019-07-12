@@ -62,9 +62,13 @@ axis square
 %% firing rate X depth of recording
 figure(480);clf
 
-scatter( cellfun(@(y) y.meta.depth,U),cellfun(@(y) mean(y.R_ntk(:))*1000, U),'k')
+jc_silent_cell = [766 819 895 631 776 815 910 871 844];
+
+scatter( cellfun(@(y) y.meta.depth,U),cellfun(@(y) mean(y.R_ntk(:))*1000, U),'k','filled')
+hold on; scatter(jc_silent_cell,ones(length(jc_silent_cell),1)*-1,[],'c','filled');
 hold on; plot([700 700],[0 30],'-.k')
 hold on; plot([900 900],[0 30],'-.k')
+title(['n = response (' num2str(numel(U)) ') + silent (' num2str(numel(jc_silent_cell)) ')' ])
 
 set(gca,'ytick',0:10:30,'xtick',600:100:1000,'xlim',[600 1000])
 ylabel('firing rate (hz)');
