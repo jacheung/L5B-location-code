@@ -63,7 +63,7 @@ for cellStep = 1:length(cellNum)
     useTrials = useTrials(useTrials >= trialCutoffs(cellStep,1) & useTrials <= trialCutoffs(cellStep,2));
     
     %Trial checking to ensure both T array and contacts have same number of
-    %timepoints 
+    %timepoints JC190711
     timeStamps = zeros(1,length(useTrials));
     timeStampsContacts = zeros(1,length(useTrials));
     for i = 1:length(useTrials)

@@ -1,6 +1,7 @@
 %Load whisking and neural time series struct 
 clear
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b excitatory cells
+% load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b excitatory cells
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_2.mat') %L5b excitatory cells recorded by Phil
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
@@ -9,22 +10,14 @@ viewWindow = [-25:50]; %window for analyses around touch
 % touchCells = touchCell(U,'on');
 % selectedCells = find(touchCells==1);
 
-% Structure for quantifying tuning and evaluating decoding 
-popV = touchFeatureBinned(U,viewWindow);
-
 % Defining touch response
-U = defTouchResponse(U,.95,'on');
-selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)==1);
+U = defTouchResponse(U,.95,'off');
+selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 % selectedCells(17) = [];
-%% Plotter for feature tuning around touch window
-gaussFilt = 1; %smoothing function for tuning plots
-whichTouches = fields(popV{1});
-fieldsList = fields(popV{1}.allTouches);
-touchFeatureBinned_plotter(U,popV,selectedCells,fieldsList(1),whichTouches,viewWindow,gaussFilt)
+defTouchResponse(U(selectedCells),.95,'on')
 
-%% Quantifying object location tuning
-fieldsList = fields(popV{1}.allTouches);
-tunedCellsIdx = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches(1),viewWindow,'on');
+%% object location tuning 
+object_location_quantification(U,selectedCells) %for old see object_location_v1.0 
 
 %optional raster of FRs for tuned cells. 
 for d = 13
