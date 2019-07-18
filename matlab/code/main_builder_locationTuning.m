@@ -16,8 +16,34 @@ selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 % selectedCells(17) = [];
 defTouchResponse(U(selectedCells),.95,'on')
 
-%% object location tuning 
-object_location_quantification(U,selectedCells) %for old see object_location_v1.0 
+%% at touch hilbert tuning 
+angle_tuned = object_location_quantification(U,selectedCells,'angle'); %for old see object_location_v1.0 
+amp_tuned = object_location_quantification(U,selectedCells,'amplitude'); %for old see object_location_v1.0 
+midpoint_tuned = object_location_quantification(U,selectedCells,'midpoint'); %for old see object_location_v1.0 
+phase_tuned = object_location_quantification(U,selectedCells,'phase'); %for old see object_location_v1.0 
+
+%% scatter of tuning
+touch_tuning = cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0;
+feat_tuned = [touch_tuning' angle_tuned amp_tuned midpoint_tuned phase_tuned];
+[~,idx ] = sort(nansum(feat_tuned,2));
+plot_tuned = feat_tuned(flipud(idx),:);
+
+figure(80);clf
+for i = 1:size(plot_tuned,2)
+    for g = 1:size(plot_tuned,1)
+        if plot_tuned(g,i) == 1
+            hold on; scatter(g,i,'ko','filled')
+        else
+            hold on; scatter(g,i,'ko','markeredgecolor',[.6 .6 .6])
+        end
+    end
+end
+
+set(gca,'ydir','reverse','ytick',1:5,'yticklabel',{'touch','angle','amp','midpoint','phase'},'ylim',[0.5 5.5])
+xlabel(['cell number (n=' num2str(length(U)) ')'])
+
+%% 
+
 
 %optional raster of FRs for tuned cells. 
 for d = 13

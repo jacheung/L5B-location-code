@@ -124,36 +124,38 @@ end
 
 %% summary plot of touch responses
 
-untuned = find(cellfun(@(x) strcmp(x.meta.responseType,'untuned'),U));
-excited = find(cellfun(@(x) strcmp(x.meta.responseType,'excited'),U));
-inhibited = find(cellfun(@(x) strcmp(x.meta.responseType,'inhibited'),U));
-
-responseTypes = {excited,inhibited,untuned};
-
-figure(3001);clf
-
-for g = 1:length(responseTypes)
-    current = heatTouch(responseTypes{g});
-    post_touch_window = find(window==0) : find(window==max(window));
-    response_max_index = cellfun(@(x) find(x(post_touch_window) == max(x(post_touch_window))==1,1,'first'),current);
-    [~,sorted_idx] = sort(response_max_index);
-    norm_mat = normalize_var(cell2mat(current(sorted_idx)),0,1);
+if willdisplay
+    untuned = find(cellfun(@(x) strcmp(x.meta.responseType,'untuned'),U));
+    excited = find(cellfun(@(x) strcmp(x.meta.responseType,'excited'),U));
+    inhibited = find(cellfun(@(x) strcmp(x.meta.responseType,'inhibited'),U));
     
-    if g == 1
-        subplot(5,1,[1:3]);
-    elseif g == 2
-        subplot(5,1,4);
-    elseif g ==3
-        subplot(5,1,5);
-
+    responseTypes = {excited,inhibited,untuned};
+    
+    figure(3001);clf
+    
+    for g = 1:length(responseTypes)
+        current = heatTouch(responseTypes{g});
+        post_touch_window = find(window==0) : find(window==max(window));
+        response_max_index = cellfun(@(x) find(x(post_touch_window) == max(x(post_touch_window))==1,1,'first'),current);
+        [~,sorted_idx] = sort(response_max_index);
+        norm_mat = normalize_var(cell2mat(current(sorted_idx)),0,1);
+        
+        if g == 1
+            subplot(5,1,[1:3]);
+        elseif g == 2
+            subplot(5,1,4);
+        elseif g ==3
+            subplot(5,1,5);
+            
+        end
+        imagesc(norm_mat')
+        hold on; plot([find(window==0) find(window==0)],[0 numel(current)+1],'-.w')
+        set(gca,'xtick',1:25:length(window),'xticklabel',min(window):25:max(window),'xlim',[1 length(window)])
+        
+        
     end
-    imagesc(norm_mat')
-    hold on; plot([find(window==0) find(window==0)],[0 numel(current)+1],'-.w')
-    set(gca,'xtick',1:25:length(window),'xticklabel',min(window):25:max(window),'xlim',[1 length(window)])
-    
-    
 end
-    
+
     
 
 
