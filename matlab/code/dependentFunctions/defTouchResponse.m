@@ -145,8 +145,7 @@ if willdisplay
         elseif g == 2
             subplot(5,1,4);
         elseif g ==3
-            subplot(5,1,5);
-            
+            subplot(5,1,5);   
         end
         imagesc(norm_mat')
         hold on; plot([find(window==0) find(window==0)],[0 numel(current)+1],'-.w')

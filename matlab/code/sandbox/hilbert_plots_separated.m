@@ -4,11 +4,16 @@ touchOrderFields = fields(popV{1});
 whichTouches = 1;
 
 % Defining touch response
-U = defTouchResponse(U,.99,'off');
+U = defTouchResponse(U,.95,'off');
 
 %%
 for i = 1:length(glmModel)
     array = U{glmModel{i}.meta};
+    
+    if ~isfield(array.meta,'responseWindow')
+        array.meta.responseWindow = [8 30];
+    end
+    
     BI = glmModel{i}.modelParams.buildIndices;
     touchResp = array.meta.responseWindow;
     spikes = squeeze(array.R_ntk(:,:,:));
@@ -83,6 +88,11 @@ thetabounds = [-100:2:100];
 
 for i = 1:length(glmModel)
     array = U{glmModel{i}.meta};
+    
+    if ~isfield(array.meta,'responseWindow')
+        array.meta.responseWindow = [8 30];
+    end
+    
     BI = glmModel{i}.modelParams.buildIndices;
     touchResp = array.meta.responseWindow;
     spikes = squeeze(array.R_ntk(:,:,:));
@@ -226,22 +236,26 @@ xlabel('raw tuning')
 ylabel('predicted tuning')
 
 subplot(1,2,2);
- histogram(peakTuning(selCells,3)-peakTuning(selCells,2),-5:2.5:20)
- set(gca,'xlim',[-5 20])
- axis square
- xlabel('degrees from raw tuning');ylabel('number of cells')
+histogram(peakTuning(selCells,3)-peakTuning(selCells,2),-5:2.5:20)
+set(gca,'xlim',[-5 20])
+axis square
+xlabel('degrees from raw tuning');ylabel('number of cells')
 
- %goodness of fit of ol tuning and variance explained
- figure(131);clf
- scatter(devExplained,expVar)
+%goodness of fit of ol tuning and variance explained
+figure(131);clf
+scatter(devExplained,expVar)
 axis square
 xlabel('devExplained');ylabel('rsqd of OL tuning')
- 
+
 
 %% goodness of fit!
 devExplained = cellfun(@(x) nanmean(x.gof.devExplained),glmModel);
 for i = 1:length(glmModel)
     array = U{glmModel{i}.meta};
+    if ~isfield(array.meta,'responseWindow')
+        array.meta.responseWindow = [8 30];
+    end
+    
     BI = glmModel{i}.modelParams.buildIndices;
     touchResp = array.meta.responseWindow;
     spikes = squeeze(array.R_ntk(:,:,:));

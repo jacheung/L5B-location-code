@@ -11,7 +11,7 @@ viewWindow = [-25:50]; %window for analyses around touch
 % selectedCells = find(touchCells==1);
 
 % Defining touch response
-U = defTouchResponse(U,.95,'off');
+U = defTouchResponse(U,.95,'on');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 % selectedCells(17) = [];
 defTouchResponse(U(selectedCells),.95,'on')
@@ -21,6 +21,8 @@ angle_tuned = object_location_quantification(U,selectedCells,'angle'); %for old 
 amp_tuned = object_location_quantification(U,selectedCells,'amplitude'); %for old see object_location_v1.0 
 midpoint_tuned = object_location_quantification(U,selectedCells,'midpoint'); %for old see object_location_v1.0 
 phase_tuned = object_location_quantification(U,selectedCells,'phase'); %for old see object_location_v1.0 
+
+dk_tuned = object_location_quantification(U,selectedCells,'curvature'); %for old see object_location_v1.0 
 
 %% scatter of tuning
 touch_tuning = cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0;
@@ -32,9 +34,12 @@ figure(80);clf
 for i = 1:size(plot_tuned,2)
     for g = 1:size(plot_tuned,1)
         if plot_tuned(g,i) == 1
-            hold on; scatter(g,i,'ko','filled')
+            hold on; scatter(g,i,'bo','filled')
+        elseif plot_tuned(g,i) == .5
+            hold on; scatter(g,i,'ko','filled','markerfacecolor',[.6 .6 .6])
         else
             hold on; scatter(g,i,'ko','markeredgecolor',[.6 .6 .6])
+            
         end
     end
 end

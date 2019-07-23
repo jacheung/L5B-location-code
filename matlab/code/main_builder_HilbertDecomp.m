@@ -1,27 +1,27 @@
 %Load whisking and neural time series struct 
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\U.mat') %L5b excitatory cells
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b excitatory cells
+% load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
-touchWindow = [-25:50]; %window for analyses around touch
-numInterpPts = 24; %used for stretching or shrinking tuning curves to within the same bounds for decoding object location
+U = defTouchResponse(U,.95,'on');
+selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 
-touchCells = touchCell(U,'off');
-selectedCells = find(touchCells==1);
+is_tuned = object_location_quantification(U,selectedCells,'angle');
 
-% Structure for quantifying tuning 
-and evaluating decoding 
-popV = touchFeatureBinned(U,touchWindow);
-
-% Defining touch response
-U = defTouchResponse(U,.99,'off');
-%% Plotter for object location tuning
-whichTouches = fields(popV{1});
-fieldsList = fields(popV{1}.allTouches);
-tunedCells = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
+% touchWindow = [-25:50]; %window for analyses around touch
+% touchCells = touchCell(U,'off');
+% selectedCells = find(touchCells==1);
+% % Structure for quantifying tuning and evaluating decoding 
+% popV = touchFeatureBinned(U,touchWindow);
+% % Defining touch response
+% U = defTouchResponse(U,.99,'off');
+% %% Plotter for object location tuning
+% whichTouches = fields(popV{1});
+% fieldsList = fields(popV{1}.allTouches);
+% tunedCells = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
 
 %% Builder for identifying hilbert components that generate tuning
-selectedArray = U(find(tunedCells.mat(1,:)==1));
+selectedArray = U((is_tuned==1));
 
 %GLMNET parameters
 glmnetOpt = glmnetSet;
@@ -41,12 +41,12 @@ basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwid
 glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
 
 %GLMdesign Matrix Set-up
-fileName = 'glmModelFullInterp';
+fileName = 'glmModel';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C :\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
     glmModel = [];
-    [glmModel] = designMatrixBlocks(selectedArray,glmnetOpt,glmModel);
+    [glmModel] = designMatrixBlocks_v2(selectedArray,glmnetOpt,glmModel);
 end
 
 %GLMdesign Matrix Build

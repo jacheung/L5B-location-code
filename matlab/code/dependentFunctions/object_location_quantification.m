@@ -48,6 +48,8 @@ for rec = 1:length(selectedCells)
             selected_feature = tVar.allTouches.S_ctk(:,4);
         elseif strcmp(hilbert_feature,'phase')
             selected_feature = tVar.allTouches.S_ctk(:,5);
+        elseif strcmp(hilbert_feature,'curvature')
+            selected_feature = tVar.allTouches.S_ctk(:,6);
         else
             error('select features of "angle", "amplitude", "midpoint", or "phase"')
         end
@@ -153,6 +155,8 @@ for rec = 1:length(selectedCells)
             set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
         end
         
+    else
+        is_tuned(selectedCells(rec)) = .5;  %not enough samples 
     end
     
     
