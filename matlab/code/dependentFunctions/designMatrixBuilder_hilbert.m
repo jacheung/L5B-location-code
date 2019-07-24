@@ -16,7 +16,7 @@ for i = 1:length(glmModel)
 
     if strcmp(interpOption,'on')
         DmatX = fillmissing(DmatX,'linear',1);
-    elseif strcmp(interOption,'off')
+    elseif strcmp(interpOption,'off')
         disp('no interpolation of missing values') 
     end
     

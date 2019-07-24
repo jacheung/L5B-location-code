@@ -40,7 +40,7 @@ for p = 1:glmnetOpt.numIterations
     %                 set(gca,'xtick',[],'ytick',[])
     %
     cv = cvglmnet(trainDmatX,trainDmatY,'binomial',glmnetOpt,[],glmnetOpt.xfoldCV);
-    cvglmnetPlot(cv)
+%     cvglmnetPlot(cv)
     
     fitLambda = cv.lambda_1se;
     iLambda = find(cv.lambda == fitLambda);

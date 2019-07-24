@@ -7,7 +7,7 @@ whichTouches = 1;
 U = defTouchResponse(U,.95,'off');
 
 %%
-for i = 1:length(glmModel)
+for i = 9
     array = U{glmModel{i}.meta};
     
     if ~isfield(array.meta,'responseWindow')
@@ -86,7 +86,7 @@ otune=nan(size(glmModel,1));
 tuningSharpness = cell(3,1);
 thetabounds = [-100:2:100];
 
-for i = 1:length(glmModel)
+for i = 9
     array = U{glmModel{i}.meta};
     
     if ~isfield(array.meta,'responseWindow')
@@ -250,7 +250,7 @@ xlabel('devExplained');ylabel('rsqd of OL tuning')
 
 %% goodness of fit!
 devExplained = cellfun(@(x) nanmean(x.gof.devExplained),glmModel);
-for i = 1:length(glmModel)
+for i = 9
     array = U{glmModel{i}.meta};
     if ~isfield(array.meta,'responseWindow')
         array.meta.responseWindow = [8 30];
@@ -282,6 +282,7 @@ suptitle('touch response of raw(black) vs modeled (red')
 
 %% kernels
 figure(128);clf
+BI = glmModel{i}.modelParams.buildIndices;
 for i = 1:length(glmModel)
     subplot(4,5,i)
     coeffsToPlot = fields(glmModel{i}.coeffs);

@@ -8,6 +8,7 @@ selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 
 is_tuned = object_location_quantification(U,selectedCells,'angle');
 
+
 % touchWindow = [-25:50]; %window for analyses around touch
 % touchCells = touchCell(U,'off');
 % selectedCells = find(touchCells==1);
@@ -21,7 +22,8 @@ is_tuned = object_location_quantification(U,selectedCells,'angle');
 % tunedCells = tuningQuantification(U,popV,selectedCells,fieldsList(1),whichTouches,touchWindow,'off');
 
 %% Builder for identifying hilbert components that generate tuning
-selectedArray = U((is_tuned==1));
+tunedIdx = find(is_tuned==1);
+selectedArray = U(tunedIdx);
 
 %GLMNET parameters
 glmnetOpt = glmnetSet;
@@ -31,14 +33,14 @@ glmnetOpt.xfoldCV = 5;
 glmnetOpt.numIterations = 5;
 
 %BUILD parameters
-glmnetOpt.buildIndices = [-25:50]; %Indices around touch
+glmnetOpt.buildIndices = [0:50]; %Indices around touch
 
 %basis function and convolution using gaussian distribution
-glmnetOpt.bf.bfwidth =7;
-glmnetOpt.bf.bfstd = 5;
+glmnetOpt.bf.bfwidth =5;
+glmnetOpt.bf.bfstd = 3;
 glmnetOpt.bf.bfspacing = 3;
 basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwidth,0,glmnetOpt.bf.bfstd),0,1);
-glmnetOpt.bf.indicesToAdd  = [-33:glmnetOpt.bf.bfspacing:20];
+glmnetOpt.bf.indicesToAdd  = [-41:glmnetOpt.bf.bfspacing:-4];
 
 %GLMdesign Matrix Set-up
 fileName = 'glmModel';
@@ -50,8 +52,8 @@ else
 end
 
 %GLMdesign Matrix Build
-selectedFeatures = [1 2 4 5 6 7 9]; 
-interpOption = 'on'; %linear interpolation of missing values;
+selectedFeatures = [3 4 5 6]; 
+interpOption = 'off'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 [glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures,interpOption);
@@ -63,12 +65,11 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 % caxis([0 .7]) ;colorbar
 % axis square; set(gca,'xtick',[],'ytick',[])
 
-for i =13
- i
+for i =1:length(tunedIdx)
  glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
- glmModel{i}.meta = tunedCellsIdx{1}(i);
+ glmModel{i}.meta = tunedIdx(i);
  glmModel{i}.name = fileName;
 end
 
-% cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
-% save(fileName,'glmModel','-v7.3')
+cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
+save(fileName,'glmModel','-v7.3')
