@@ -38,42 +38,48 @@ spikesAligned = cellfun(@(x) spikes(x),spikesIdx,'uniformoutput',0);
 %S_ctk stimulus mat for features around touches 
 varDesign = cell(1,3);
 dtDesign = cell(1,3); 
+dtDesign_R_ntk = cell(1,3); 
+
 for g = 1:length(tOnIndices)
     touchTnums = ceil(tOnIndices{g}./array.t);
     varDesign{g}(:,1) = array.S_ctk(1,tOnIndices{g});%theta at touch
     varDesign{g}(:,3) = array.S_ctk(3,tOnIndices{g});%amp at at touch
     varDesign{g}(:,4) = array.S_ctk(4,tOnIndices{g});%setpoint at touch
     varDesign{g}(:,5) = array.S_ctk(5,tOnIndices{g});%phase at touch
+    varDesign{g}(:,6) = array.S_ctk(17,tOnIndices{g});%curvature at touch
     for i = 1:length(tOnIndices{g})
         kwin=array.S_ctk(6,tOnIndices{g}(i):tOffIndices{g}(i)); %get values in touch window
         [~ ,maxidx] = max(abs(kwin)); %find idx of max kappa within each touch window, neg or pos
-        varDesign{g}(i,6)=kwin(maxidx); %use idx to pull max kappa
+        dtDesign{g}(i,2)=kwin(maxidx); %use idx to pull max kappa
         varDesign{g}(i,2)=mean(array.S_ctk(2,tOnIndices{g}(i)-5:tOnIndices{g}(i)-1)); %finds mean of velocity (-4:-1ms) before touch
         
-        dtDesign{g}(i,2) = sum(spikes(tOnIndices{g}(i):tOffIndices{g}(i)));
+        dtDesign_R_ntk{g}(i) = sum(spikes(tOnIndices{g}(i):tOffIndices{g}(i)));
     end
     varDesign{g}(:,7) = array.meta.motorPosition(touchTnums);
     dtDesign{g}(:,1) = tOffIndices{g} - tOnIndices{g};
 end
 
 %composing output structure
-tVar.allTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature','motorPosition'};
-tVar.allTouches.dtNames = {'touchDuration','spikes during'};
+tVar.allTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
+tVar.allTouches.dtNames = {'touchDuration','max dK'};
 tVar.allTouches.S_ctk = varDesign{1};  
 tVar.allTouches.R_ntk = spikesAligned{1};
 tVar.allTouches.dtS_ctk = dtDesign{1};
+tVar.allTouches.dtR_ntk = dtDesign_R_ntk{1}; %these are all the spikes that occur DURING the whole touch window
 
-tVar.preDecisionTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature','motorPosition','touchDuration'};
-tVar.preDecisionTouches.dtNames = {'touchDuration','spikes during'};
+tVar.allTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
+tVar.preDecisionTouches.dtNames = {'touchDuration','max dK'};
 tVar.preDecisionTouches.S_ctk = varDesign{2};
 tVar.preDecisionTouches.R_ntk = spikesAligned{2}; 
 tVar.preDecisionTouches.dtS_ctk = dtDesign{2}; 
+tVar.preDecisionTouches.dtR_ntk = dtDesign_R_ntk{2}; 
 
-tVar.postDecisionTouches.varNames = {'theta','velocity','amp','midpoint','phase','curvature','motorPosition','touchDuration'};
-tVar.postDecisionTouches.dtNames = {'touchDuration','spikes during'};
+tVar.allTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
+tVar.postDecisionTouches.dtNames = {'touchDuration','max dK'};
 tVar.postDecisionTouches.S_ctk = varDesign{3};
 tVar.postDecisionTouches.R_ntk = spikesAligned{3}; 
 tVar.postDecisionTouches.dtS_ctk = dtDesign{3}; 
+tVar.preDecisionTouches.dtR_ntk = dtDesign_R_ntk{3}; 
 
 
 

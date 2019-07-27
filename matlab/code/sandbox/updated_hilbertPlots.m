@@ -1,18 +1,37 @@
 %% pearson correlation of predicted FR and true FR
-
-rawFR = cellfun(@(x) mean(x.io.DmatY),glmModel) *1000; 
-predictedFR = cellfun(@(x) mean(x.predicted.spikeProb(:)),glmModel) * 1000; 
-
+gauss_std = [1 2 4 8 16 32];
+pearson_corr = zeros(length(gauss_std),length(glmModel));
+for i = 1:length(gauss_std)
+    rawFR = cellfun(@(x) imgaussfilt(x.predicted.spikeTestRaw(:),gauss_std(i)),glmModel,'uniformoutput',0);
+    predictedFR = cellfun(@(x) x.predicted.spikeProb(:),glmModel,'uniformoutput',0);
+    
+    pearson_corr(i,:) = cellfun(@(x,y) corr(x,y),rawFR,predictedFR);
+end
+%% plotting
 figure(123);clf
-scatter(predictedFR,rawFR,50,'.k')
-xlabel('predicted firing rate (Hz)');
-ylabel('raw firing rate (Hz)')
-title(['pearson correlation = ' num2str(corr(predictedFR',rawFR'))])
+subplot(2,1,1)
+xs = repmat((1:length(gauss_std))',1,length(glmModel)); 
+scatter(xs(:),pearson_corr(:),'kx')
+hold on; boxplot(pearson_corr')
+set(gca,'xtick',1:length(gauss_std),'xticklabel',gauss_std)
+xlabel('Gaussian sigma');
+ylabel('Pearson correlation')
 
+subplot(2,1,2)
+[~,idx] = sort(pearson_corr(end,:));
+imagesc(pearson_corr(:,idx))
+set(gca,'ytick',1:length(gauss_std),'yticklabel',gauss_std,'xdir','reverse','ydir','normal')
+colorbar
+xlabel('cell number');
+ylabel('Gaussian sigma')
 
+%% deviance explained
+DE = cellfun(@(x) mean(x.gof.devExplained),glmModel);
+figure(5221);clf
+for i = 1:length(gauss_std)
+hold on;scatter(DE,pearson_corr(i,:),'filled')
+end
 
-%%
-glmModel{1}.predicted.angles
 
 %% fitting to OL tuning
 % tunedCells = cellfun(@(x) x.meta,glmModel);

@@ -6,7 +6,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b e
 U = defTouchResponse(U,.95,'on');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 
-is_tuned = object_location_quantification(U,selectedCells,'angle');
+is_tuned = object_location_quantification(U,selectedCells,'pole');
 
 
 % touchWindow = [-25:50]; %window for analyses around touch
@@ -65,10 +65,11 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
 % caxis([0 .7]) ;colorbar
 % axis square; set(gca,'xtick',[],'ytick',[])
 
-for i =1:length(tunedIdx)
+parfor i =1:length(tunedIdx)
  glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
  glmModel{i}.meta = tunedIdx(i);
  glmModel{i}.name = fileName;
+
 end
 
 cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')

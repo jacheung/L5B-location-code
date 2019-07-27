@@ -50,11 +50,13 @@ for rec = 1:length(selectedCells)
             selected_feature = tVar.allTouches.S_ctk(:,5);
         elseif strcmp(hilbert_feature,'curvature')
             selected_feature = tVar.allTouches.S_ctk(:,6);
+        elseif strcmp(hilbert_feature,'pole')
+            selected_feature = normalize_var(tVar.allTouches.S_ctk(:,7),-1,1);
         else
-            error('select features of "angle", "amplitude", "midpoint", or "phase"')
+            error('select features of "angle", "amplitude", "midpoint", "phase", "curvature", or "pole"')
         end
     else
-        error('select features of "angle", "amplitude", "midpoint", or "phase"')
+        error('select features of "angle", "amplitude", "midpoint", "phase", "curvature", or "pole"')
     end
     
     rw = find(viewWindow == array.meta.responseWindow(1)) : find(viewWindow == array.meta.responseWindow(2));
@@ -78,6 +80,10 @@ for rec = 1:length(selectedCells)
         caxis([0 prctile(smoothed_heat_resp(:),99)])
         if strcmp(hilbert_feature,'phase')
             set(gca,'ydir','normal','ytick',[1 12],'yticklabel',{'-\pi','\pi'},...
+                'xtick',1:25:length(viewWindow),'xticklabel',-25:25:50)
+        elseif strcmp(hilbert_feature,'pole')
+            [~,zero_idx] = min(abs(cellfun(@median,sortedBy_heat)));
+            set(gca,'ytick',zero_idx,'yticklabel',0,...
                 'xtick',1:25:length(viewWindow),'xticklabel',-25:25:50)
         else
             set(gca,'ydir','normal','ytick',1:length(sortedBy_heat),'yticklabel',round(cellfun(@median,sortedBy_heat)),...
@@ -151,6 +157,8 @@ for rec = 1:length(selectedCells)
         
         if strcmp(hilbert_feature,'phase')
             set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
+        elseif strcmp(hilbert_feature,'pole')
+             set(gca,'xlim',[-1 1],'xtick',-1:1:1,'xdir','reverse')
         else
             set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
         end
