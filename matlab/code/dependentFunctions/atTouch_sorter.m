@@ -1,9 +1,9 @@
 % This function will find the indices of touch, the spikes around that
 % touch given by the RANGE (ie -25:50ms) you provide. Lastly it'll find the
 % theta, phase, amplitude, setpoint, max kappa, and pre touch velocity.
-
+%
 % Simple organization tool for visualizing parameters at touch onset
-
+%
 % OUTPUT: First 6 columns will be values for the variables 
 % 1) THETA 2) AMP 3) SETPOINT 4) PHASE 5) MAX KAPPA 6) PRE TOUCH VELOCITY 
 % Last columns will be the spikes around your given window 
@@ -51,9 +51,14 @@ for g = 1:length(tOnIndices)
         kwin=array.S_ctk(6,tOnIndices{g}(i):tOffIndices{g}(i)); %get values in touch window
         [~ ,maxidx] = max(abs(kwin)); %find idx of max kappa within each touch window, neg or pos
         dtDesign{g}(i,2)=kwin(maxidx); %use idx to pull max kappa
+        
+        ktheta=array.S_ctk(18,tOnIndices{g}(i):tOffIndices{g}(i)); %get values in touch window
+        [~ ,maxidx] = max(abs(ktheta)); %find idx of max theta within each touch window, neg or pos
+        dtDesign{g}(i,3)=ktheta(maxidx); %use idx to pull max theta
+        
         varDesign{g}(i,2)=mean(array.S_ctk(2,tOnIndices{g}(i)-5:tOnIndices{g}(i)-1)); %finds mean of velocity (-4:-1ms) before touch
         
-        dtDesign_R_ntk{g}(i) = sum(spikes(tOnIndices{g}(i):tOffIndices{g}(i)));
+        dtDesign_R_ntk{g}(i) = sum(spikes(tOnIndices{g}(i):tOffIndices{g}(i))); %sum spikes during touch duration 
     end
     varDesign{g}(:,7) = array.meta.motorPosition(touchTnums);
     dtDesign{g}(:,1) = tOffIndices{g} - tOnIndices{g};
@@ -61,21 +66,21 @@ end
 
 %composing output structure
 tVar.allTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
-tVar.allTouches.dtNames = {'touchDuration','max dK'};
+tVar.allTouches.dtNames = {'touchDuration','max dK','max dTheta'};
 tVar.allTouches.S_ctk = varDesign{1};  
 tVar.allTouches.R_ntk = spikesAligned{1};
 tVar.allTouches.dtS_ctk = dtDesign{1};
 tVar.allTouches.dtR_ntk = dtDesign_R_ntk{1}; %these are all the spikes that occur DURING the whole touch window
 
 tVar.allTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
-tVar.preDecisionTouches.dtNames = {'touchDuration','max dK'};
+tVar.preDecisionTouches.dtNames = {'touchDuration','max dK','max dTheta'};
 tVar.preDecisionTouches.S_ctk = varDesign{2};
 tVar.preDecisionTouches.R_ntk = spikesAligned{2}; 
 tVar.preDecisionTouches.dtS_ctk = dtDesign{2}; 
 tVar.preDecisionTouches.dtR_ntk = dtDesign_R_ntk{2}; 
 
 tVar.allTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
-tVar.postDecisionTouches.dtNames = {'touchDuration','max dK'};
+tVar.postDecisionTouches.dtNames = {'touchDuration','max dK','max dTheta'};
 tVar.postDecisionTouches.S_ctk = varDesign{3};
 tVar.postDecisionTouches.R_ntk = spikesAligned{3}; 
 tVar.postDecisionTouches.dtS_ctk = dtDesign{3}; 

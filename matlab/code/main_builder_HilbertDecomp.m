@@ -43,19 +43,19 @@ basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwid
 glmnetOpt.bf.indicesToAdd  = [-41:glmnetOpt.bf.bfspacing:-4];
 
 %GLMdesign Matrix Set-up
-fileName = 'glmModel';
+fileName = 'glm_itdt';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-    load(['C :\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
     glmModel = [];
     [glmModel] = designMatrixBlocks_v2(selectedArray,glmnetOpt,glmModel);
 end
 
 %GLMdesign Matrix Build
-selectedFeatures = [3 4 5 6]; 
-interpOption = 'off'; %linear interpolation of missing values;
+selectedFeatures = [3:9]; 
+interpOption = 'on'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
-selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures)
+selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
 [glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures,interpOption);
 
 %Plot correlation matrix between features of design matrix. Look for
@@ -69,7 +69,6 @@ parfor i =1:length(tunedIdx)
  glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
  glmModel{i}.meta = tunedIdx(i);
  glmModel{i}.name = fileName;
-
 end
 
 cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')

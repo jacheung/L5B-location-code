@@ -1,9 +1,14 @@
-function [glmModel] = designMatrixBlocks(selectedArray,glmnetOpt,glmModel)
+function [glmModel] = designMatrixBlocks_v2(selectedArray,glmnetOpt,glmModel)
+
+preDecisionTouches = preDecisionTouchMat(selectedArray);
+viewWindow = -25:50;
 
 basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwidth,0,glmnetOpt.bf.bfstd),0,1);
 
 for i = 1:length(selectedArray)
     currentCell = selectedArray{i};
+    
+    [tVar] = atTouch_sorter(selectedArray{i},viewWindow,preDecisionTouches{i}); %use this to fill velocity pre-touch 
     
     %Defining features
     touchMat = zeros(currentCell.t,currentCell.k); 
@@ -14,8 +19,12 @@ for i = 1:length(selectedArray)
     amplitude = squeeze(currentCell.S_ctk(3,:,:)) .* touchMat; %these are at touch features we care about
     midpoint = squeeze(currentCell.S_ctk(4,:,:)) .* touchMat; %these are at touch features we care about
     angle = squeeze(currentCell.S_ctk(1,:,:)) .* touchMat; %these are at touch features we care about
+    kappa = squeeze(currentCell.S_ctk(17,:,:)) .* touchMat; %kappa at touch
+    pt_velocity = touchMat; 
+    pt_velocity(pt_velocity==1) =  tVar.allTouches.S_ctk(:,2); 
+    
     DKappa = squeeze(currentCell.S_ctk(6,:,:));
-
+    DTheta = squeeze(currentCell.S_ctk(18,:,:));
     
     %Get rid of touches with nan values
     nanidx = unique([find(isnan(midpoint(touchIdx))) ; find(isnan(amplitude(touchIdx))) ; find(isnan(phase(touchIdx)))] );
@@ -26,8 +35,11 @@ for i = 1:length(selectedArray)
     phase_conv = conv2(basisFunction,1,phase,'same');
     amplitude_conv = conv2(basisFunction,1,amplitude,'same');
     midpoint_conv = conv2(basisFunction,1,midpoint,'same');
+    kappa_conv = conv2(basisFunction,1,kappa,'same');
+    ptVel_conv = conv2(basisFunction,1,pt_velocity,'same'); 
     DKappa_conv = DKappa;
-%     DKappa_conv = conv2(basisFunction,1,DKappa,'same'); %no convolutoin for Dkappa
+    DTheta_conv = DTheta; 
+%     DKappa_conv = conv2(basisFunction,1,DKappa,'same'); %no convolution for Dkappa
 
     %INDEX BUILDER FOR LAGS
     startIdx = glmnetOpt.buildIndices'+touchIdx';
@@ -51,7 +63,10 @@ for i = 1:length(selectedArray)
     glmModel{i}.io.components.phase = phase_conv(shiftIdx');
     glmModel{i}.io.components.amplitude = amplitude_conv(shiftIdx');
     glmModel{i}.io.components.midpoint = midpoint_conv(shiftIdx');
+    glmModel{i}.io.components.kappa = kappa_conv(shiftIdx'); 
+    glmModel{i}.io.components.pt_velocity = ptVel_conv(shiftIdx'); 
     glmModel{i}.io.components.DKappa = DKappa_conv(shiftIdx');
+    glmModel{i}.io.components.DTheta = DTheta_conv(shiftIdx'); 
     
     glmModel{i}.basisFunctions.touch = touchShiftIdx;
     glmModel{i}.basisFunctions.features = touchShiftIdxRaw;

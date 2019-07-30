@@ -1,4 +1,4 @@
-function is_tuned = object_location_quantification(uberarray,selectedCells,hilbert_feature)
+function [is_tuned, tc_xy] = object_location_quantification(uberarray,selectedCells,hilbert_feature)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %this function is used to plot a heat map of location (angle at touch)
 %tuning for selectedCells. Specifically, use touch cells. 
@@ -13,6 +13,7 @@ function is_tuned = object_location_quantification(uberarray,selectedCells,hilbe
 %defTouchResponse.m function
 %is_tuned = vector showing whether neuron is tuned to hilbert_feature at
 %touch
+%tc_xy = tuning curves showing x(stim) and y(responses); 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -33,6 +34,7 @@ figure(22);clf
 figure(23);clf
 
 is_tuned = nan(length(uberarray),1); 
+tc_xy = cell(1,length(selectedCells)); 
 
 for rec = 1:length(selectedCells)
     %stimulus and response variables definitions
@@ -162,6 +164,8 @@ for rec = 1:length(selectedCells)
         else
             set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
         end
+        
+         tc_xy{rec} = [cellfun(@median, sortedBy) smooth(cellfun(@mean,sorted),smoothing_param)];
         
     else
         is_tuned(selectedCells(rec)) = .5;  %not enough samples 
