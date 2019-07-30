@@ -5,15 +5,16 @@ for i = 1:length(gauss_std)
     
     buildIndices = glmModel{1}.modelParams.buildIndices; 
     shiftedResponseWindows = cellfun(@(x) find(U{x.meta}.meta.responseWindow(1) == buildIndices) : find(U{x.meta}.meta.responseWindow(2) == buildIndices) ,glmModel,'uniformoutput',0);
+    
     selected_rawFR = cellfun(@(x,y) x.predicted.spikeTestRaw(:,y),glmModel,shiftedResponseWindows,'uniformoutput',0);
     rawFR = cellfun(@(x) imgaussfilt(x(:),gauss_std(i)),selected_rawFR,'uniformoutput',0);
     
     selected_predictedFR = cellfun(@(x,y) x.predicted.spikeProb(:,y),glmModel,shiftedResponseWindows,'uniformoutput',0);
-    predictedFR = cellfun(@(x) imgaussfilt(x(:),gauss_std(i)),selected_predictedFR,'uniformoutput',0);
+    predictedFR = cellfun(@(x) x(:),selected_predictedFR,'uniformoutput',0);
 
     pearson_corr(i,:) = cellfun(@(x,y) corr(x,y),rawFR,predictedFR);
 end
-%% plotting
+%% plotting of the above corr values
 figure(123);clf
 subplot(2,1,1)
 xs = repmat((1:length(gauss_std))',1,length(glmModel)); 
@@ -31,13 +32,41 @@ colorbar
 xlabel('cell number');
 ylabel('Gaussian sigma')
 
+%% plotting of touch psth responses 
+gauss_std = [1 2 4 8 16 32];
+
+
+for i = 3
+    buildIndices = glmModel{1}.modelParams.buildIndices; 
+    shiftedResponseWindows = cellfun(@(x) find(U{x.meta}.meta.responseWindow(1) == buildIndices) : find(U{x.meta}.meta.responseWindow(2) == buildIndices) ,glmModel,'uniformoutput',0);
+
+    rawFR = cellfun(@(x) imgaussfilt(mean(x.predicted.spikeTestRaw)*1000,gauss_std(i)),glmModel,'uniformoutput',0);
+    predictedFR = cellfun(@(x) mean(x.predicted.spikeProb)*1000,glmModel,'uniformoutput',0);
+    
+    [~,idx] = sort(pearson_corr(i,:));
+    idx = fliplr(idx);
+    
+    figure(67+i);clf
+    for b = 1:length(rawFR)
+        cellNum = idx(b); %set to b to plot in build order
+        subplot(4,8,b)
+        plot(buildIndices,rawFR{cellNum},'k')
+        hold on; plot(buildIndices,predictedFR{cellNum},'r')
+        title(num2str(pearson_corr(i,cellNum)))
+        set(gca,'xtick',0:25:50,'xlim',[min(buildIndices) max(buildIndices)])
+    end
+        
+end
+suptitle(['gaussian sigma ' num2str(gauss_std(i))])
+
+
+
 %% deviance explained
 DE = cellfun(@(x) mean(x.gof.devExplained),glmModel);
 figure(5221);clf
 for i = 1:length(gauss_std)
 hold on;scatter(DE,pearson_corr(i,:),'filled')
 end
-
 
 %% fitting to OL tuning
 % tunedCells = cellfun(@(x) x.meta,glmModel);
@@ -161,12 +190,41 @@ real_response = cellfun(@(x,y) interp1(x(:,1),x(:,2),y)',tcxy_real,ix_bins,'unif
 
 tuning_correlation = cellfun(@(x,y) corr(x,y,'rows','complete'),pred_response,real_response);
 
+
 figure(19);clf
 histogram(tuning_correlation,-1:.2:1)
 set(gca,'xtick',-1:.5:1)
 ylabel('number of neurons')
 xlabel('pearson correlation')
 title('correlation b/t modeled and true tuning curves')
+
+[~,idx] = sort(tuning_correlation);
+
+idx = fliplr(idx);
+
+figure(21);clf
+for i = 1:length(pred_response)
+    cellNum = idx(i); %set to i to 
+    subplot(4,8,i)
+    plot(1:length(pred_response{cellNum}),normalize_var(pred_response{cellNum},0,1),'r')
+    hold on; plot(1:length(real_response{cellNum}),normalize_var(real_response{cellNum},0,1),'k')
+    title(num2str(tuning_correlation(cellNum)))
+end
+
+
+%scatter of tuning correlation x firing rate of cell
+figure(580);clf
+scatter(cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000, tuning_correlation)
+hold on; scatter(cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000, pearson_corr(3,:))
+set(gca,'xtick',0:25:100)
+legend({'tuning correlation','touch psth correlation'})
+xlabel('touch response firing rate (hz)')
+ylabel('correlation')
+
+corr((cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000)', tuning_correlation')
+corr((cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000)', pearson_corr(3,:)')
+
+% cellfun(@(x) nanmean(U{x.meta}.R_ntk(:)),glmModel)*1000, tuning_correlation)
 
 %% kernels
 figure(128);clf
