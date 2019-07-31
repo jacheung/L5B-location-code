@@ -32,9 +32,9 @@ colorbar
 xlabel('cell number');
 ylabel('Gaussian sigma')
 
-%% plotting of touch psth responses 
+%% plotting of touch psth responses raw vs predicted
 gauss_std = [1 2 4 8 16 32];
-
+rc = numSubplots(length(glmModel));
 
 for i = 3
     buildIndices = glmModel{1}.modelParams.buildIndices; 
@@ -48,8 +48,8 @@ for i = 3
     
     figure(67+i);clf
     for b = 1:length(rawFR)
-        cellNum = idx(b); %set to b to plot in build order
-        subplot(4,8,b)
+        cellNum = (b); %set to b to plot in build order
+        subplot(rc(1),rc(2),b)
         plot(buildIndices,rawFR{cellNum},'k')
         hold on; plot(buildIndices,predictedFR{cellNum},'r')
         title(num2str(pearson_corr(i,cellNum)))
@@ -205,7 +205,7 @@ idx = fliplr(idx);
 figure(21);clf
 for i = 1:length(pred_response)
     cellNum = idx(i); %set to i to 
-    subplot(4,8,i)
+    subplot(rc(1),rc(2),i)
     plot(1:length(pred_response{cellNum}),normalize_var(pred_response{cellNum},0,1),'r')
     hold on; plot(1:length(real_response{cellNum}),normalize_var(real_response{cellNum},0,1),'k')
     title(num2str(tuning_correlation(cellNum)))
@@ -224,15 +224,29 @@ ylabel('correlation')
 corr((cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000)', tuning_correlation')
 corr((cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000)', pearson_corr(3,:)')
 
-% cellfun(@(x) nanmean(U{x.meta}.R_ntk(:)),glmModel)*1000, tuning_correlation)
+
+modeled_cells = cellfun(@(x) x.meta,glmModel);
+[~,SNR] = defTouchResponse(U(modeled_cells),.95,'off');
+figure(320);clf
+scatter(SNR,tuning_correlation,'b')
+hold on; scatter(SNR, pearson_corr(3,:),'r')
+legend({'tuning correlation','touch psth correlation'})
+xlabel('SNR of touch response')
+ylabel('correlation')
+
+corr(SNR', tuning_correlation')
+corr(SNR', pearson_corr(3,:)')
+
+
 
 %% kernels
+
 figure(128);clf
 well_modeled_cells =  find(tuning_correlation>.5); 
 
 for i = 1:length(well_modeled_cells)
     selCell = well_modeled_cells(i); 
-    subplot(4,8,i)
+    subplot(rc(1),rc(2),i)
     BI = glmModel{selCell}.modelParams.buildIndices;
 %     coeffsToPlot = fields(glmModel{i}.coeffs);
     

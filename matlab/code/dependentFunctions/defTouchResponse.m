@@ -1,4 +1,4 @@
-function U = defTouchResponse(U,confidenceThreshold,displayOpt)
+function [U, SNR] = defTouchResponse(U,confidenceThreshold,displayOpt)
 
 %function that builds upon location code data struct. Adds fields of
 %responseWindow under meta. Response window is defined by a confidence
@@ -12,6 +12,9 @@ if willdisplay
     rc = numSubplots(length(U));
     figure(3000);clf
 end
+
+heatTouch = cell(1,length(U)); 
+SNR = nan(1,length(U)); 
 
 for rec=1:length(U)
     array = U{rec};
@@ -73,6 +76,7 @@ for rec=1:length(U)
                     set(gca,'xtick',-25:25:50)
                 end
             
+                SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
             else
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
@@ -108,6 +112,8 @@ for rec=1:length(U)
                 
             end
         end
+        
+        SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (inhibThreshold*1000));
         
     else
         if willdisplay
