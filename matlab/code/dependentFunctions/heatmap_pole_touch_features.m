@@ -16,16 +16,31 @@ for rec = 1:length(U)
     corr_values = corr([pole it dt]);
     gc_vals{rec} = corr_values;
     
+    %plotting all stimulus features for one single neuron in a heatmap
+    if rec == 27
+    [~,idx] = sort(pole);
+     
+     mod_it = normalize_var(it(idx,:),0,1) + repmat(1:size(it,2),length(it),1);
+     mod_dt = normalize_var(dt(idx,:),0,1) + repmat(size(it,2)+1:size(it,2)+size(dt,2),length(it),1);
+     mod_mat = [mod_it mod_dt];
+     figure(280);clf
+     scatter(1:length(pole),normalize_var(pole(idx),1,0),'b')
+     for g = 1:size(it,2)+size(dt,2)
+         hold on; plot(1:length(pole),mod_mat(:,g),'k')
+     end
+     
+     set(gca,'ytick',.5:size([pole it dt],2)+.5,'yticklabel',['pole' tVar.allTouches.itNames(1:end-1) tVar.allTouches.dtNames],...
+         'xlim',[1 length(pole)],'ydir','reverse')
+     
+     
+     figure(238);clf
+     imagesc([normalize_var(pole(idx),1,0)' ; normalize_var([it(idx,:) dt(idx,:)],0,1)'])
+     set(gca,'yticklabel',['pole' tVar.allTouches.itNames(1:end-1) tVar.allTouches.dtNames])
+     colorbar 
+     colormap redbluecmap
+     xlabel('touches sorted by pole position')
+    end
     
-    %imagesc of heat for all feature correlation
-    %     figure(42);clf
-    %     imagesc(corr([pole it dt]))
-    %     caxis([-1 1])
-    %     colorbar
-    %     colormap bone
-    %     set(gca,'xticklabel',['pole' tVar.allTouches.itNames(1:end-1) tVar.allTouches.dtNames(1:end-1)]...
-    %         ,'yticklabel',['pole' tVar.allTouches.itNames(1:end-1) tVar.allTouches.dtNames(1:end-1)])
-    %     axis square
 end
 
 %% Population feature correlation
