@@ -28,6 +28,7 @@ gauss_filt = .5;
 
 %dependent function to id all touches and pre/post decision touches
 preDecisionTouches = preDecisionTouchMat(uberarray);
+rc = numSubplots(numel(selectedCells));
 
 quant_ol_p = nan(length(selectedCells),1);
 figure(22);clf
@@ -74,7 +75,7 @@ for rec = 1:length(selectedCells)
     
     
     if numel(sortedBy_heat)>min_bins
-        figure(22);subplot(4,8,rec)
+        figure(22);subplot(rc(1),rc(2),rec)
         heat_resp = cell2mat(cellfun(@(x) mean(x,1),sorted_heat,'uniformoutput',0)); 
         smoothed_heat_resp = imgaussfilt(heat_resp,gauss_filt,'padding','replicate');
         imagesc(smoothed_heat_resp)
@@ -111,7 +112,7 @@ for rec = 1:length(selectedCells)
     CI = SEM.*tscore;
     
     if numel(sortedBy)>min_bins
-        figure(23);subplot(4,8,rec)
+        figure(23);subplot(rc(1),rc(2),rec)
         shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
 
         if quant_ol_p(rec) < alpha_value

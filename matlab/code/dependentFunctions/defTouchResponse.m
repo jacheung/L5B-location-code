@@ -68,15 +68,19 @@ for rec=1:length(U)
                 U{rec}.meta.responseType = 'excited';
                 U{rec}.meta.responseWindow=[startPoint endPoint];
                 
+                SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
                     hold on; bar(window,touchResponse*1000,'b','facealpha',.2,'edgealpha',.2);
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
                     hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50)
+                    
+                    title(num2str(SNR(rec)));
                 end
             
-                SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
+                
+                
             else
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
@@ -102,18 +106,21 @@ for rec=1:length(U)
                 U{rec}.meta.responseType = 'inhibited';
                 U{rec}.meta.responseWindow=[startPoint endPoint];
                 
+                SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (inhibThreshold*1000));
+                
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
                     hold on; bar(window,touchResponse*1000,'r','facealpha',.2,'edgealpha',.2);
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'r','filled')
                     hold on; plot(window,ones(length(window),1).* inhibThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50)
+                    title(num2str(SNR(rec)));
                 end
                 
             end
         end
         
-        SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (inhibThreshold*1000));
+        
         
     else
         if willdisplay

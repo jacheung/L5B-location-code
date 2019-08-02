@@ -1,7 +1,8 @@
 %Load whisking and neural time series struct 
 clear
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b excitatory cells
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_2.mat') %L5b excitatory cells recorded by Phil
+% load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_2.mat') %L5b excitatory cells recorded by Phil
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
@@ -11,12 +12,15 @@ viewWindow = [-25:50]; %window for analyses around touch
 % selectedCells = find(touchCells==1);
 
 % Defining touch response
-U = defTouchResponse(U,.95,'on');
+U = defTouchResponse(U,.95,'off');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 % selectedCells(17) = [];
 defTouchResponse(U(selectedCells),.95,'on')
 
 %% at touch hilbert tuning 
+object_location_quantification(U,selectedCells,'pole'); %for old see object_location_v1.0 
+
+
 angle_tuned = object_location_quantification(U,selectedCells,'angle'); %for old see object_location_v1.0 
 amp_tuned = object_location_quantification(U,selectedCells,'amplitude'); %for old see object_location_v1.0 
 midpoint_tuned = object_location_quantification(U,selectedCells,'midpoint'); %for old see object_location_v1.0 

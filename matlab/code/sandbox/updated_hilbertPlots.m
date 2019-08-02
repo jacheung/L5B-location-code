@@ -27,7 +27,7 @@ ylabel('Pearson correlation')
 subplot(2,1,2)
 [~,idx] = sort(pearson_corr(end,:));
 imagesc(pearson_corr(:,idx))
-set(gca,'ytick',1:length(gauss_std),'yticklabel',gauss_std,'xdir','reverse','ydir','normal')
+set(gca,'ytick',1:length(gauss_std),'yticklabel',gauss_std,'xdir','normal','ydir','normal')
 colorbar
 xlabel('cell number');
 ylabel('Gaussian sigma')
@@ -48,7 +48,7 @@ for i = 3
     
     figure(67+i);clf
     for b = 1:length(rawFR)
-        cellNum = (b); %set to b to plot in build order
+        cellNum = idx(b); %set to b to plot in build order
         subplot(rc(1),rc(2),b)
         plot(buildIndices,rawFR{cellNum},'k')
         hold on; plot(buildIndices,predictedFR{cellNum},'r')
@@ -64,7 +64,7 @@ suptitle(['gaussian sigma ' num2str(gauss_std(i))])
 %% deviance explained
 DE = cellfun(@(x) mean(x.gof.devExplained),glmModel);
 figure(5221);clf
-for i = 1:length(gauss_std)
+for i = 3
 hold on;scatter(DE,pearson_corr(i,:),'filled')
 end
 
@@ -77,6 +77,9 @@ alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
 gauss_filt = .5;
+
+rc = numSubplots(numel(tunedCells));
+
 
 figure(22);clf
 figure(24); clf
@@ -101,7 +104,7 @@ for rec = 1:length(glmModel)
     
     
     if numel(sortedBy_heat)>min_bins
-        figure(22);subplot(4,8,rec)
+        figure(22);subplot(rc(1),rc(2),rec)
         heat_resp = cell2mat(cellfun(@(x) mean(x,1),sorted_heat,'uniformoutput',0));
         smoothed_heat_resp = imgaussfilt(heat_resp,gauss_filt,'padding','replicate');
         imagesc(smoothed_heat_resp)
@@ -125,7 +128,7 @@ for rec = 1:length(glmModel)
     CI = SEM.*tscore;
     
     if numel(sortedBy)>min_bins
-        figure(24);subplot(4,8,rec)
+        figure(24);subplot(rc(1),rc(2),rec)
         shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
         
         if quant_ol_p(rec) < alpha_value
@@ -191,12 +194,15 @@ real_response = cellfun(@(x,y) interp1(x(:,1),x(:,2),y)',tcxy_real,ix_bins,'unif
 tuning_correlation = cellfun(@(x,y) corr(x,y,'rows','complete'),pred_response,real_response);
 
 
+best_mdled = intersect(find(pearson_corr(3,:)>.2),find(tuning_correlation>.5));
+
+
 figure(19);clf
-histogram(tuning_correlation,-1:.2:1)
-set(gca,'xtick',-1:.5:1)
-ylabel('number of neurons')
-xlabel('pearson correlation')
-title('correlation b/t modeled and true tuning curves')
+scatter(pearson_corr(3,:),tuning_correlation)
+ylabel('tuning correlation')
+xlabel('pearson correlation (sigma 4)')
+hold on; scatter(pearson_corr(3,best_mdled),tuning_correlation(best_mdled),'filled','r')
+title(['"well" modeled units = ' num2str(numel(best_mdled)) '/' num2str(numel(tuning_correlation))])
 
 [~,idx] = sort(tuning_correlation);
 
@@ -212,21 +218,22 @@ for i = 1:length(pred_response)
 end
 
 
-%scatter of tuning correlation x firing rate of cell
+%scatter of gof metrics x firing rate of cell
 figure(580);clf
+cellfiringRate = cellfun(@(x) nanmean(U{x.meta}.R_ntk(:)),glmModel);
 scatter(cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000, tuning_correlation)
 hold on; scatter(cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000, pearson_corr(3,:))
 set(gca,'xtick',0:25:100)
 legend({'tuning correlation','touch psth correlation'})
-xlabel('touch response firing rate (hz)')
+xlabel('touch response firing rate (Hz)')
 ylabel('correlation')
 
 corr((cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000)', tuning_correlation')
 corr((cellfun(@(x) mean(x.predicted.spikeTestRaw(:)),glmModel) * 1000)', pearson_corr(3,:)')
 
-
+%scatter of gof metrics x SNR
 modeled_cells = cellfun(@(x) x.meta,glmModel);
-[~,SNR] = defTouchResponse(U(modeled_cells),.95,'off');
+[~,SNR] = defTouchResponse(U(modeled_cells),.95,'on');
 figure(320);clf
 scatter(SNR,tuning_correlation,'b')
 hold on; scatter(SNR, pearson_corr(3,:),'r')
@@ -240,12 +247,14 @@ corr(SNR', pearson_corr(3,:)')
 
 
 %% kernels
-
+best_mdled = intersect(find(pearson_corr(3,:)>.2),find(tuning_correlation>.5));
 figure(128);clf
-well_modeled_cells =  find(tuning_correlation>.5); 
 
-for i = 1:length(well_modeled_cells)
-    selCell = well_modeled_cells(i); 
+rc = numSubplots(numel(best_mdled));
+
+
+for i = 1:length(best_mdled)
+    selCell = best_mdled(i); 
     subplot(rc(1),rc(2),i)
     BI = glmModel{selCell}.modelParams.buildIndices;
 %     coeffsToPlot = fields(glmModel{i}.coeffs);

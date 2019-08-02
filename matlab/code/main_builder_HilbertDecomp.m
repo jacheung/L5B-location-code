@@ -1,9 +1,9 @@
 %Load whisking and neural time series struct 
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory.mat') %L5b excitatory cells
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
-U = defTouchResponse(U,.95,'on');
+U = defTouchResponse(U,.95,'off');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 
 is_tuned = object_location_quantification(U,selectedCells,'pole');
@@ -43,7 +43,7 @@ basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwid
 glmnetOpt.bf.indicesToAdd  = [-41:glmnetOpt.bf.bfspacing:-4];
 
 %GLMdesign Matrix Set-up
-fileName = 'glm_itdt';
+fileName = 'glm_all_units';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
@@ -65,7 +65,9 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
 % caxis([0 .7]) ;colorbar
 % axis square; set(gca,'xtick',[],'ytick',[])
 
-parfor i =1:length(tunedIdx)
+toBuild = find(~cellfun(@(x) isfield(x,'predicted'),glmModel)); 
+parfor i = 36:45
+ disp(['iterating for neuron ' num2str(i) '/' num2str(length(tunedIdx))])
  glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
  glmModel{i}.meta = tunedIdx(i);
  glmModel{i}.name = fileName;
