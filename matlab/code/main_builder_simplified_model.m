@@ -3,11 +3,11 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
-U = defTouchResponse(U,.95,'off');
+% U = defTouchResponse(U,.95,'off');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 is_tuned = object_location_quantification(U,selectedCells,'pole');
 
-%% Builder for identifying hilbert components that generate tuning
+%%
 tunedIdx = find(is_tuned==1);
 selectedArray = U(tunedIdx);
 
@@ -19,39 +19,37 @@ glmnetOpt.xfoldCV = 5;
 glmnetOpt.numIterations = 5;
 
 %BUILD parameters
-glmnetOpt.buildIndices = [0:50]; %Indices around touch
+glmnetOpt.buildIndices = [-25:50]; %Indices around touch
 
-%basis function and convolution using gaussian distribution
-glmnetOpt.bf.bfwidth =5;
-glmnetOpt.bf.bfstd = 3;
-glmnetOpt.bf.bfspacing = 3;
-basisFunction = normalize_var(normpdf(-1*glmnetOpt.bf.bfwidth:glmnetOpt.bf.bfwidth,0,glmnetOpt.bf.bfstd),0,1);
-glmnetOpt.bf.indicesToAdd  = [-41:glmnetOpt.bf.bfspacing:-4];
-
-%GLMdesign Matrix Set-up
-fileName = 'glm_all_units';
+fileName = 'glm_simplified';
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
 else
     glmModel = [];
-    [glmModel] = designMatrixBlocks_v2(selectedArray,glmnetOpt,glmModel);
+    [glmModel] = designMatrixBlocks_simplified(selectedArray,glmnetOpt,glmModel);
 end
-
+    
 %GLMdesign Matrix Build
-selectedFeatures = [3:9]; 
-interpOption = 'on'; %linear interpolation of missing values;
+selectedFeatures = [2:4]; 
+interpOption = 'off'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
 [glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures,interpOption);
 
-%Build model 
-toBuild = find(~cellfun(@(x) isfield(x,'predicted'),glmModel)); 
-parfor i = 36:45
+
+for i = 1:length(glmModel)
+ responseTrials = ~glmModel{i}.io.DmatY==0;
+ disp(['num response trials = ' num2str(sum(responseTrials))])
+ if numel(unique(glmModel{i}.io.DmatY(responseTrials)))>1
  disp(['iterating for neuron ' num2str(i) '/' num2str(length(tunedIdx))])
- glmModel{i} = binomialModel_hilbert(glmModel{i}.io.DmatXNormalized,glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
+ glmModel{i} = poissonModel(glmModel{i}.io.DmatXNormalized(responseTrials,:),glmModel{i}.io.DmatY(responseTrials),selectedArray{i},glmnetOpt,glmModel{i});
  glmModel{i}.meta = tunedIdx(i);
  glmModel{i}.name = fileName;
+ else
+     disp('skipping trial. not enough unique touch responses')
+ end
+ 
 end
 
-cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
-save(fileName,'glmModel','-v7.3')
+
+glmnet(glmModel{1}.io.DmatXNormalized

@@ -34,8 +34,10 @@ for i = 1:length(glmModel)
     glmModel{i}.io.DmatXNormalized = (DmatX - mean(DmatX)) ./ std(DmatX);
     glmModel{i}.io.selectedFeatures.name = DmatFields([selectedFeatures]); 
     glmModel{i}.io.selectedFeatures.dims = dims;
-
-    glmModel{i}.raw.trimmedAngle = glmModel{i}.raw.angle;
-    glmModel{i}.raw.trimmedAngle(trialsToRemove) = [];
+    
+    if isfield(glmModel{i},'raw')
+        glmModel{i}.raw.trimmedAngle = glmModel{i}.raw.angle;
+        glmModel{i}.raw.trimmedAngle(trialsToRemove) = [];
+    end
     
 end
