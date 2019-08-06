@@ -50,6 +50,7 @@ for p = 1:glmnetOpt.numIterations
 
     sHeat{p} = predFR;
     sRaw{p} = testDmatY;
+    sPole{p} = mdl.raw.trimmedPole(testIdxStartRaw); 
     sFitCoeffs{p} = fitCoeffs;
 end
 
@@ -62,6 +63,7 @@ mdl.coeffs.raw = cell2mat(sFitCoeffs);
 
 mdl.predicted.spikeTestRaw = cell2mat(sRaw');
 mdl.predicted.spikeProb = cell2mat(sHeat');
+mdl.predicted.pole = cell2mat(sPole'); 
 
 mdl.gof.devExplained = fitDevExplained;
 

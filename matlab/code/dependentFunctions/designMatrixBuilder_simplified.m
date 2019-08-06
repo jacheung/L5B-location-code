@@ -1,4 +1,4 @@
-function [glmModel] = designMatrixBuilder_hilbert(glmModel,glmnetOpt,selectedFeatures,interpOption)
+function [glmModel] = designMatrixBuilder_simplified(glmModel,glmnetOpt,selectedFeatures,interpOption)
 
 %selectedFeatures is a vector with values corresponding to the values in
 %the DmatFields 
@@ -22,11 +22,21 @@ for i = 1:length(glmModel)
     
     DmatY = glmModel{i}.io.DmatY; 
     
-    [row,~] = find(isnan(DmatX));
-    trialsToRemove = unique(ceil(row./length(glmnetOpt.buildIndices)));
-    trialsToRemoveIdx = (length(glmnetOpt.buildIndices)*(trialsToRemove-1)) + (1:(length(glmnetOpt.buildIndices))) ;
-    DmatX(trialsToRemoveIdx,:) = [] ;
-    DmatY(trialsToRemoveIdx,:) = [] ;
+    [nan_remove,~] = find(isnan(DmatX));
+    
+    if strcmp(glmnetOpt.touchDirection,'protraction')
+        dir_remove = find((glmModel{i}.io.components.phase < 0 & glmModel{i}.io.components.pt_velocity > 0) ==0);
+    elseif strcmp(glmnetOpt.touchDirection,'retraction')
+        dir_remove = find((glmModel{i}.io.components.phase > 0 & glmModel{i}.io.components.pt_velocity < 0) ==0);
+    else
+        dir_remove = [];
+        disp('using all touches since no input')
+    end
+
+    trialsToRemove = unique([nan_remove ; dir_remove]); 
+    
+    DmatX(trialsToRemove,:) = [] ;
+    DmatY(trialsToRemove,:) = [] ;
     
     
     glmModel{i}.io.DmatX = DmatX;

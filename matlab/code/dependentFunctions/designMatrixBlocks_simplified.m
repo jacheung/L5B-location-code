@@ -23,4 +23,7 @@ for i = 1:length(selectedArray)
     
     %Responses
     glmModel{i}.io.DmatY = response;
+    
+    %raw 
+    glmModel{i}.raw.pole = tVar.allTouches.S_ctk(:,end); 
 end

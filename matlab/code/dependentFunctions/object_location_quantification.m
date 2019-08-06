@@ -1,4 +1,4 @@
-function [is_tuned, tc_xy] = object_location_quantification(uberarray,selectedCells,hilbert_feature)
+function [tuneStruct] = object_location_quantification(uberarray,selectedCells,hilbert_feature)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %this function is used to plot a heat map of location (angle at touch)
 %tuning for selectedCells. Specifically, use touch cells. 
@@ -34,8 +34,13 @@ quant_ol_p = nan(length(selectedCells),1);
 figure(22);clf
 figure(23);clf
 
-is_tuned = nan(length(uberarray),1); 
-tc_xy = cell(1,length(selectedCells)); 
+tuneStruct = cell(1,length(uberarray));
+
+for i = 1:length(uberarray)
+    tuneStruct{i}.mod_depth = nan; 
+    tuneStruct{i}.is_tuned = nan;
+end
+
 
 for rec = 1:length(selectedCells)
     %stimulus and response variables definitions
@@ -155,7 +160,9 @@ for rec = 1:length(selectedCells)
                 end
             end
             
-            is_tuned(selectedCells(rec)) = 1; 
+            
+            tuneStruct{selectedCells(rec)}.mod_depth = (max(cellfun(@mean,sorted)) - min(cellfun(@mean,sorted))) ./ mean(cellfun(@mean,sorted));
+            tuneStruct{selectedCells(rec)}.is_tuned = 1; 
         end
         
         if strcmp(hilbert_feature,'phase')
@@ -166,10 +173,10 @@ for rec = 1:length(selectedCells)
             set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
         end
         
-         tc_xy{rec} = [cellfun(@median, sortedBy) smooth(cellfun(@mean,sorted),smoothing_param)];
-        
+         tuneStruct{selectedCells(rec)}.stim_response = [cellfun(@median, sortedBy) smooth(cellfun(@mean,sorted),smoothing_param)];
+         
     else
-        is_tuned(selectedCells(rec)) = .5;  %not enough samples 
+        tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples 
     end
     
     
