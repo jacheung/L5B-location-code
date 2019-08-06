@@ -17,7 +17,6 @@ function [tuneStruct] = object_location_quantification(uberarray,selectedCells,h
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-
 %function parameters
 viewWindow = [-25:50]; %viewing window around touch 
 numTouchesPerBin = 75; %number of touches to assign in each bin for quantification. 
@@ -30,17 +29,15 @@ gauss_filt = .5;
 preDecisionTouches = preDecisionTouchMat(uberarray);
 rc = numSubplots(numel(selectedCells));
 
-quant_ol_p = nan(length(selectedCells),1);
-figure(22);clf
-figure(23);clf
-
+%populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
-
 for i = 1:length(uberarray)
     tuneStruct{i}.mod_depth = nan; 
     tuneStruct{i}.is_tuned = nan;
 end
 
+figure(22);clf
+figure(23);clf
 
 for rec = 1:length(selectedCells)
     %stimulus and response variables definitions
@@ -110,7 +107,7 @@ for rec = 1:length(selectedCells)
         [sorted, sortedBy] = binslin(selected_feature,response,'equalN',numBins);
     end
     
-    quant_ol_p(rec) = anova1(cell2nanmat(sorted),[],'off');
+    quant_ol_p = anova1(cell2nanmat(sorted),[],'off');
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
@@ -120,7 +117,7 @@ for rec = 1:length(selectedCells)
         figure(23);subplot(rc(1),rc(2),rec)
         shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
 
-        if quant_ol_p(rec) < alpha_value
+        if quant_ol_p < alpha_value
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
             if strcmp(array.meta.responseType,'excited')
