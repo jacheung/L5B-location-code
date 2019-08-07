@@ -5,10 +5,10 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 %% Top level parameters and definitions 
 % U = defTouchResponse(U,.95,'off');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
-is_tuned = object_location_quantification(U,selectedCells,'pole');
+tStruct = object_location_quantification(U,selectedCells,'pole');
 
 %%
-tunedIdx = find(is_tuned==1);
+tunedIdx = find( cellfun(@(x) x.is_tuned,tStruct)==1);
 selectedArray = U(tunedIdx);
 
 %GLMNET parameters
@@ -44,14 +44,20 @@ for i = 1:length(glmModel)
     glmModel{i}.name = fileName;
 end
 
-%%
+%% goodness of fit of model 
 tStruct = object_location_quantification(U,cellfun(@(x) x.meta,glmModel),'pole'); 
 
 samplesPerBin = 100; 
 rc = numSubplots(length(glmModel)); 
 
 figure(32);clf
-for i = 1:length(glmModel)
+
+[~,idx] = sort(gof_tuning);
+plotIdx = fliplr(idx); 
+
+for rec = 1:length(glmModel)
+    
+    i = plotIdx(rec); 
     poles = normalize_var(glmModel{i}.predicted.pole,-1,1);
     rawResponses = glmModel{i}.predicted.spikeTestRaw;
     predResponses = glmModel{i}.predicted.spikeProb;
@@ -60,13 +66,14 @@ for i = 1:length(glmModel)
     [raw_sorted,raw_sortedBy] = binslin(poles,rawResponses,'equalN',numBins);
     [pred_sorted,pred_sortedBy] = binslin(poles,predResponses,'equalN',numBins);
     
-    figure(32);subplot(rc(1),rc(2),i)
+    figure(32);subplot(rc(1),rc(2),rec)
     hold on; plot(cellfun(@median, raw_sortedBy),normalize_var(smooth(cellfun(@mean, raw_sorted)),0,1),'b')
     hold on; plot(cellfun(@median, pred_sortedBy),normalize_var(smooth(cellfun(@mean, pred_sorted)),0,1),'r')
     
     gof_tuning(i) = corr(smooth(cellfun(@mean, raw_sorted)),smooth(cellfun(@mean, pred_sorted)));
     pct_responsive(i) = sum(glmModel{i}.io.DmatY>0) ./ numel(glmModel{i}.io.DmatY); 
     
+    title(num2str(gof_tuning(i))); 
 end
 
 gof_de = cellfun(@(x) mean(x.gof.devExplained),glmModel); 
@@ -74,18 +81,18 @@ mod_depth = cellfun(@(x) x.mod_depth,tStruct(cellfun(@(y) y.meta,glmModel)));
 
 figure(8);clf
 subplot(2,2,1)
-scatter(mod_depth,gof_de)
+scatter(mod_depth,gof_de,'filled','k')
 title(['corr = ' num2str(corr(mod_depth',gof_de'))])
 ylabel('dev explained')
 xlabel('modulation depth')
 
 subplot(2,2,2)
-scatter(pct_responsive,gof_de)
+scatter(pct_responsive,gof_de,'filled','k')
 title(['corr = ' num2str(corr(pct_responsive',gof_de'))])
 xlabel('proportion trials touch responsive')
 
 subplot(2,2,3)
-scatter(gof_tuning,gof_de)
+scatter(gof_tuning,gof_de,'filled','k')
 title(['corr = ' num2str(corr(gof_tuning',gof_de'))])
 ylabel('dev explained')
 xlabel('tuning goodness of fit')
