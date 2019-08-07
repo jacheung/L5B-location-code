@@ -59,9 +59,9 @@ mdl.modelParams = glmnetOpt;
 mdl.coeffs.raw = cell2mat(sFitCoeffs);
 
 mdl.predicted.inputX = sInput; 
-mdl.predicted.spikeTestRaw = cell2mat(sRaw');
-mdl.predicted.spikeProb = cell2mat(sHeat');
-mdl.predicted.pole = cell2mat(sPole'); 
+mdl.predicted.spikeTestRaw = sRaw;
+mdl.predicted.spikeProb = sHeat;
+mdl.predicted.pole = sPole; 
 
 mdl.gof.devExplained = fitDevExplained;
 
