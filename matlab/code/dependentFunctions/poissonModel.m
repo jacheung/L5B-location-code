@@ -44,11 +44,9 @@ for p = 1:glmnetOpt.numIterations
    devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
     
        
-%     %variables for recreating heat map
-    rawFR = testDmatY;
-    predFR = model;
-
-    sHeat{p} = predFR;
+%   %variables for recreating heat map
+    sInput{p} = testDmatX; 
+    sHeat{p} = model;
     sRaw{p} = testDmatY;
     sPole{p} = mdl.raw.trimmedPole(testIdxStartRaw); 
     sFitCoeffs{p} = fitCoeffs;
@@ -60,7 +58,7 @@ mdl.modelParams = glmnetOpt;
 
 mdl.coeffs.raw = cell2mat(sFitCoeffs);
 
-
+mdl.predicted.inputX = sInput; 
 mdl.predicted.spikeTestRaw = cell2mat(sRaw');
 mdl.predicted.spikeProb = cell2mat(sHeat');
 mdl.predicted.pole = cell2mat(sPole'); 
