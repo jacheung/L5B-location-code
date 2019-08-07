@@ -118,4 +118,11 @@ end
 suplabel('raw fr (Hz)')
 suplabel('predicted fr (Hz)','y')
 
+%% feature importance 
+
+
+%do leave one out and see change in deviance explained 
+
+
+
 
