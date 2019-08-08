@@ -23,8 +23,8 @@ for i=1:length(glmModel)
         end
     end
     
-    glmModel{i}.coeff.leaveOneOutNames = {'row = feature','column = numIteration'};
-    glmModel{i}.coeff.leaveOneOut = fitDevExplained;
+    glmModel{i}.coeff.leaveOneOutNames = {'row = feature','column = iteration #'};
+    glmModel{i}.coeff.leaveOneOut_de = fitDevExplained;
     
 end
 
