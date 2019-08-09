@@ -12,7 +12,7 @@ for p = 1:glmnetOpt.numIterations
     shuffIdx = exampleIdx(randperm(length(exampleIdx)));
     trainIdxStartRaw = shuffIdx(1:round(numTrials*.7));
     testIdxStartRaw = setdiff(shuffIdx,trainIdxStartRaw);
-
+    
     trainDmatX = DmatX(trainIdxStartRaw,:);
     trainDmatY = DmatY(trainIdxStartRaw,:);
     testDmatX = DmatX(testIdxStartRaw,:);
@@ -27,28 +27,38 @@ for p = 1:glmnetOpt.numIterations
     %                 set(gca,'xtick',[],'ytick',[])
     %
     cv = cvglmnet(trainDmatX,trainDmatY,'poisson',glmnetOpt,[],glmnetOpt.xfoldCV);
-%     cvglmnetPlot(cv)
+    %     cvglmnetPlot(cv)
     
     fitLambda = cv.lambda_1se;
     iLambda = find(cv.lambda == fitLambda);
     fitCoeffs = [cv.glmnet_fit.a0(iLambda) ; cv.glmnet_fit.beta(:,iLambda)];
-    predicts = cvglmnetPredict(cv,testDmatX,fitLambda); % this outputs testDmatX * fitCoeffs
+    
+    %This is to check that our deviance calculation is correct. Trained
+    %model outputs deviance explained but we need for test model which
+    %we show below.
+%     model = exp([ones(length(trainDmatX),1),trainDmatX]*fitCoeffs); %exponential link function 
+%     mu = mean(trainDmatY); % null poisson parameter
+%     trainnullLL = sum(log(poisspdf(trainDmatY,mu)));
+%     saturatedLogLikelihood = sum(log(poisspdf(trainDmatY,trainDmatY)));
+%     trainfullLL = sum(log(poisspdf(trainDmatY,model)));
+%     trainDevExplained(p) = (trainfullLL - trainnullLL)/(saturatedLogLikelihood - trainnullLL);
+%     devExplained(p) = cv.glmnet_fit.dev(iLambda);
     
     
-   model = exp([ones(length(testDmatX),1),testDmatX]*fitCoeffs);
-   mu = mean(testDmatY); % null poisson parameter
-   nullLogLikelihood = sum(log(poisspdf(testDmatY,mu)));
-   saturatedLogLikelihood = sum(log(poisspdf(testDmatY,testDmatY)));
-   fullLogLikelihood = sum(log(poisspdf(testDmatY,model)));
-   fitDevExplained(p) = (fullLogLikelihood - nullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-   devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
+    model = exp([ones(length(testDmatX),1),testDmatX]*fitCoeffs);
+    mu = mean(testDmatY); % null poisson parameter
+    nullLogLikelihood = sum(log(poisspdf(testDmatY,mu)));
+    saturatedLogLikelihood = sum(log(poisspdf(testDmatY,testDmatY)));
+    fullLogLikelihood = sum(log(poisspdf(testDmatY,model)));
+    fitDevExplained(p) = (fullLogLikelihood - nullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
+    devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
     
-       
-%   %variables for recreating heat map
-    sInput{p} = testDmatX; 
+    
+    %   %variables for recreating heat map
+    sInput{p} = testDmatX;
     sHeat{p} = model;
     sRaw{p} = testDmatY;
-    sPole{p} = mdl.raw.trimmedPole(testIdxStartRaw); 
+    sPole{p} = mdl.raw.trimmedPole(testIdxStartRaw);
     sFitCoeffs{p} = fitCoeffs;
 end
 
@@ -58,10 +68,10 @@ mdl.modelParams = glmnetOpt;
 
 mdl.coeffs.raw = cell2mat(sFitCoeffs);
 
-mdl.predicted.inputX = sInput; 
+mdl.predicted.inputX = sInput;
 mdl.predicted.spikeTestRaw = sRaw;
 mdl.predicted.spikeProb = sHeat;
-mdl.predicted.pole = sPole; 
+mdl.predicted.pole = sPole;
 
 mdl.gof.devExplained = fitDevExplained;
 
