@@ -1,4 +1,5 @@
 %Load whisking and neural time series struct 
+clear
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
@@ -31,7 +32,7 @@ else
 end
     
 %GLMdesign Matrix Build
-selectedFeatures = [2:6]; 
+selectedFeatures = [1:8]; 
 interpOption = 'off'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
@@ -43,7 +44,48 @@ for i = 1:length(glmModel)
     glmModel{i}.meta = tunedIdx(i);
     glmModel{i}.name = fileName;
 end
+%% heatmap of input features and output predictions
+builtUnits = find(cellfun(@(x) isfield(x,'gof'),glmModel));
+meangof = cellfun(@(x) mean(x.gof.devExplained),glmModel(builtUnits));
+wellfitUnits = intersect(builtUnits,find(meangof>.1)); 
 
+figure(658);clf
+for cellNum = wellfitUnits(5)
+    %predictors
+    [s_pole,idx] = sort(normalize_var(glmModel{cellNum}.raw.trimmedPole',1,-1));
+    features = normalize_var(glmModel{cellNum}.io.DmatXNormalized(idx,:),-1,1);
+    
+    %colormap 
+     stretch_resolution = 100 ;
+    stretch_map = redbluecmap;
+    new_map = nan(stretch_resolution,3);
+    for j = 1:3
+        new_map(:,j) = interp1(linspace(1,stretch_resolution,length(stretch_map)),stretch_map(:,j),1:stretch_resolution);
+    end
+    
+    figure(658);subplot(4,1,1:3)
+    imagesc([s_pole' features]')
+    set(gca,'yticklabel',['pole' ; glmModel{1}.io.selectedFeatures.name ; 'spikes'])
+    colorbar
+    colormap(new_map)
+    title('inputs')
+     
+    %targets
+    pred = cell2mat(glmModel{cellNum}.predicted.spikeProb');
+    raw = cell2mat(glmModel{cellNum}.predicted.spikeTestRaw');
+    pred_responses = pred(idx);
+    raw_responses = raw(idx); 
+   
+ 
+    figure(658);subplot(4,1,4)
+    imagesc(normalize_var([raw_responses  pred_responses],0,1)')
+    set(gca,'ytick',1:2,'yticklabel',[{'true spikes'} ; {'predicted spikes'}])
+    colorbar
+    colormap(new_map)
+    title(['outputs for gof de ' num2str(meangof(cellNum))])
+    xlabel('trials sorted by pole position')
+    
+end
 %% goodness of fit of model 
 tStruct = object_location_quantification(U,cellfun(@(x) x.meta,glmModel),'pole'); 
 
