@@ -1,4 +1,4 @@
-function decoderPerformance(mdl)
+function resolution = decoderPerformance(mdl)
 
 chance = 1/length(mdl.gof.confusionMatrix); 
 
@@ -10,7 +10,6 @@ imagesc(predProb)
 caxis([0 .75])
 set(gca,'xtick',[],'ytick',[])
 xlabel('predicted');ylabel('true')
-title(['chance = ' num2str(chance)])
 colorbar
 axis square
 
@@ -19,11 +18,21 @@ hold on;
 binedges = max(mdl.io.Y.normal)-.5; 
 plotedges = max(mdl.io.Y.normal)-1;
 n = histcounts(mdl.io.trueXpredicted(:,2)-mdl.io.trueXpredicted(:,1),[-binedges:1:binedges]);
-plot([-plotedges:1:plotedges],n/sum(n),'k');
+x = -plotedges:1:plotedges;
+y = n/sum(n); 
+plot(x,y,'k');
+hold on; plot(x,ones(1,length(x)).*chance,'-.k')
 axis square
-set(gca,'ylim',[0 .75])
+set(gca,'ylim',[0 .4])
 xlabel('distance of prediction from true');
 ylabel('proportion of trials')
+xdata = y(find(x==0):end);
+ydata = x(find(x==0):end);
+resolution = spline(xdata(1:9),ydata(1:9),chance);
+
+ 
+
+
 
 % DEPRECATED 190524 since no longer doing angles 
 % sampledSpanPerCell = cellfun(@(x) (max(x.allTouches.theta.range) - min(x.allTouches.theta.range)),selectedArray);

@@ -170,7 +170,8 @@ for rec = 1:length(selectedCells)
             set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
         end
         
-         tuneStruct{selectedCells(rec)}.stim_response = [cellfun(@median, sortedBy) smooth(cellfun(@mean,sorted),smoothing_param)];
+         tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk'};
+         tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@median, sortedBy) smooth(cellfun(@mean,sorted),smoothing_param) smooth(cellfun(@std,sorted),smoothing_param)];
          
     else
         tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples 
