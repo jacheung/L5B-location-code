@@ -13,9 +13,8 @@ glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0; %set to 0 b/c already standardized
 glmnetOpt.alpha = 0.95;
 glmnetOpt.xfoldCV = 3;
-glmnetOpt.numIterations = 10;
-glmnetOpt.numInterpPts = 10;
-glmnetOpt.pctSamplingThreshold = .80; 
+glmnetOpt.numIterations = 20;
+glmnetOpt.pctSamplingThreshold = .80; %what percent of total pole positions must be sampled before using
 glmnetOpt.interpResolution = 40; %10mm / numBins (e.g. 40 = .25mm resolution) 
 glmnetOpt.samplingOption = 'poisson';
 glmnetOpt.numberResamples = 50;
@@ -36,14 +35,7 @@ mdlResults.io.Y.normal = glmModel{1}.io.DmatY;
 
 mdlResults = multinomialModel(mdlResults,DmatXnorm,mdlResults.io.Y.normal,glmnetOpt);
 %%
-resolution_in_X = decoderPerformance(mdlResults);
+decoderPerformance(mdlResults);
 usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
 
-% sampled_mm = mean(cellfun(@(x) range(x.meta.ranges),U(usedUnits)) ./ 10000);
-sampled_mm = 10;
-resolution_in_mm = (sampled_mm ./ glmnetOpt.interpResolution) * resolution_in_X;
-
-subplot(1,2,1)
-title(['bin resolution = ' num2str(sampled_mm ./ glmnetOpt.interpResolution) 'mm'])
-subplot(1,2,2)
-title(['decoding resolution = ' num2str(resolution_in_mm) 'mm'])
+suptitle([ 'Per touch location decoding using ' num2str(size(DmatXnorm,2)) ' tuned units'])

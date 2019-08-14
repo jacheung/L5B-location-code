@@ -1,4 +1,4 @@
-function resolution = decoderPerformance(mdl)
+function decoderPerformance(mdl)
 
 chance = 1/length(mdl.gof.confusionMatrix); 
 
@@ -6,31 +6,51 @@ figure;
 subplot(1,2,1)
 predProb = mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix); 
 imagesc(predProb)
-% caxis([0 max(predProb(:))])
-caxis([0 .75])
+caxis([0 prctile(predProb(:),99)])
+% caxis([0 .75])
 set(gca,'xtick',[],'ytick',[])
 xlabel('predicted');ylabel('true')
 colorbar
 axis square
 
-subplot(1,2,2);
-hold on;
-binedges = max(mdl.io.Y.normal)-.5; 
-plotedges = max(mdl.io.Y.normal)-1;
-n = histcounts(mdl.io.trueXpredicted(:,2)-mdl.io.trueXpredicted(:,1),[-binedges:1:binedges]);
-x = -plotedges:1:plotedges;
-y = n/sum(n); 
-plot(x,y,'k');
-hold on; plot(x,ones(1,length(x)).*chance,'-.k')
-axis square
-set(gca,'ylim',[0 .4])
-xlabel('distance of prediction from true');
-ylabel('proportion of trials')
-xdata = y(find(x==0):end);
-ydata = x(find(x==0):end);
-resolution = spline(xdata(1:9),ydata(1:9),chance);
 
- 
+distance_from_true = cellfun(@(x,y) abs(x-y),mdl.io.trueY,mdl.io.predY,'uniformoutput',0);
+
+distances = 0:max(cell2mat(distance_from_true));
+probs = nan(numel(distance_from_true),numel(distances));
+for i = 1:length(distances)
+    check_dist = distances(i); 
+    probs(:,i) = cellfun(@(x) mean(x<=check_dist),distance_from_true);
+end
+
+meanProb = mean(probs);
+SEM = nanstd(probs)./ sqrt(size(probs,1));
+ts = tinv(.95,size(probs,1));
+CI = SEM.*ts;
+
+subplot(1,2,2);
+shadedErrorBar(distances,meanProb,std(probs),'k')
+set(gca,'ylim',[0 1],'xlim',[0 8],'xtick',0:2:10,'xticklabel',0:.5:5) %hard coded xticklabels for single touch prediction of pole position using population of OL tuned cells
+xlabel('distance from prediction (mm)');ylabel('p(prediction)')
+axis square
+
+% hold on;
+% binedges = max(mdl.io.Y.normal)-.5; 
+% plotedges = max(mdl.io.Y.normal)-1;
+% n = histcounts(mdl.io.trueXpredicted(:,2)-mdl.io.trueXpredicted(:,1),[-binedges:1:binedges]);
+% x = -plotedges:1:plotedges;
+% y = n/sum(n); 
+% plot(x,y,'k');
+% hold on; plot(x,ones(1,length(x)).*chance,'-.k')
+% axis square
+% set(gca,'ylim',[0 .4])
+% xlabel('distance of prediction from true');
+% ylabel('proportion of trials')
+% xdata = y(find(x==0):end);
+% ydata = x(find(x==0):end);
+% resolution = spline(xdata(1:9),ydata(1:9),chance);
+% 
+%  
 
 
 

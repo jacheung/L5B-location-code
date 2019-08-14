@@ -64,7 +64,8 @@ for h = 1:glmnetOpt.numIterations
     
 end
 
-mdl.io.trueXpredicted = [cell2mat(true) cell2mat(pred)];
+mdl.io.trueY = true;
+mdl.io.predY = pred;
 
 %goodness of fit metric confusionMatrix
 mdl.gof.confusionMatrix = confusionmat(cell2mat(true),cell2mat(pred));
