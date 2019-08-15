@@ -1,13 +1,14 @@
-function decoderPerformance(mdl)
+function gof = decoderPerformance(mdl)
 
-chance = 1/length(mdl.gof.confusionMatrix); 
+confusionMatrix = confusionmat(cell2mat(mdl.io.trueY),cell2mat(mdl.io.predY));
+chance = 1/length(confusionMatrix); 
 
-figure;
+figure(10);clf;
 subplot(1,2,1)
-predProb = mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix); 
+predProb = confusionMatrix ./ sum(confusionMatrix); 
 imagesc(predProb)
 caxis([0 prctile(predProb(:),99)])
-% caxis([0 .75])
+caxis([0 .30])
 set(gca,'xtick',[],'ytick',[])
 xlabel('predicted');ylabel('true')
 colorbar
@@ -33,6 +34,10 @@ shadedErrorBar(distances,meanProb,std(probs),'k')
 set(gca,'ylim',[0 1],'xlim',[0 8],'xtick',0:2:10,'xticklabel',0:.5:5) %hard coded xticklabels for single touch prediction of pole position using population of OL tuned cells
 xlabel('distance from prediction (mm)');ylabel('p(prediction)')
 axis square
+
+gof.cmat = predProb;
+gof.resolutionNames = {'distances','mean probability','std probability'}; 
+gof.resolution = [distances' meanProb' std(probs)'];
 
 % hold on;
 % binedges = max(mdl.io.Y.normal)-.5; 

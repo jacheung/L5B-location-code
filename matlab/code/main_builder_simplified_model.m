@@ -4,7 +4,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
-% U = defTouchResponse(U,.95,'off');
+U = defTouchResponse(U,.95,'on');
 selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
 tStruct = object_location_quantification(U,selectedCells,'pole');
 
@@ -17,7 +17,7 @@ glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0;
 glmnetOpt.alpha = 0.95;
 glmnetOpt.xfoldCV = 5;
-glmnetOpt.numIterations = 5;
+glmnetOpt.numIterations = 20;
 
 %BUILD parameters
 glmnetOpt.buildIndices = [-25:50]; %Indices around touch
@@ -32,7 +32,7 @@ else
 end
     
 %GLMdesign Matrix Build
-selectedFeatures = [2:8]; 
+selectedFeatures = [1 5:8]; 
 interpOption = 'off'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
@@ -46,11 +46,11 @@ for i = 1:length(glmModel)
 end
 %% heatmap of input features and output predictions
 builtUnits = find(cellfun(@(x) isfield(x,'gof'),glmModel));
-meangof = cellfun(@(x) mean(x.gof.devExplained),glmModel(builtUnits));
-wellfitUnits = intersect(builtUnits,find(meangof>.1)); 
+meangof_de = cellfun(@(x) mean(x.gof.devExplained),glmModel(builtUnits));
+wellfitUnits = intersect(builtUnits,find(meangof_de>.1)); 
 
 figure(658);clf
-for cellNum = wellfitUnits(3)
+for cellNum = wellfitUnits(5)
     %predictors
     [s_pole,idx] = sort(normalize_var(glmModel{cellNum}.raw.trimmedPole',1,-1));
     features = normalize_var(glmModel{cellNum}.io.DmatXNormalized(idx,:),-1,1);
@@ -82,7 +82,7 @@ for cellNum = wellfitUnits(3)
     set(gca,'ytick',1:2,'yticklabel',[{'true spikes'} ; {'predicted spikes'}])
     colorbar
     colormap(new_map)
-    title(['outputs for gof de ' num2str(meangof(cellNum))])
+    title(['outputs for gof de ' num2str(meangof_de(cellNum))])
     xlabel('touches sorted by pole position')
     
 end
@@ -110,8 +110,8 @@ plotIdx = fliplr(idx);
 
 for rec = 1:length(glmModel)
     
-    i = plotIdx(rec); 
-%     i = rec; 
+%     i = plotIdx(rec); 
+    i = rec; 
     poles = normalize_var(cell2mat(glmModel{i}.predicted.pole'),-1,1);
     rawResponses = cell2mat(glmModel{i}.predicted.spikeTestRaw');
     predResponses = cell2mat(glmModel{i}.predicted.spikeProb');
@@ -124,10 +124,8 @@ for rec = 1:length(glmModel)
     hold on; plot(cellfun(@median, raw_sortedBy),normalize_var(smooth(cellfun(@mean, raw_sorted)),0,1),'b')
     hold on; plot(cellfun(@median, pred_sortedBy),normalize_var(smooth(cellfun(@mean, pred_sorted)),0,1),'r')
     
-    gof_tuning(i) = corr(smooth(cellfun(@mean, raw_sorted)),smooth(cellfun(@mean, pred_sorted)));
-    mae(i) = mean(smooth(cellfun(@mean, raw_sorted)) - smooth(cellfun(@mean, pred_sorted)));
-    
-    pct_responsive(i) = sum(glmModel{i}.io.DmatY>0) ./ numel(glmModel{i}.io.DmatY); 
+    gof_tuning(rec) = corr(smooth(cellfun(@mean, raw_sorted)),smooth(cellfun(@mean, pred_sorted)));
+    mae(rec) = mean(smooth(cellfun(@mean, raw_sorted)) - smooth(cellfun(@mean, pred_sorted)));
     
     title(num2str(gof_tuning(i))); 
 end
@@ -155,8 +153,8 @@ xlabel('tuning goodness of fit')
 
 %% deviance explained leave one out feature importance
 builtUnits = find(cellfun(@(x) isfield(x,'gof'),glmModel));
-meangof = cellfun(@(x) mean(x.gof.devExplained),glmModel(builtUnits));
-wellfitUnits = intersect(builtUnits,find(meangof>.1)); 
+meangof_de = cellfun(@(x) mean(x.gof.devExplained),glmModel(builtUnits));
+wellfitUnits = intersect(builtUnits,find(gof_tuning>.5)); 
 
 glmModel = poisson_leaveOneOut(glmModel,glmnetOpt,wellfitUnits);
 loo_importance = cell2mat(cellfun(@(x) nanmean(x.gof.LOO_importance,2),glmModel(wellfitUnits),'uniformoutput',0));
@@ -181,6 +179,12 @@ set(gca,'xtick',1:length(glmModel{1}.io.selectedFeatures.name),'xticklabel',glmM
 ylabel('normalized feature weight')
 title('absolute feature weight ranking')
 suptitle(['n = ' num2str(sum(~isnan(sum(bfNorm)))) ' well fit units'])
+
+%% random metrics 
+%percent of touches responsive
+pct_responsive = cellfun(@(x) mean(x.io.DmatY>0),glmModel);
+figure(4);clf
+histogram(pct_responsive,0:.1:1)
 
     
     

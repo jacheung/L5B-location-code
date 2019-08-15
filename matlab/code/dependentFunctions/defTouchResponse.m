@@ -53,7 +53,8 @@ for rec=1:length(U)
     
     %Defining touch responses as a period between two points that are less
     %than 5ms apart.
-    if sum(excitthreshIdx)>0 && sum(excitthreshIdx)>sum(inhibthreshIdx)
+    if sum(excitthreshIdx)>0 && sum(excitthreshIdx)>sum(inhibthreshIdx) 
+%     if sum(excitthreshIdx)>0 && min([find(excitthreshIdx) 100])<min([find(inhibthreshIdx) 100])
         tps = window(excitthreshIdx);
         if ~isempty(tps)
             startPoint = tps(1);
