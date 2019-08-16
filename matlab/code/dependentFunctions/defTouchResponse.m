@@ -1,7 +1,7 @@
-function [U, SNR] = defTouchResponse(U,confidenceThreshold,displayOpt)
+function [U] = defTouchResponse(U,confidenceThreshold,displayOpt)
 
 %function that builds upon location code data struct. Adds fields of
-%responseWindow under meta. Response window is defined by a confidence
+%touch properties under meta. Response window is defined by a confidence
 %threshold above baseline response (BL response is from -25:0ms pre touch)
 
 if (nargin < 3), displayOpt = 'on'; end
@@ -14,7 +14,6 @@ if willdisplay
 end
 
 heatTouch = cell(1,length(U)); 
-SNR = nan(1,length(U)); 
 
 for rec=1:length(U)
     array = U{rec};
@@ -48,8 +47,11 @@ for rec=1:length(U)
     inhibthreshIdx(inhibthreshIdx==1)= -1;
     inhibthreshIdx(1:find(window==0))=0;
     
+    U{rec}.meta.touchProperties.baseline_varNames = {'excit base+95CI','inhib base-95CI'};
+    U{rec}.meta.touchProperties.baseline = [excitThreshold inhibThreshold]*1000;
+    
     heatTouch{rec} = touchResponse;
-    U{rec}.meta.responseType = 'untuned'; %deeming neuron as touch untuned less otherwise
+    U{rec}.meta.touchProperties.responseType = 'untuned'; %deeming neuron as touch untuned less otherwise
     
     %Defining touch responses as a period between two points that are less
     %than 5ms apart.
@@ -66,10 +68,10 @@ for rec=1:length(U)
             %used below to eliminate touch responses that are sig but way
             %too small.
             if mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) > 2 && endPoint - startPoint >= 4
-                U{rec}.meta.responseType = 'excited';
-                U{rec}.meta.responseWindow=[startPoint endPoint];
+                U{rec}.meta.touchProperties.responseType = 'excited';
+                U{rec}.meta.touchProperties.responseWindow=[startPoint endPoint];
                 
-                SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
+                U{rec}.meta.touchProperties.SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
                     hold on; bar(window,touchResponse*1000,'b','facealpha',.2,'edgealpha',.2);
@@ -77,7 +79,7 @@ for rec=1:length(U)
                     hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50)
                     
-                    title(num2str(SNR(rec)));
+                    title(num2str(U{rec}.meta.touchProperties.SNR(rec)));
                 end
             
                 
@@ -104,10 +106,10 @@ for rec=1:length(U)
             %used below to eliminate touch responses that are sig but small
             %firing rates (<2Hz) or are short (responses < 4ms)
             if mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) > 2 && endPoint - startPoint >= 4
-                U{rec}.meta.responseType = 'inhibited';
-                U{rec}.meta.responseWindow=[startPoint endPoint];
+                U{rec}.meta.touchProperties.responseType = 'inhibited';
+                U{rec}.meta.touchProperties.responseWindow=[startPoint endPoint];
                 
-                SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (inhibThreshold*1000));
+                U{rec}.meta.touchProperties.SNR (rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (inhibThreshold*1000));
                 
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
@@ -115,7 +117,7 @@ for rec=1:length(U)
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'r','filled')
                     hold on; plot(window,ones(length(window),1).* inhibThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50)
-                    title(num2str(SNR(rec)));
+                    title(num2str(U{rec}.meta.touchProperties.SNR(rec)));
                 end
                 
             end

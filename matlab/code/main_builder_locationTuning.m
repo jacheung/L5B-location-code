@@ -40,7 +40,7 @@ usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
 
 suptitle([ 'Per touch location decoding using ' num2str(size(DmatXnorm,2)) ' tuned units'])
 
-%% number of neurons vs the above
+%% number of neurons for resolution
 %mdl needs to have distance_from_true = cellfun(@(x,y) abs(x-y),mdl.io.trueY,mdl.io.predY,'uniformoutput',0);
 %mdl needs to have confusion matrix  mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix);
 numNeurons = [1 5 10 20 30];
@@ -52,8 +52,6 @@ reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
 nframe = numNeurons;
 v = VideoWriter('resolution_heatmap.avi');
 open(v)
-% mov(1:nframe)=struct('cdata',[],'colormap',[]);
-
 resamp_mdl = [];
 for g = 1:length(numNeurons)
     for d = 1:numIterations

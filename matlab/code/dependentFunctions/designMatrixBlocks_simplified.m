@@ -8,7 +8,7 @@ for i = 1:length(selectedArray)
     it = tVar.allTouches.S_ctk(:,1:end-1);
     dt = tVar.allTouches.dtS_ctk;
     
-    response_window = find(glmnetOpt.buildIndices == array.meta.responseWindow(1)) : find(glmnetOpt.buildIndices == array.meta.responseWindow(2)); 
+    response_window = find(glmnetOpt.buildIndices == array.meta.touchProperties.responseWindow(1)) : find(glmnetOpt.buildIndices == array.meta.touchProperties.responseWindow(2)); 
     response =  sum(tVar.allTouches.R_ntk(:,response_window),2);
     
     %Feature blocks for design matrix construction 

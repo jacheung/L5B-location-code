@@ -5,7 +5,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 
 %% Top level parameters and definitions 
 U = defTouchResponse(U,.95,'on');
-selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
+selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 tStruct = object_location_quantification(U,selectedCells,'pole');
 
 %%
