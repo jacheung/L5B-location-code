@@ -4,7 +4,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions
-selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
+selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 pole_tuned = object_location_quantification(U,selectedCells,'pole'); %for old see object_location_v1.0
 
 %% population at touch pole decoding
@@ -51,6 +51,7 @@ reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
  
 nframe = numNeurons;
 v = VideoWriter('resolution_heatmap.avi');
+v.FrameRate = 1; 
 open(v)
 resamp_mdl = [];
 for g = 1:length(numNeurons)
@@ -78,8 +79,6 @@ for g = 1:length(numNeurons)
     writeVideo(v,frame);
 end
 close(v)
-v.FrameRate = 1;
-
 
 
 boneMap = flipud(jet(length(numNeurons)));

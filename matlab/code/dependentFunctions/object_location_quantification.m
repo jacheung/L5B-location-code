@@ -64,7 +64,7 @@ for rec = 1:length(selectedCells)
         error('select features of "angle", "amplitude", "midpoint", "phase", "curvature", or "pole"')
     end
     
-    rw = find(viewWindow == array.meta.responseWindow(1)) : find(viewWindow == array.meta.responseWindow(2));
+    rw = find(viewWindow == array.meta.touchProperties.responseWindow(1)) : find(viewWindow == array.meta.touchProperties.responseWindow(2));
     response = mean(tVar.allTouches.R_ntk(:,rw),2) * 1000;
     numBins = round(numel(selected_feature)./numTouchesPerBin);
     
@@ -120,7 +120,7 @@ for rec = 1:length(selectedCells)
         if quant_ol_p < alpha_value
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
-            if strcmp(array.meta.responseType,'excited')
+            if strcmp(array.meta.touchProperties.responseType,'excited')
                 [maxResponse,idx] = max(smooth_response);
                 
                 %plot scatter of first sig diff from max
@@ -138,7 +138,7 @@ for rec = 1:length(selectedCells)
                     hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
                 end
                 
-            elseif strcmp(array.meta.responseType,'inhibited')
+            elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
                 [minResponse,idx] = min(smooth_response);
                 
                 %plot scatter of first sig diff from min

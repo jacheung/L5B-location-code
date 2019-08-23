@@ -28,8 +28,8 @@ for i = 1:length(array)
     
     [~,p(i)] = ttest2(quietSpikes(:),whiskSpikes(:));
     
-    nwfr(i) = nanmean(quietSpikes(:))*1000;
-    wfr(i) = nanmean(whiskSpikes(:))*1000;
+    nwfr(i) = nansum(quietSpikes(:))./numel(quietSpikes)*1000;
+    wfr(i) = nansum(whiskSpikes(:))./numel(whiskSpikes)*1000;
     
 end
 

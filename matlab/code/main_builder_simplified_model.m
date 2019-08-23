@@ -4,7 +4,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
-U = defTouchResponse(U,.95,'on');
+% U = defTouchResponse(U,.95,'on');
 selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 tStruct = object_location_quantification(U,selectedCells,'pole');
 
@@ -32,7 +32,7 @@ else
 end
     
 %GLMdesign Matrix Build
-selectedFeatures = [1 5:8]; 
+selectedFeatures = [2:8]; 
 interpOption = 'off'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
@@ -98,9 +98,7 @@ set(gca,'yticklabel',['pole' ; glmModel{cellNum}.io.selectedFeatures.name],...
 axis square
 
 %% goodness of fit of model 
-tStruct = object_location_quantification(U,cellfun(@(x) x.meta,glmModel),'pole'); 
-
-samplesPerBin = 50; 
+samplesPerBin = 250; 
 rc = numSubplots(length(glmModel)); 
 
 figure(32);clf
@@ -130,22 +128,7 @@ for rec = 1:length(glmModel)
     title(num2str(gof_tuning(i))); 
 end
 
-gof_de = cellfun(@(x) mean(x.gof.devExplained),glmModel); 
-mod_depth = cellfun(@(x) x.mod_depth,tStruct(cellfun(@(y) y.meta,glmModel))); 
-
-figure(8);clf
-subplot(2,2,1)
-scatter(mod_depth,gof_de,'filled','k')
-title(['corr = ' num2str(corr(mod_depth',gof_de'))])
-ylabel('dev explained')
-xlabel('modulation depth')
-
-subplot(2,2,2)
-scatter(pct_responsive,gof_de,'filled','k')
-title(['corr = ' num2str(corr(pct_responsive',gof_de'))])
-xlabel('proportion trials touch responsive')
-
-subplot(2,2,3)
+figure(80);clf
 scatter(gof_tuning,gof_de,'filled','k')
 title(['corr = ' num2str(corr(gof_tuning',gof_de'))])
 ylabel('dev explained')
@@ -166,19 +149,61 @@ ranking = imp ./ nansum(imp);
 
 figure(249);clf
 subplot(1,2,1); 
-shadedErrorBar(1:size(imp,1)-1,nanmean(ranking(2:end,:),2),nanstd(ranking(2:end,:),[],2)./numel(wellfitUnits))
-set(gca,'xtick',1:size(imp,1)-1,'xticklabel',glmModel{1}.io.selectedFeatures.name)
+hold on; plot(ranking(2:end,:),'color',[.9 .9 .9])
+hold on;shadedErrorBar(1:size(imp,1)-1,nanmean(ranking(2:end,:),2),nanstd(ranking(2:end,:),[],2)./numel(wellfitUnits))
+
+set(gca,'xtick',1:size(imp,1)-1,'xticklabel',glmModel{1}.io.selectedFeatures.name,'ytick',0:.5:1)
 title('leave one out feature ranking')
 
 figure(249);subplot(1,2,2)
 bestFeatures = cell2mat(cellfun(@(x) mean(x.coeffs.raw(2:end,:),2),glmModel(wellfitUnits),'uniformoutput',0));
 bfNorm = normalize_var(abs(bestFeatures),0,1);
 
-shadedErrorBar(1:size(bestFeatures,1),nanmean(bfNorm,2),nanstd(bfNorm,[],2)./sum(~isnan(sum(bfNorm))))
-set(gca,'xtick',1:length(glmModel{1}.io.selectedFeatures.name),'xticklabel',glmModel{1}.io.selectedFeatures.name); 
+hold on;plot(bfNorm,'color',[.9 .9 .9])
+hold on;shadedErrorBar(1:size(bestFeatures,1),nanmean(bfNorm,2),nanstd(bfNorm,[],2)./sum(~isnan(sum(bfNorm))))
+% hold on;shadedErrorBar(1:size(bestFeatures,1),nanmean(bfNorm,2),nanstd(bfNorm,[],2))
+
+set(gca,'xtick',1:length(glmModel{1}.io.selectedFeatures.name),'xticklabel',glmModel{1}.io.selectedFeatures.name,'ytick',0:.5:1); 
 ylabel('normalized feature weight')
 title('absolute feature weight ranking')
 suptitle(['n = ' num2str(sum(~isnan(sum(bfNorm)))) ' well fit units'])
+
+%best feature in predicting choice 
+[~,midx] = max(ranking(1:end,:));
+keptIndices = wellfitUnits((midx-1)~=0); 
+featureIndices = midx((midx-1)~=0)-1;
+
+[sort_featureIdx,sort_idx] = sort(featureIndices);
+
+topFeature = glmModel{1}.io.selectedFeatures.name(sort_featureIdx);
+
+plotUnits = keptIndices(sort_idx);
+
+figure(33);clf
+rc = numSubplots(length(plotUnits)); 
+
+samplesPerBin = 500;
+for rec = 1:length(plotUnits)
+    
+    i = plotUnits(rec); 
+    poles = normalize_var(cell2mat(glmModel{i}.predicted.pole'),-1,1);
+    rawResponses = cell2mat(glmModel{i}.predicted.spikeTestRaw');
+    predResponses = cell2mat(glmModel{i}.predicted.spikeProb');
+    
+    numBins = round(numel(poles)./samplesPerBin); 
+    [raw_sorted,raw_sortedBy] = binslin(poles,rawResponses,'equalN',numBins);
+    [pred_sorted,pred_sortedBy] = binslin(poles,predResponses,'equalN',numBins);
+    
+    subplot(rc(1),rc(2),rec)
+    hold on; plot(cellfun(@median, raw_sortedBy),normalize_var(smooth(cellfun(@mean, raw_sorted)),0,1),'b')
+    hold on; plot(cellfun(@median, pred_sortedBy),normalize_var(smooth(cellfun(@mean, pred_sorted)),0,1),'r')
+    
+    gof_tuning_indiv= corr(smooth(cellfun(@mean, raw_sorted)),smooth(cellfun(@mean, pred_sorted)));
+
+    title([topFeature{rec} ' ' num2str(gof_tuning_indiv)]); 
+end
+
+
 
 %% random metrics 
 %percent of touches responsive
