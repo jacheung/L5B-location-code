@@ -32,7 +32,7 @@ else
 end
     
 %GLMdesign Matrix Build
-selectedFeatures = [2:8]; 
+selectedFeatures = [1 5:8]; 
 interpOption = 'off'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
@@ -103,8 +103,8 @@ rc = numSubplots(length(glmModel));
 
 figure(32);clf
 
-[~,idx] = sort(gof_tuning);
-plotIdx = fliplr(idx); 
+% [~,idx] = sort(gof_tuning);
+% plotIdx = fliplr(idx); 
 
 for rec = 1:length(glmModel)
     

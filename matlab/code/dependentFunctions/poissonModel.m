@@ -51,6 +51,7 @@ for p = 1:glmnetOpt.numIterations
     saturatedLogLikelihood = sum(log(poisspdf(testDmatY,testDmatY)));
     fullLogLikelihood = sum(log(poisspdf(testDmatY,model)));
     fitDevExplained(p) = (fullLogLikelihood - nullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
+    aic(p) = -2.*(fullLogLikelihood) + (2*size(DmatX,2)); 
     devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
     
     
@@ -74,5 +75,6 @@ mdl.predicted.spikeProb = sHeat;
 mdl.predicted.pole = sPole;
 
 mdl.gof.devExplained = fitDevExplained;
+mdl.gof.aic = aic; 
 
 

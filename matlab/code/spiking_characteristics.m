@@ -58,7 +58,7 @@ median_touch = [cellfun(@median, touch_properties) ]';
 range_touch(:,1) = [cellfun(@min, touch_properties) ]';
 range_touch(:,2) = [cellfun(@max, touch_properties) ]';
 
-%% Define touch units
+%% Define location tuned units
 pole_tuned = object_location_quantification(U,touchUnits,'pole'); %for old see object_location_v1.0
 
 tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
