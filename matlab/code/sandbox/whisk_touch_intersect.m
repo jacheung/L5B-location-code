@@ -7,8 +7,32 @@ selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'ex
 tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
 
 wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'off');
-%% scatter of tuning preference
+%% scatter of tuning preference of whisk and touch
 
+tUnits = cellfun(@(x) isfield(x.calculations,'tune_peak'),tStruct);
+wUnits = cellfun(@(x) isfield(x.calculations,'tune_peak'),wStruct);
+
+[~,touchIdx] = intersect(find(tUnits),find(wUnits));
+[~,whiskIdx] = intersect(find(wUnits),find(tUnits));
+
+touch_nonIX_idx = setdiff(1:sum(tUnits),touchIdx);
+whisk_nonIX_idx = setdiff(1:sum(wUnits),whiskIdx);
+
+touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_width],tStruct(tUnits),'uniformoutput',0)') ;
+whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_width],wStruct(wUnits),'uniformoutput',0)'); 
+
+%scatter of whisking (Y) vs touch (X) 
+figure(3850);clf
+hold on; errorbar(touch_pw(touch_nonIX_idx,1),ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,2),'bo','horizontal')%plot only touch tuned units
+hold on; errorbar(ones(1,length(whisk_nonIX_idx))*2.5,whisking_pw(whisk_nonIX_idx,1),whisking_pw(whisk_nonIX_idx,2),'co','vertical')%plot only whisk tuned units
+hold on; errorbar(touch_pw(touchIdx,1),whisking_pw(whiskIdx,1),whisking_pw(whiskIdx,2),whisking_pw(whiskIdx,2),touch_pw(touchIdx,1),touch_pw(touchIdx,1),'ro')
+
+set(gca,'xlim',[-3 3],'ylim',[-3 3],'xdir','reverse','ydir','reverse',...
+    'xtick',-1:1:1,'ytick',-1:1:1)
+hold on; plot([-1 1],[-1 1],'--k')
+legend('touch tuned only','whisk tuned only','both tuned')
+axis square
+xlabel('touch tune peak');ylabel('whisk tune peak')
 
 
 %% intersection of whisking and touch 
