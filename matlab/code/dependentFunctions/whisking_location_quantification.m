@@ -1,4 +1,4 @@
-function [tuneStruct] = whisking_location_quantification(uberarray,selectedCells,hilbert_feature)
+function [tuneStruct] = whisking_location_quantification(uberarray,selectedCells,hilbert_feature,displayOpt)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %this function is used to plot a heat map of location (angle at touch)
@@ -17,6 +17,13 @@ function [tuneStruct] = whisking_location_quantification(uberarray,selectedCells
 %tc_xy = tuning curves showing x(stim) and y(responses); 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if (nargin < 4), displayOpt = 'on'; end
+willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
+    | strcmp(displayOpt,'off'));
+
+if willdisplay
+    rc = numSubplots(numel(selectedCells));
+end
 
 %function parameters
 numWhiskSamplesPerBin = 3000; %number of touches to assign in each bin for quantification. 
@@ -27,7 +34,8 @@ min_bins = 5; %minimum number of angle bins to consider quantifying
 
 %dependent function to id all touches and pre/post decision touches
 preDecisionTouches = preDecisionTouchMat(uberarray(selectedCells));
-rc = numSubplots(numel(selectedCells));
+
+
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
@@ -44,15 +52,15 @@ for rec = 1:length(selectedCells)
     spikes = squeeze(array.R_ntk); 
     
     if strcmp(hilbert_feature,'angle')
-        conversion_feature = array.S_ctk(:,1);
+        conversion_feature = squeeze(array.S_ctk(1,:,:));
     elseif strcmp(hilbert_feature,'amplitude')
-        conversion_feature = array.S_ctk(:,3);
+        conversion_feature = squeeze(array.S_ctk(3,:,:));
     elseif strcmp(hilbert_feature,'midpoint')
-        conversion_feature = array.S_ctk(:,4);
+        conversion_feature = squeeze(array.S_ctk(4,:,:));
     elseif strcmp(hilbert_feature,'phase')
-        conversion_feature = array.S_ctk(:,5);
+        conversion_feature = squeeze(array.S_ctk(5,:,:));
     elseif strcmp(hilbert_feature,'curvature')
-        conversion_feature = array.S_ctk(:,6);
+        conversion_feature = squeeze(array.S_ctk(6,:,:));
     elseif strcmp(hilbert_feature,'pole')
         viewWindow = -25:50;
         [tVar] = atTouch_sorter(array,viewWindow,preDecisionTouches{rec});
@@ -89,9 +97,12 @@ for rec = 1:length(selectedCells)
     CI = SEM.*tscore;
     
     if numel(sortedBy)>min_bins
-        figure(23);subplot(rc(1),rc(2),rec)
-        shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
-
+        
+        if willdisplay
+            figure(23);subplot(rc(1),rc(2),rec)
+            shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
+        end
+        
         if quant_ol_p < alpha_value
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
@@ -108,7 +119,7 @@ for rec = 1:length(selectedCells)
             [~,sd_idx_tmp] = min(abs(idx - all_idx));
             sd_idx = all_idx(sd_idx_tmp);
             
-            if ~isempty(sd_idx) && ~isempty(idx)
+            if ~isempty(sd_idx) && ~isempty(idx) && willdisplay
                 hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
                 hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
             end
@@ -117,16 +128,18 @@ for rec = 1:length(selectedCells)
             tuneStruct{selectedCells(rec)}.is_tuned = 1; 
         end
         
-        if strcmp(hilbert_feature,'phase')
-            set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
-        elseif strcmp(hilbert_feature,'pole')
-             set(gca,'xlim',[-1 1],'xtick',-1:1:1,'xdir','reverse')
-        else
-            set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
+        if willdisplay
+            if strcmp(hilbert_feature,'phase')
+                set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
+            elseif strcmp(hilbert_feature,'pole')
+                set(gca,'xlim',[-1 1],'xtick',-1:1:1,'xdir','reverse')
+            else
+                set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
+            end
         end
         
-         tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk'};
-         tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@median, sortedBy) smooth(cellfun(@mean,sorted),smoothing_param) smooth(cellfun(@std,sorted),smoothing_param)];
+         tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};
+         tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@nanmedian, sortedBy) smooth(cellfun(@nanmean,sorted),smoothing_param) smooth(cellfun(@nanstd,sorted),smoothing_param) smooth(CI,smoothing_param)];
          
     else
         tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples 
