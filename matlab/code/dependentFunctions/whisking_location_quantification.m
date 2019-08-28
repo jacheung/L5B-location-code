@@ -34,7 +34,7 @@ preDecisionTouches = preDecisionTouchMat(uberarray(selectedCells));
 tuneStruct = cell(1,length(uberarray));
 for i = 1:length(uberarray)
     tuneStruct{i}.is_tuned = nan;
-    tuneStruct{i}.calculations = nan;
+    tuneStruct{i}.calculations = [];
 end
 
 all_masks = cellfun(@maskBuilder,uberarray(selectedCells)); %build masks
