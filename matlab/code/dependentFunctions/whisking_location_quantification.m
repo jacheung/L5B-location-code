@@ -1,7 +1,7 @@
 function [tuneStruct] = whisking_location_quantification(uberarray,selectedCells,hilbert_feature,displayOpt)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% this function is used to plot a heat map of whisking 
+% this function is used to plot a heat map of whisking
 % tuning for selectedCells. Specifically, use touch cells.
 %
 % inputs:
@@ -34,6 +34,7 @@ preDecisionTouches = preDecisionTouchMat(uberarray(selectedCells));
 tuneStruct = cell(1,length(uberarray));
 for i = 1:length(uberarray)
     tuneStruct{i}.is_tuned = nan;
+    tuneStruct{i}.calculations = nan;
 end
 
 all_masks = cellfun(@maskBuilder,uberarray(selectedCells)); %build masks
@@ -113,19 +114,21 @@ for rec = 1:length(selectedCells)
             [~,sd_idx_tmp] = min(abs(idx - all_idx));
             sd_idx = all_idx(sd_idx_tmp);
             
-            if ~isempty(sd_idx) && ~isempty(idx) && willdisplay
-                hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
-                hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
-                
+            if ~isempty(sd_idx) && ~isempty(idx)
+                if willdisplay
+                    hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
+                    hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
+                end
+                %calculations of tuning
+                tuneStruct{selectedCells(rec)}.is_tuned = 1;
                 tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
-                tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response             
+                tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
+                tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
+                tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
             end
             
-            %calculations of tuning 
-            tuneStruct{selectedCells(rec)}.is_tuned = 1;
-            tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
-            tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
-
+            
+            
         end
         
         if willdisplay

@@ -32,7 +32,7 @@ preDecisionTouches = preDecisionTouchMat(uberarray);
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
 for i = 1:length(uberarray)
-    tuneStruct{i}.mod_depth = nan;
+    tuneStruct{i}.calculations = nan;
     tuneStruct{i}.is_tuned = nan;
 end
 
@@ -145,22 +145,24 @@ for rec = 1:length(selectedCells)
                 [~,sd_idx_tmp] = min(abs(idx - all_idx));
                 sd_idx = all_idx(sd_idx_tmp);
                 
-                if ~isempty(sd_idx) && ~isempty(idx) && willdisplay
-                    hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
-                    hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
-                    
+                if ~isempty(sd_idx) && ~isempty(idx)
+                    if willdisplay
+                        hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
+                        hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
+                        
+                    end
+                    %calculations for output of tuning. Built specifically for
+                    %touch excited units. Touch inhibited may need a new
+                    %calculation
+                    tuneStruct{selectedCells(rec)}.is_tuned = 1;
+                    tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
+                    tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
                     tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
                     tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
                     
                 end
                 
-                %calculations for output of tuning. Built specifically for
-                %touch excited units. Touch inhibited may need a new
-                %calculation
-                tuneStruct{selectedCells(rec)}.is_tuned = 1;
-                tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
-                tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
-
+                
                 
             elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
                 [minResponse,idx] = min(smooth_response);

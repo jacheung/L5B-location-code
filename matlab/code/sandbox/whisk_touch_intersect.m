@@ -8,6 +8,10 @@ selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'ex
 tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
 
 wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'off');
+%% scatter of tuning preference
+
+
+
 %% intersection of whisking and touch 
 
 touch_OL = cellfun(@(x) x.is_tuned==1,tStruct);
