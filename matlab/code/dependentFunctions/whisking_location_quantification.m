@@ -116,15 +116,16 @@ for rec = 1:length(selectedCells)
             if ~isempty(sd_idx) && ~isempty(idx) && willdisplay
                 hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
                 hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
+                
+                tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
+                tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response             
             end
             
             %calculations of tuning 
             tuneStruct{selectedCells(rec)}.is_tuned = 1;
             tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
             tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
-            tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
-            tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
-            
+
         end
         
         if willdisplay

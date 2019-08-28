@@ -133,6 +133,7 @@ for rec = 1:length(selectedCells)
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
             if strcmp(array.meta.touchProperties.responseType,'excited')
                 [maxResponse,idx] = max(smooth_response);
+                minResponse = min(smooth_response);
                 
                 %plot scatter of first sig diff from max and max value
                 sd_p = nan(length(sorted),1);
@@ -147,6 +148,10 @@ for rec = 1:length(selectedCells)
                 if ~isempty(sd_idx) && ~isempty(idx) && willdisplay
                     hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
                     hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
+                    
+                    tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
+                    tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
+                    
                 end
                 
                 %calculations for output of tuning. Built specifically for
@@ -155,9 +160,7 @@ for rec = 1:length(selectedCells)
                 tuneStruct{selectedCells(rec)}.is_tuned = 1;
                 tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
                 tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
-                tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
-                tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
-                
+
                 
             elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
                 [minResponse,idx] = min(smooth_response);
