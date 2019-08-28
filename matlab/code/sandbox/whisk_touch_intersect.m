@@ -1,7 +1,7 @@
 % selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 
 %% 
-hilbertVar = 'angle'
+hilbertVar = 'pole'
 
 
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
