@@ -1,20 +1,16 @@
 function [tuneStruct] = whisking_location_quantification(uberarray,selectedCells,hilbert_feature,displayOpt)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%this function is used to plot a heat map of location (angle at touch)
-%tuning for selectedCells. Specifically, use touch cells. 
+% this function is used to plot a heat map of whisking 
+% tuning for selectedCells. Specifically, use touch cells.
 %
-%inputs: 
-%uberarray - packaged uber array with all recorded units
-%selectedCells - indices of units in uberarray that are touch cells
+% inputs:
+% uberarray - packaged uber array with all recorded units
+% selectedCells - indices of units in uberarray that are touch cells
 %
-%outputs:
-%heatmap for object location tuning across time
-%object location tuning in touch response window as defined from
-%defTouchResponse.m function
-%is_tuned = vector showing whether neuron is tuned to hilbert_feature at
-%touch
-%tc_xy = tuning curves showing x(stim) and y(responses); 
+% outputs:
+% whisk location tuning as defined from
+% tuneStruct = struct with calculations of tuning
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if (nargin < 4), displayOpt = 'on'; end
@@ -26,16 +22,13 @@ if willdisplay
 end
 
 %function parameters
-numWhiskSamplesPerBin = 3000; %number of touches to assign in each bin for quantification. 
+numWhiskSamplesPerBin = 3000; %number of whisks to assign in each bin for quantification.
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
-min_bins = 5; %minimum number of angle bins to consider quantifying 
-
+min_bins = 5; %minimum number of angle bins to consider quantifying
 
 %dependent function to id all touches and pre/post decision touches
 preDecisionTouches = preDecisionTouchMat(uberarray(selectedCells));
-
-
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
@@ -49,7 +42,7 @@ for rec = 1:length(selectedCells)
     array = uberarray{selectedCells(rec)};
     curr_mask = all_masks(rec);
     whisking_mask = curr_mask.whisking .*curr_mask.touch;
-    spikes = squeeze(array.R_ntk); 
+    spikes = squeeze(array.R_ntk);
     
     if strcmp(hilbert_feature,'angle')
         conversion_feature = squeeze(array.S_ctk(1,:,:));
@@ -61,14 +54,14 @@ for rec = 1:length(selectedCells)
         conversion_feature = squeeze(array.S_ctk(5,:,:));
     elseif strcmp(hilbert_feature,'curvature')
         conversion_feature = squeeze(array.S_ctk(6,:,:));
-    elseif strcmp(hilbert_feature,'pole')
+    elseif strcmp(hilbert_feature,'pole') %conversion of angle to pole using touch positions
         viewWindow = -25:50;
         [tVar] = atTouch_sorter(array,viewWindow,preDecisionTouches{rec});
         pole_at_touch = normalize_var(tVar.allTouches.S_ctk(:,end),-1,1);
         angle_at_touch = tVar.allTouches.S_ctk(:,1);
         
         [s,sby] = binslin(pole_at_touch,angle_at_touch,'equalN',12); %bin responses based on pole positions
-        cleaned = cell2mat(cellfun(@(x,y) rmoutliers([x y]),s,sby,'uniformoutput',0)); %remove outliers using median 
+        cleaned = cell2mat(cellfun(@(x,y) rmoutliers([x y]),s,sby,'uniformoutput',0)); %remove outliers using median
         cleaned(sum(isnan(cleaned),2)>0,:) = [];
         clean_aat = cleaned(:,1);
         clean_pat = cleaned(:,2);
@@ -83,7 +76,7 @@ for rec = 1:length(selectedCells)
     
     numBins = round(sum(~isnan(current_feature(:)))./numWhiskSamplesPerBin);
     
-    %% Tuning in touch response window 
+    %% Tuning in touch response window
     if strcmp(hilbert_feature,'phase')
         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalE',13,-pi,pi);
     else
@@ -108,6 +101,7 @@ for rec = 1:length(selectedCells)
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
             
             [maxResponse,idx] = max(smooth_response);
+            minResponse = min(smooth_response);
             
             %plot scatter of first sig diff from max
             sd_p = nan(length(sorted),1);
@@ -124,8 +118,13 @@ for rec = 1:length(selectedCells)
                 hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
             end
             
-          
-            tuneStruct{selectedCells(rec)}.is_tuned = 1; 
+            %calculations of tuning 
+            tuneStruct{selectedCells(rec)}.is_tuned = 1;
+            tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
+            tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
+            tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
+            tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
+            
         end
         
         if willdisplay
@@ -138,10 +137,10 @@ for rec = 1:length(selectedCells)
             end
         end
         
-         tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};
-         tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@nanmedian, sortedBy) smooth(cellfun(@nanmean,sorted),smoothing_param) smooth(cellfun(@nanstd,sorted),smoothing_param) smooth(CI,smoothing_param)];
-         
+        tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};
+        tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@nanmedian, sortedBy) smooth(cellfun(@nanmean,sorted),smoothing_param) smooth(cellfun(@nanstd,sorted),smoothing_param) smooth(CI,smoothing_param)];
+        
     else
-        tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples 
+        tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples
     end
-end   
+end

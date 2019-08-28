@@ -1,19 +1,15 @@
 function [tuneStruct] = object_location_quantification(uberarray,selectedCells,hilbert_feature,displayOpt)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%this function is used to plot a heat map of location (angle at touch)
-%tuning for selectedCells. Specifically, use touch cells. 
+% this function is used to plot a heat map of location (e.g. angle at touch)
+% tuning for selectedCells. Specifically, use touch cells.
 %
-%inputs: 
-%uberarray - packaged uber array with all recorded units
-%selectedCells - indices of units in uberarray that are touch cells
+% inputs:
+% uberarray - packaged uber array with all recorded units
+% selectedCells - indices of units in uberarray that are touch cells
 %
-%outputs:
-%heatmap for object location tuning across time
-%object location tuning in touch response window as defined from
-%defTouchResponse.m function
-%is_tuned = vector showing whether neuron is tuned to hilbert_feature at
-%touch
-%tc_xy = tuning curves showing x(stim) and y(responses); 
+% outputs:
+% whisk location tuning as defined from
+% tuneStruct = struct with calculations of tuning
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if (nargin < 4), displayOpt = 'on'; end
@@ -22,12 +18,12 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 
 
 %function parameters
-viewWindow = [-25:50]; %viewing window around touch 
-numTouchesPerBin = 75; %number of touches to assign in each bin for quantification. 
+viewWindow = [-25:50]; %viewing window around touch
+numTouchesPerBin = 75; %number of touches to assign in each bin for quantification.
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
-min_bins = 5; %minimum number of angle bins to consider quantifying 
-gauss_filt = .5; 
+min_bins = 5; %minimum number of angle bins to consider quantifying
+gauss_filt = .5; %2D smoothing filter for heatmap 
 
 %dependent function to id all touches and pre/post decision touches
 preDecisionTouches = preDecisionTouchMat(uberarray);
@@ -36,7 +32,7 @@ preDecisionTouches = preDecisionTouchMat(uberarray);
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
 for i = 1:length(uberarray)
-    tuneStruct{i}.mod_depth = nan; 
+    tuneStruct{i}.mod_depth = nan;
     tuneStruct{i}.is_tuned = nan;
 end
 
@@ -75,7 +71,7 @@ for rec = 1:length(selectedCells)
     response = mean(tVar.allTouches.R_ntk(:,rw),2) * 1000;
     numBins = round(numel(selected_feature)./numTouchesPerBin);
     
-    %% Heatmap
+    %% Heatmap of responses around touch. Window around touch defined as view_window
     if strcmp(hilbert_feature,'phase')
         [sorted_heat, sortedBy_heat] = binslin(selected_feature,tVar.allTouches.R_ntk,'equalE',13,-pi,pi);
     else
@@ -123,11 +119,13 @@ for rec = 1:length(selectedCells)
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
     
+    % making sure we've sampled enough bins before plotting. 
+    % min_bins defined as a global param above. 
     if numel(sortedBy)>min_bins
         
         if willdisplay
-        figure(23);subplot(rc(1),rc(2),rec)
-        shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
+            figure(23);subplot(rc(1),rc(2),rec)
+            shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
         end
         
         if quant_ol_p < alpha_value
@@ -136,7 +134,7 @@ for rec = 1:length(selectedCells)
             if strcmp(array.meta.touchProperties.responseType,'excited')
                 [maxResponse,idx] = max(smooth_response);
                 
-                %plot scatter of first sig diff from max
+                %plot scatter of first sig diff from max and max value 
                 sd_p = nan(length(sorted),1);
                 pThresh = .05;
                 for g = 1:numel(sorted)
@@ -150,6 +148,8 @@ for rec = 1:length(selectedCells)
                     hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
                     hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
                 end
+                
+
                 
             elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
                 [minResponse,idx] = min(smooth_response);
@@ -170,9 +170,15 @@ for rec = 1:length(selectedCells)
                 end
             end
             
-            
-            tuneStruct{selectedCells(rec)}.mod_depth = (max(cellfun(@mean,sorted)) - min(cellfun(@mean,sorted))) ./ mean(cellfun(@mean,sorted));
+            %calculations for output of tuning. Built specifically for
+            %touch excited units. Touch inhibited may need a new
+            %calculation
             tuneStruct{selectedCells(rec)}.is_tuned = 1; 
+            tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
+            tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
+            tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
+            tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
+            
         end
         
         if willdisplay
@@ -185,11 +191,11 @@ for rec = 1:length(selectedCells)
             end
         end
         
-         tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};
-         tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@nanmedian, sortedBy) smooth(cellfun(@nanmean,sorted),smoothing_param) smooth(cellfun(@nanstd,sorted),smoothing_param) CI];
-         
+        tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};
+        tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@nanmedian, sortedBy) smooth(cellfun(@nanmean,sorted),smoothing_param) smooth(cellfun(@nanstd,sorted),smoothing_param) CI];
+        
     else
-        tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples 
+        tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples
     end
     
     

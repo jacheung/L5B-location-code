@@ -7,8 +7,8 @@ hilbertVar = 'angle'
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
 
-wStruct = whisking_location_quantification(U,selectedCells,hilbertVar);
-%% intesrection of whisking and touch 
+wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'off');
+%% intersection of whisking and touch 
 
 touch_OL = cellfun(@(x) x.is_tuned==1,tStruct);
 rc = numSubplots(sum(touch_OL)); 
