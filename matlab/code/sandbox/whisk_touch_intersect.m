@@ -21,20 +21,22 @@ whisk_nonIX_idx = setdiff(1:sum(wUnits),whiskIdx);
 touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_width],tStruct(tUnits),'uniformoutput',0)') ;
 whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_width],wStruct(wUnits),'uniformoutput',0)'); 
 
-%scatter of whisking (Y) vs touch (X) 
+%scatter of whisking (Y) vs touch (X), would be cool to do a 3D plot of
+%this for easier visualization
 figure(3850);clf
-hold on; errorbar(touch_pw(touch_nonIX_idx,1),ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,2),'bo','horizontal')%plot only touch tuned units
 hold on; errorbar(ones(1,length(whisk_nonIX_idx))*2.5,whisking_pw(whisk_nonIX_idx,1),whisking_pw(whisk_nonIX_idx,2),'co','vertical')%plot only whisk tuned units
+hold on; errorbar(touch_pw(touch_nonIX_idx,1),ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,2),'bo','horizontal')%plot only touch tuned units
 hold on; errorbar(touch_pw(touchIdx,1),whisking_pw(whiskIdx,1),whisking_pw(whiskIdx,2),whisking_pw(whiskIdx,2),touch_pw(touchIdx,1),touch_pw(touchIdx,1),'ro')
 
 set(gca,'xlim',[-3 3],'ylim',[-3 3],'xdir','reverse','ydir','reverse',...
     'xtick',-1:1:1,'ytick',-1:1:1)
 hold on; plot([-1 1],[-1 1],'--k')
-legend('touch tuned only','whisk tuned only','both tuned')
+legend('whisk tuned only','touch tuned only','both tuned')
 axis square
 xlabel('touch tune peak');ylabel('whisk tune peak')
+title(['whisk=' num2str(numel(whisk_nonIX_idx)) ', touch=' num2str(numel(touch_nonIX_idx)) ', both=' num2str(numel(touchIdx))])
 
-
+% table of modulation indices
 %% intersection of whisking and touch 
 
 touch_OL = cellfun(@(x) x.is_tuned==1,tStruct);

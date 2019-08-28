@@ -7,6 +7,10 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 pole_tuned = object_location_quantification(U,selectedCells,'pole'); %for old see object_location_v1.0
 
+%% Plot heatmap of tuning across all units
+tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
+%set unsampled heatmap to nan; 
+
 %% population at touch pole decoding
 % GLM model parameters
 glmnetOpt = glmnetSet;
@@ -14,7 +18,7 @@ glmnetOpt.standardize = 0; %set to 0 b/c already standardized
 glmnetOpt.alpha = 0.95;
 glmnetOpt.xfoldCV = 3;
 glmnetOpt.numIterations = 20;
-glmnetOpt.pctSamplingThreshold = .80; %what percent of total pole positions must be sampled before using
+glmnetOpt.pctSamplingThreshold = .80; %what percent of total pole positions must be sampled before using that unit
 glmnetOpt.interpResolution = 40; %10mm / numBins (e.g. 40 = .25mm resolution)
 glmnetOpt.samplingOption = 'poisson';
 glmnetOpt.numberResamples = 50;
