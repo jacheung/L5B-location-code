@@ -23,7 +23,7 @@ numTouchesPerBin = 75; %number of touches to assign in each bin for quantificati
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
-gauss_filt = .5; %2D smoothing filter for heatmap 
+gauss_filt = .5; %2D smoothing filter for heatmap
 
 %dependent function to id all touches and pre/post decision touches
 preDecisionTouches = preDecisionTouchMat(uberarray);
@@ -106,7 +106,7 @@ for rec = 1:length(selectedCells)
             disp(['Not plotting cell ' num2str(selectedCells(rec)) ' b/c less than 5 sampled bins'])
         end
     end
-    %% Tuning in touch response window 
+    %% Tuning in touch response window
     if strcmp(hilbert_feature,'phase')
         [sorted, sortedBy] = binslin(selected_feature,response,'equalE',13,-pi,pi);
     else
@@ -119,8 +119,8 @@ for rec = 1:length(selectedCells)
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
     
-    % making sure we've sampled enough bins before plotting. 
-    % min_bins defined as a global param above. 
+    % making sure we've sampled enough bins before plotting.
+    % min_bins defined as a global param above.
     if numel(sortedBy)>min_bins
         
         if willdisplay
@@ -134,7 +134,7 @@ for rec = 1:length(selectedCells)
             if strcmp(array.meta.touchProperties.responseType,'excited')
                 [maxResponse,idx] = max(smooth_response);
                 
-                %plot scatter of first sig diff from max and max value 
+                %plot scatter of first sig diff from max and max value
                 sd_p = nan(length(sorted),1);
                 pThresh = .05;
                 for g = 1:numel(sorted)
@@ -149,7 +149,15 @@ for rec = 1:length(selectedCells)
                     hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
                 end
                 
-
+                %calculations for output of tuning. Built specifically for
+                %touch excited units. Touch inhibited may need a new
+                %calculation
+                tuneStruct{selectedCells(rec)}.is_tuned = 1;
+                tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
+                tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
+                tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
+                tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
+                
                 
             elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
                 [minResponse,idx] = min(smooth_response);
@@ -169,15 +177,6 @@ for rec = 1:length(selectedCells)
                     hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'r','filled');
                 end
             end
-            
-            %calculations for output of tuning. Built specifically for
-            %touch excited units. Touch inhibited may need a new
-            %calculation
-            tuneStruct{selectedCells(rec)}.is_tuned = 1; 
-            tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
-            tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
-            tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
-            tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
             
         end
         
