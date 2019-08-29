@@ -1,12 +1,18 @@
 % selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 
 %% 
-hilbertVar = 'pole'
+hilbertVar = 'pole';
 
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
 
 wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'off');
+
+if strcmp(hilbertVar,'pole')
+    population_heatmap_builder(tStruct,wStruct)
+else
+    disp('not building out population heatmaps. function not optimized for other variables')
+end
 %% scatter of tuning preference of whisk and touch
 
 tUnits = cellfun(@(x) isfield(x.calculations,'tune_peak'),tStruct);
@@ -70,7 +76,6 @@ for g = 1:sum(touch_OL)
     whisk_std = interp1(curr_w(:,1),curr_w(:,3),whisk_x);
     whisk_CI = interp1(curr_w(:,1),curr_w(:,4),whisk_x);
     
-    
     touch_response = interp1(curr_t(:,1),curr_t(:,2),touch_x);
     touch_std = interp1(curr_t(:,1),curr_t(:,3),touch_x);
     touch_CI =  interp1(curr_t(:,1),curr_t(:,4),touch_x);
@@ -78,17 +83,19 @@ for g = 1:sum(touch_OL)
     [~,~,whisk_idx] = intersect(touch_x,whisk_x);
     [overlap_x,~,touch_idx] = intersect(whisk_x,touch_x);
     
+    
+    
+    
+    
+    
     figure(99);subplot(rc(1),rc(2),g)
     shadedErrorBar(overlap_x,whisk_response(whisk_idx),whisk_CI(whisk_idx),'c')
     hold on; shadedErrorBar(overlap_x,touch_response(touch_idx),touch_CI(touch_idx),'b')
     if strcmp(hilbertVar,'pole')
         set(gca,'xlim',[-1 1],'xdir','reverse')
     elseif strcmp(hilbertVar,'phase')
-        set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'\pi','0','\pi'})
-    else
-        
+        set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'\pi','0','\pi'})    
     end
-    
     
     figure(100);subplot(rc(1),rc(2),g)
     scatter(whisk_response(whisk_idx),touch_response(touch_idx))

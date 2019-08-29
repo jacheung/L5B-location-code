@@ -5,11 +5,9 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 
 %% Top level parameters and definitions
 selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
-pole_tuned = object_location_quantification(U,selectedCells,'pole'); %for old see object_location_v1.0
+pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 
-%% Plot heatmap of tuning across all units
-tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
-%set unsampled heatmap to nan; 
+
 
 %% population at touch pole decoding
 % GLM model parameters
