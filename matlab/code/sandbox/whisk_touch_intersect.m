@@ -9,7 +9,7 @@ tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
 wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'off');
 
 if strcmp(hilbertVar,'pole')
-    population_heatmap_builder(tStruct,wStruct)
+    population_heatmap_builder(tStruct,wStruct,hilbertVar)
 else
     disp('not building out population heatmaps. function not optimized for other variables')
 end
