@@ -7,7 +7,6 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 
-
 %% population at touch pole decoding
 % GLM model parameters
 glmnetOpt = glmnetSet;
@@ -44,16 +43,17 @@ suptitle([ 'Per touch location decoding using ' num2str(size(DmatXnorm,2)) ' tun
 %% number of neurons for resolution
 %mdl needs to have distance_from_true = cellfun(@(x,y) abs(x-y),mdl.io.trueY,mdl.io.predY,'uniformoutput',0);
 %mdl needs to have confusion matrix  mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix);
-numNeurons = [1 5 10 20 30];
+numNeurons = [1 5 10 20 30 numel(usedUnits)];
 numIterations = 20;
 
 mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
 reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
  
 nframe = numNeurons;
-v = VideoWriter('resolution_heatmap.avi');
-v.FrameRate = 1; 
-open(v)
+neurometric_curve = cell(1,length(numNeurons));
+% v = VideoWriter('resolution_heatmap.avi');
+% v.FrameRate = 1; 
+% open(v)
 resamp_mdl = [];
 for g = 1:length(numNeurons)
     for d = 1:numIterations
@@ -76,11 +76,36 @@ for g = 1:length(numNeurons)
     resamp_mdl{g}.io.predY = pred';
     gofmetrics{g} = decoderPerformance(resamp_mdl{g});
     suptitle(['Number of neurons = ' num2str(numNeurons(g))])
-    frame=getframe(gcf);
-    writeVideo(v,frame);
+    
+    %calculate neurometric curve from matrix
+    %how do we do this? create first a confusion matrix
+    %
+    % pred(Go)    pred(nogo)
+    % aka lick    aka no lick  
+    %%%%%%%%%%%%%%%%%%%%%%%%
+    %           |           |
+    %    HIT    |    MISS   |  true(Go)
+    %           |           |
+    %%%%%%%%%%%%|%%%%%%%%%%%|
+    %           |           |
+    %    FA     |    CR     |   true(Nogo)
+    %           |           |
+    %%%%%%%%%%%%|%%%%%%%%%%%|
+    %
+    for b = 1:numIterations
+        raw_mat = confusionmat(true{b},pred{b});
+        prob_mat = raw_mat./ sum(raw_mat,2);
+        mat_shape = size(prob_mat,1);
+        lix_pred = prob_mat(:,1:(mat_shape/2)); 
+        neurometric_curve{g}(b,:) = sum(lix_pred,2);
+%         [sorted,sorted_by]  = binslin((1:mat_shape)',xform_1','equalX',11);
+%         neurometric_curve{g}(b,:) = cellfun(@nanmean,sorted);
+    end
+    
+%     frame=getframe(gcf);
+%     writeVideo(v,frame);
 end
-close(v)
-
+% close(v)
 
 boneMap = flipud(jet(length(numNeurons)));
 figure(80);clf
@@ -94,6 +119,23 @@ xlabel('mm w/in prediction');ylabel('p (prediction)')
 axis square
 title('cdf of prediction varying # of neurons')
 legend([num2str(numNeurons')])
+
+%plot neurometric curve 
+neuro_mean = cellfun(@nanmean ,neurometric_curve,'uniformoutput',0);
+neuro_sem = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),neurometric_curve,'uniformoutput',0);
+neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
+
+figure(81);clf
+rc=numSubplots(numel(numNeurons));
+for d = 1:length(numNeurons)
+    subplot(rc(1),rc(2),d)
+    hold on;
+    shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},neuro_sem{d});
+    %     plot(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},'color',boneMap(d,:));
+    set(gca,'xlim',[-1 1],'ylim',[0 1],'ytick',0:.25:1)
+    title(num2str(numNeurons(d)));
+end
+
 
 
 

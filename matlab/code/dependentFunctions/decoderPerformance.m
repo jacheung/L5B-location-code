@@ -35,6 +35,7 @@ set(gca,'ylim',[0 1],'xlim',[0 8],'xtick',0:2:10,'xticklabel',0:.5:5) %hard code
 xlabel('distance from prediction (mm)');ylabel('p(prediction)')
 axis square
 
+gof.cmat_raw = confusionMatrix; 
 gof.cmat = predProb;
 gof.resolutionNames = {'distances','mean probability','std probability'}; 
 gof.resolution = [distances' meanProb' std(probs)'];
