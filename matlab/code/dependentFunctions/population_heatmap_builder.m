@@ -115,7 +115,7 @@ title('ix whisk sorted')
 %plotting all whisk+touch object location tuned units touch responses sorted by whisk peak 
 subplot(3,2,5)
 unsorted_heat_touch = normalize_var(cell2mat(touch_heat(touch_ix_idx)')',0,1);
-data = unsorted_heat(:,w_idx_ix)'; 
+data = unsorted_heat_touch(:,w_idx_ix)'; 
 %set unsampled heatmap to nan; 
 [nr,nc] = size(data);
 pcolor([data nan(nr,1); nan(1,nc+1)]);

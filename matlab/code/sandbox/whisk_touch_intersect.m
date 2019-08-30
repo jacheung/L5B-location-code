@@ -24,15 +24,20 @@ wUnits = cellfun(@(x) isfield(x.calculations,'tune_peak'),wStruct);
 touch_nonIX_idx = setdiff(1:sum(tUnits),touchIdx);
 whisk_nonIX_idx = setdiff(1:sum(wUnits),whiskIdx);
 
-touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_width],tStruct(tUnits),'uniformoutput',0)') ;
-whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_width],wStruct(wUnits),'uniformoutput',0)'); 
+touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],tStruct(tUnits),'uniformoutput',0)') ;
+whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],wStruct(wUnits),'uniformoutput',0)'); 
 
-%scatter of whisking (Y) vs touch (X), would be cool to do a 3D plot of
-%this for easier visualization
+%scatter of whisking (Y) vs touch (X)
 figure(3850);clf
-hold on; errorbar(ones(1,length(whisk_nonIX_idx))*2.5,whisking_pw(whisk_nonIX_idx,1),whisking_pw(whisk_nonIX_idx,2),'co','vertical')%plot only whisk tuned units
-hold on; errorbar(touch_pw(touch_nonIX_idx,1),ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,2),'bo','horizontal')%plot only touch tuned units
-hold on; errorbar(touch_pw(touchIdx,1),whisking_pw(whiskIdx,1),whisking_pw(whiskIdx,2),whisking_pw(whiskIdx,2),touch_pw(touchIdx,1),touch_pw(touchIdx,1),'ro')
+hold on; errorbar(ones(1,length(whisk_nonIX_idx))*2.5,whisking_pw(whisk_nonIX_idx,1),whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','vertical')%plot only whisk tuned units
+hold on; errorbar(touch_pw(touch_nonIX_idx,1),ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','horizontal')%plot only touch tuned units
+hold on; errorbar(touch_pw(touchIdx,1),whisking_pw(whiskIdx,1),whisking_pw(whiskIdx,2),whisking_pw(whiskIdx,3),touch_pw(touchIdx,2),touch_pw(touchIdx,3),'ko')
+
+lm = fitlm(touch_pw(touchIdx,1),whisking_pw(whiskIdx,1));
+predicts = lm.predict;
+[s_vals,sort_idx] = sort(touch_pw(touchIdx,1));
+hold on; plot(s_vals,predicts(sort_idx))
+
 
 set(gca,'xlim',[-3 3],'ylim',[-3 3],'xdir','reverse','ydir','reverse',...
     'xtick',-1:1:1,'ytick',-1:1:1)
@@ -41,6 +46,15 @@ legend('whisk tuned only','touch tuned only','both tuned')
 axis square
 xlabel('touch tune peak');ylabel('whisk tune peak')
 title(['whisk=' num2str(numel(whisk_nonIX_idx)) ', touch=' num2str(numel(touch_nonIX_idx)) ', both=' num2str(numel(touchIdx))])
+
+figure(3851);clf
+subplot(2,1,1)
+histogram(touch_pw(:,1),-3:.20:3,'facecolor','b','facealpha',1)
+set(gca,'xdir','reverse','xlim',[-3 3])
+
+subplot(2,1,2); 
+histogram(whisking_pw(:,1),-3:.20:3,'facecolor','c','facealpha',1)
+set(gca,'xdir','reverse','xlim',[-3 3],'ytick',0:2:6,'ylim',[0 6])
 
 % table of modulation indices
 %% intersection of whisking and touch 
@@ -82,10 +96,6 @@ for g = 1:sum(touch_OL)
     
     [~,~,whisk_idx] = intersect(touch_x,whisk_x);
     [overlap_x,~,touch_idx] = intersect(whisk_x,touch_x);
-    
-    
-    
-    
     
     
     figure(99);subplot(rc(1),rc(2),g)

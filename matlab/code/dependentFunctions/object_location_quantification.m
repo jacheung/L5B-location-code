@@ -142,8 +142,31 @@ for rec = 1:length(selectedCells)
                     [~,sd_p(g)] = ttest2(sorted{idx},sorted{g});
                 end
                 all_idx = find(sd_p < pThresh); %all points sig diff from max
+                groupIdx = sort([all_idx ;idx]);
+                mid_idx = find(groupIdx==idx);
                 [~,sd_idx_tmp] = min(abs(idx - all_idx));
                 sd_idx = all_idx(sd_idx_tmp);
+                %finding tuning width before peak
+                if (mid_idx-1) ~= 0
+                    left_idx = groupIdx(mid_idx-1);
+                    tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
+                    tuneStruct{selectedCells(rec)}.calculations.tune_left_width = median(sortedBy{idx}) - median(sortedBy{left_idx}); %width defined as the first bin that's sig diff from peak response
+                else
+                    left_idx = [];
+                    tuneStruct{selectedCells(rec)}.calculations.tune_left_width = nan;
+                end
+                
+                % finding tuning width after peak
+                if (mid_idx+1) <= length(groupIdx)
+                    right_idx = groupIdx(mid_idx+1);
+                    tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
+                    tuneStruct{selectedCells(rec)}.calculations.tune_right_width = median(sortedBy{right_idx}) - median(sortedBy{idx}); %width defined as the first bin that's sig diff from peak response
+                else
+                    right_idx = [];
+                    tuneStruct{selectedCells(rec)}.calculations.tune_right_width = nan;
+                end
+                
+
                 
                 if ~isempty(sd_idx) && ~isempty(idx)
                     if willdisplay
@@ -156,9 +179,6 @@ for rec = 1:length(selectedCells)
                     %calculation
                     tuneStruct{selectedCells(rec)}.is_tuned = 1;
                     tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
-                    tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
-                    tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
-                    tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
                     
                 end
                 

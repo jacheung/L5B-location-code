@@ -8,7 +8,6 @@ selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 
 
-
 %% population at touch pole decoding
 % GLM model parameters
 glmnetOpt = glmnetSet;
