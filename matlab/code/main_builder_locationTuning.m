@@ -51,9 +51,9 @@ reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
  
 nframe = numNeurons;
 neurometric_curve = cell(1,length(numNeurons));
-% v = VideoWriter('resolution_heatmap.avi');
-% v.FrameRate = 1; 
-% open(v)
+v = VideoWriter('resolution_heatmap.avi');
+v.FrameRate = 1; 
+open(v)
 resamp_mdl = [];
 for g = 1:length(numNeurons)
     for d = 1:numIterations
@@ -98,17 +98,16 @@ for g = 1:length(numNeurons)
         mat_shape = size(prob_mat,1);
         lix_pred = prob_mat(:,1:(mat_shape/2)); 
         neurometric_curve{g}(b,:) = sum(lix_pred,2);
-%         [sorted,sorted_by]  = binslin((1:mat_shape)',xform_1','equalX',11);
-%         neurometric_curve{g}(b,:) = cellfun(@nanmean,sorted);
     end
     
-%     frame=getframe(gcf);
-%     writeVideo(v,frame);
+    frame=getframe(gcf);
+    writeVideo(v,frame);
 end
-% close(v)
+close(v)
 
 boneMap = flipud(jet(length(numNeurons)));
 figure(80);clf
+subplot(1,2,1)
 for d = 1:length(numNeurons)
     hold on;
     %     shadedErrorBar(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),gofmetrics{d}.resolution(:,3),'linecolor','b');
@@ -117,7 +116,7 @@ end
 set(gca,'ylim',[0 1],'xlim',[0 8],'xtick',0:2:10,'xticklabel',0:.5:5,'ytick',0:.25:1) %hard coded xticklabels for single touch prediction of pole position using population of OL tuned cells
 xlabel('mm w/in prediction');ylabel('p (prediction)')
 axis square
-title('cdf of prediction varying # of neurons')
+title('resolution')
 legend([num2str(numNeurons')])
 
 %plot neurometric curve 
@@ -125,16 +124,23 @@ neuro_mean = cellfun(@nanmean ,neurometric_curve,'uniformoutput',0);
 neuro_sem = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),neurometric_curve,'uniformoutput',0);
 neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
 
-figure(81);clf
-rc=numSubplots(numel(numNeurons));
+
+subplot(1,2,2)
 for d = 1:length(numNeurons)
-    subplot(rc(1),rc(2),d)
+%     subplot(rc(1),rc(2),d)
     hold on;
-    shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},neuro_sem{d});
-    %     plot(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},'color',boneMap(d,:));
-    set(gca,'xlim',[-1 1],'ylim',[0 1],'ytick',0:.25:1)
-    title(num2str(numNeurons(d)));
+    h=shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},neuro_sem{d});
+    h.patch.FaceColor = boneMap(d,:);
+    h.patch.FaceAlpha = .5;
+    h.mainLine.Color = [0 0 0];
+%     plot(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},'color',boneMap(d,:));
+    set(gca,'xlim',[-1 1],'xtick',-1:1:1,'ylim',[0 1],'ytick',0:.25:1)
 end
+title('neurometric curve')
+ylabel('lick probability')
+xlabel('normalized pole location')
+axis square
+suptitle('number of neurons affecting prediction of:')
 
 
 
