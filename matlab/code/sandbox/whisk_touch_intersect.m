@@ -5,8 +5,7 @@ hilbertVar = 'pole';
 
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
-
-wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'on');
+wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'off');
 
 if strcmp(hilbertVar,'pole')
     population_heatmap_builder(tStruct,wStruct,hilbertVar)
