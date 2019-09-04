@@ -6,7 +6,7 @@ hilbertVar = 'pole';
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
 
-wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'off');
+wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'on');
 
 if strcmp(hilbertVar,'pole')
     population_heatmap_builder(tStruct,wStruct,hilbertVar)
@@ -18,11 +18,11 @@ end
 tUnits = cellfun(@(x) isfield(x.calculations,'tune_peak'),tStruct);
 wUnits = cellfun(@(x) isfield(x.calculations,'tune_peak'),wStruct);
 
-[~,touchIdx] = intersect(find(tUnits),find(wUnits));
-[~,whiskIdx] = intersect(find(wUnits),find(tUnits));
+[~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
+[~,whisk_ix_idx] = intersect(find(wUnits),find(tUnits));
 
-touch_nonIX_idx = setdiff(1:sum(tUnits),touchIdx);
-whisk_nonIX_idx = setdiff(1:sum(wUnits),whiskIdx);
+touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
+whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
 
 touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],tStruct(tUnits),'uniformoutput',0)') ;
 whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],wStruct(wUnits),'uniformoutput',0)'); 
@@ -31,11 +31,11 @@ whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tun
 figure(3850);clf
 hold on; errorbar(ones(1,length(whisk_nonIX_idx))*2.5,whisking_pw(whisk_nonIX_idx,1),whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','vertical')%plot only whisk tuned units
 hold on; errorbar(touch_pw(touch_nonIX_idx,1),ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','horizontal')%plot only touch tuned units
-hold on; errorbar(touch_pw(touchIdx,1),whisking_pw(whiskIdx,1),whisking_pw(whiskIdx,2),whisking_pw(whiskIdx,3),touch_pw(touchIdx,2),touch_pw(touchIdx,3),'ko')
+hold on; errorbar(touch_pw(touch_ix_idx,1),whisking_pw(whisk_ix_idx,1),whisking_pw(whisk_ix_idx,2),whisking_pw(whisk_ix_idx,3),touch_pw(touch_ix_idx,2),touch_pw(touch_ix_idx,3),'ko')
 
-lm = fitlm(touch_pw(touchIdx,1),whisking_pw(whiskIdx,1));
+lm = fitlm(touch_pw(touch_ix_idx,1),whisking_pw(whisk_ix_idx,1));
 predicts = lm.predict;
-[s_vals,sort_idx] = sort(touch_pw(touchIdx,1));
+[s_vals,sort_idx] = sort(touch_pw(touch_ix_idx,1));
 hold on; plot(s_vals,predicts(sort_idx))
 
 
@@ -45,7 +45,7 @@ hold on; plot([-1 1],[-1 1],'--k')
 legend('whisk tuned only','touch tuned only','both tuned')
 axis square
 xlabel('touch tune peak');ylabel('whisk tune peak')
-title(['whisk=' num2str(numel(whisk_nonIX_idx)) ', touch=' num2str(numel(touch_nonIX_idx)) ', both=' num2str(numel(touchIdx))])
+title(['whisk=' num2str(numel(whisk_nonIX_idx)) ', touch=' num2str(numel(touch_nonIX_idx)) ', both=' num2str(numel(touch_ix_idx))])
 
 figure(3851);clf
 subplot(2,1,1)
@@ -56,7 +56,30 @@ subplot(2,1,2);
 histogram(whisking_pw(:,1),-3:.20:3,'facecolor','c','facealpha',1)
 set(gca,'xdir','reverse','xlim',[-3 3],'ytick',0:2:6,'ylim',[0 6])
 
-% table of modulation indices
+% scatter of absolute modulation values
+touch_abs_mod = cell2mat(cellfun(@(x) x.calculations.mod_idx_abs,tStruct(tUnits),'uniformoutput',0)') ;
+whisk_abs_mod = cell2mat(cellfun(@(x) x.calculations.mod_idx_abs,wStruct(wUnits),'uniformoutput',0)') ;
+
+[min_bound,max_bound] = bounds([touch_abs_mod(touch_ix_idx); whisk_abs_mod(whisk_ix_idx)]);
+
+figure(2410);clf
+hold on; scatter(whisk_abs_mod(whisk_nonIX_idx),zeros(1,length(whisk_nonIX_idx)),'c');
+hold on; scatter(zeros(1,length(touch_nonIX_idx)),touch_abs_mod(touch_nonIX_idx),'b');
+hold on; scatter(whisk_abs_mod(whisk_ix_idx),touch_abs_mod(touch_ix_idx),'k')
+hold on; plot([0,100],[0,100],'--k')
+set(gca,'xlim',[0 100],'ylim',[0 100],'ytick',0:25:100,'xtick',0:25:100)
+axis square
+xlabel('whisk absolute modulation');
+ylabel('touch absolute modulation');
+
+figure(2411);clf
+subplot(2,1,1)
+histogram(touch_abs_mod,0:5:100,'facecolor','b','facealpha',1)
+set(gca,'xlim',[0 100],'ylim',[0 10],'xtick',0:25:100,'ytick',0:5:10)
+
+subplot(2,1,2)
+histogram(whisk_abs_mod,0:5:100,'facecolor','c','facealpha',1)
+set(gca,'xlim',[0 100],'ylim',[0 10],'xtick',0:25:100,'ytick',0:5:10)
 %% intersection of whisking and touch 
 
 touch_OL = cellfun(@(x) x.is_tuned==1,tStruct);

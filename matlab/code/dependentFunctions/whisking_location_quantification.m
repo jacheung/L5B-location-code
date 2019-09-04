@@ -158,7 +158,7 @@ for rec = 1:length(selectedCells)
             if strcmp(hilbert_feature,'phase')
                 set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'-\pi','0','\pi'})
             elseif strcmp(hilbert_feature,'pole')
-                set(gca,'xlim',[-1 1],'xtick',-1:1:1,'xdir','reverse')
+                set(gca,'xtick',-5:1:5,'xdir','reverse')
             else
                 set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
             end
