@@ -74,9 +74,9 @@ reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
  
 nframe = numNeurons;
 neurometric_curve = cell(1,length(numNeurons));
-v = VideoWriter('resolution_heatmap.avi');
-v.FrameRate = 1; 
-open(v)
+% v = VideoWriter('resolution_heatmap.avi');
+% v.FrameRate = 1; 
+% open(v)
 resamp_mdl = [];
 for g = 1:length(numNeurons)
     for d = 1:numIterations
@@ -111,7 +111,7 @@ for g = 1:length(numNeurons)
     %           |           |
     %%%%%%%%%%%%|%%%%%%%%%%%|
     %           |           |
-    %    FA     |    CR     |   true(Nogo)
+    %    FA     |    CR     |  true(Nogo)
     %           |           |
     %%%%%%%%%%%%|%%%%%%%%%%%|
     %
@@ -123,10 +123,10 @@ for g = 1:length(numNeurons)
         neurometric_curve{g}(b,:) = sum(lix_pred,2);
     end
     
-    frame=getframe(gcf);
-    writeVideo(v,frame);
+%     frame=getframe(gcf);
+%     writeVideo(v,frame);
 end
-close(v)
+% close(v)
 
 boneMap = flipud(jet(length(numNeurons)));
 figure(80);clf

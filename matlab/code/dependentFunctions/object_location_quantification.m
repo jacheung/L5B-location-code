@@ -32,7 +32,7 @@ preDecisionTouches = preDecisionTouchMat(uberarray);
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
 for i = 1:length(uberarray)
-    tuneStruct{i}.calculations = []
+    tuneStruct{i}.calculations = [];
     tuneStruct{i}.is_tuned = nan;
 end
 
