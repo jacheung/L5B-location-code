@@ -4,11 +4,34 @@
 hilbertVar = 'pole';
 
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
+defTouchResponse(U(selectedCells),.95,'on')
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+    fn = 'touch_all.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
+
+
+
+tStruct = object_location_quantification(U,selectedCells,hilbertVar,'on');
+
+%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+%     fn = 'touch_location_all.eps';
+%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+%     fix_eps_fonts([saveDir, fn])
+
+
+
+
+
 wStruct = whisking_location_quantification(U,selectedCells,hilbertVar,'off');
 
 if strcmp(hilbertVar,'pole')
     population_heatmap_builder(tStruct,wStruct,hilbertVar)
+    
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+    fn = 'population_location.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
 else
     disp('not building out population heatmaps. function not optimized for other variables')
 end

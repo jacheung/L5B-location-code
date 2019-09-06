@@ -26,8 +26,11 @@ for i = 29
     subplot(1,2,2)
     pcolor(touch_matrix)
     set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
-
     
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
+    fn = 'example_raster.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
 end
 %% PSTH sorted by go and nogo
 for i = 28

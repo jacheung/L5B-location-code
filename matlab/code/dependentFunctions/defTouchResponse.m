@@ -74,11 +74,11 @@ for rec=1:length(U)
                 U{rec}.meta.touchProperties.SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
-                    hold on; bar(window,touchResponse*1000,'b','facealpha',.2,'edgealpha',.2);
+%                     hold on; bar(window,touchResponse*1000,'b','facealpha',.2,'edgealpha',.2);
+                    hold on; bar(window,touchResponse*1000,'b');
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
                     hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
-                    set(gca,'xtick',-25:25:50)
-                    
+                    set(gca,'xtick',-25:25:50,'xlim',[-25 50])
                     title(num2str(U{rec}.meta.touchProperties.SNR(rec)));
                 end
             
@@ -130,7 +130,8 @@ for rec=1:length(U)
             figure(3000);subplot(rc(1),rc(2),rec)
             hold on; bar(window,touchResponse*1000,'k','facealpha',.2,'edgealpha',.2);
             hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
-            set(gca,'xtick',-25:25:50)
+             set(gca,'xtick',-25:25:50)
+
         end
 
     end
@@ -141,9 +142,9 @@ end
 %% summary plot of touch responses
 
 if willdisplay
-    untuned = find(cellfun(@(x) strcmp(x.meta.responseType,'untuned'),U));
-    excited = find(cellfun(@(x) strcmp(x.meta.responseType,'excited'),U));
-    inhibited = find(cellfun(@(x) strcmp(x.meta.responseType,'inhibited'),U));
+    untuned = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'untuned'),U));
+    excited = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+    inhibited = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'inhibited'),U));
     
     responseTypes = {excited,inhibited,untuned};
     
@@ -165,10 +166,16 @@ if willdisplay
         end
         imagesc(norm_mat')
         hold on; plot([find(window==0) find(window==0)],[0 numel(current)+1],'-.w')
-        set(gca,'xtick',1:25:length(window),'xticklabel',min(window):25:max(window),'xlim',[1 length(window)])
-        
-        
+%         set(gca,'xtick',1:25:length(window),'xticklabel',min(window):25:max(window),'xlim',[1 length(window)])
+        set(gca,'xtick',26:25:length(window),'xticklabel',-25:25:max(window),'xlim',[26 length(window)]) %set xlim -25:50;
+        colorbar
     end
+    
+    
+%    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+%     fn = 'touch_response.eps';
+%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+%     fix_eps_fonts([saveDir, fn])
 end
 
     

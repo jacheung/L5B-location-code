@@ -7,9 +7,9 @@ for k = 29
     highs = find(motors>prctile(motors,65));
     mids = setdiff(1:currentCell.k,[lows highs])
     
-%     trialSample = [datasample(lows,1) datasample(mids,1) datasample(highs,1)];
+    trialSample = [datasample(lows,1) datasample(mids,1) datasample(highs,1)];
     
-    trialSample = [ 52 38 17]; %great example for clel 29 or 14 36 17
+    trialSample = [ 37 36 92]; %great example for clel 29 or 14 36 17
     figure(2310);clf
     for g = 1:length(trialSample)
         
@@ -33,11 +33,11 @@ for k = 29
             hold on; scatter(spikes,ones(length(spikes),1)*mean(whisk),'ko','filled')
         end
         title(['cell num ' num2str(k) ' at trial num ' num2str(trialSample(g))])
-        set(gca,'ylim',[-10 60])
+        set(gca,'ylim',[-20 60])
     end
     
     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
     fn = 'example_traces.eps';
-    print([saveDir, fn],'-depsc')
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
 end
