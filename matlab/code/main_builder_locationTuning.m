@@ -5,30 +5,9 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 
 %% Top level parameters and definitions
 %U = defTouchResponse(U,.95,'on');
-% selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
-selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
+% selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
-
-%% Comparison of naive vs expert
-naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
-expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
-
-num_naive_touch = sum(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U(naive)));
-num_expert_touch = sum(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U(expert)));
-num_naive_OL = sum((cellfun(@(x) x.is_tuned==1,pole_tuned(naive)))) ; 
-num_expert_OL = sum((cellfun(@(x) x.is_tuned==1,pole_tuned(expert)))) ; 
-
-naive_proportion_touch = num_naive_touch ./ sum(naive);
-expert_proportion_touch = num_expert_touch ./ sum(expert);
-naive_proportion_OL  = num_naive_OL ./ sum(naive);
-expert_proportion_OL  = num_expert_OL ./ sum(expert);
-
-figure(99);clf
-hold on; bar(1:2,[naive_proportion_touch expert_proportion_touch],'facecolor','k')
-hold on; bar(1:2,[naive_proportion_OL expert_proportion_OL],'facecolor',[.8 .8 .8])
-ylabel('proportion of units')
-set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(sum(naive))],['expert n=' num2str(sum(expert))]},'ytick',0:.25:1,'ylim',[0 .75])
-legend('touch','location tuned','location','northwest')
 
 %% population at touch pole decoding
 % GLM model parameters
@@ -67,7 +46,7 @@ suptitle([ 'Per touch location decoding using ' num2str(size(DmatXnorm,2)) ' tun
 %mdl needs to have distance_from_true = cellfun(@(x,y) abs(x-y),mdl.io.trueY,mdl.io.predY,'uniformoutput',0);
 %mdl needs to have confusion matrix  mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix);
 numNeurons = [1 5 10 20 30 numel(usedUnits)];
-numIterations = 20;
+numIterations = 50;
 
 mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
 reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
@@ -126,6 +105,11 @@ for g = 1:length(numNeurons)
 %     frame=getframe(gcf);
 %     writeVideo(v,frame);
 end
+
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+    fn = 'decoding_heat.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
 % close(v)
 
 boneMap = flipud(jet(length(numNeurons)));
@@ -154,7 +138,7 @@ for d = 1:length(numNeurons)
     hold on;
     h=shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},neuro_sem{d});
     h.patch.FaceColor = boneMap(d,:);
-    h.patch.FaceAlpha = .5;
+%     h.patch.FaceAlpha = .5;
     h.mainLine.Color = [0 0 0];
 %     plot(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},'color',boneMap(d,:));
     set(gca,'xlim',[-1 1],'xtick',-1:1:1,'ylim',[0 1],'ytick',0:.25:1)
@@ -165,6 +149,10 @@ xlabel('normalized pole location')
 axis square
 suptitle('number of neurons affecting prediction of:')
 
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+    fn = 'resolution_neurometric.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
 
 
 

@@ -166,7 +166,8 @@ for rec = 1:length(selectedCells)
         
         tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};
         tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@nanmedian, sortedBy) smooth(cellfun(@nanmean,sorted),smoothing_param) smooth(cellfun(@nanstd,sorted),smoothing_param) smooth(CI,smoothing_param)];
-        
+        tuneStruct{selectedCells(rec)}.stim_response.raw_stim = sortedBy;
+        tuneStruct{selectedCells(rec)}.stim_response.raw_response = sorted;
     else
         tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples
     end

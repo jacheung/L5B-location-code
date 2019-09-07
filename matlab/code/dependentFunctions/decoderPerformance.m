@@ -8,7 +8,7 @@ subplot(1,2,1)
 predProb = confusionMatrix ./ sum(confusionMatrix); %sum(cmat,1) for precision and sum(Cmat,2) for recall/sensitivity
 imagesc(predProb)
 caxis([0 prctile(predProb(:),99)])
-caxis([0 .30])
+caxis([0 .40])
 set(gca,'xtick',[],'ytick',[])
 xlabel('predicted');ylabel('true')
 colorbar
