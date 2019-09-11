@@ -37,10 +37,10 @@ mdlResults.io.Y.normal = glmModel{1}.io.DmatY;
 
 mdlResults = multinomialModel(mdlResults,mdlResults.io.Xnorm,mdlResults.io.Y.normal,glmnetOpt);
 %% decoding resolution and probability of guesses
-decoderPerformance(mdlResults);
+gof = decoderPerformance(mdlResults);
 usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
 
-suptitle([ 'Per touch location decoding using ' num2str(size(DmatXnorm,2)) ' tuned units'])
+suptitle([ 'Per touch location decoding using ' num2str(size(DmatXraw,2)) ' tuned units'])
 
 %% number of neurons for resolution
 %mdl needs to have distance_from_true = cellfun(@(x,y) abs(x-y),mdl.io.trueY,mdl.io.predY,'uniformoutput',0);

@@ -58,6 +58,7 @@ hold on; plot([700 700],[0 30],'-.k')
 hold on; plot([900 900],[0 30],'-.k')
 title(['n = response (' num2str(numel(U)) ') + silent (' num2str(numel(jc_silent_cell)) ')' ])
 
+
 set(gca,'ytick',0:10:30,'xtick',600:100:1000,'xlim',[600 1000])
 ylabel('firing rate (hz)');
 xlabel('depth (um)')
