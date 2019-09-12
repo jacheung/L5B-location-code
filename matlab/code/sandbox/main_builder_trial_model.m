@@ -4,15 +4,15 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 
 %% Top level parameters and definitions 
 % U = defTouchResponse(U,.95,'off');
-selectedCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)~=0);
-tStruct = object_location_quantification(U,selectedCells,'pole');
+touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+tStruct = object_location_quantification(U,touchCells,'pole','off');
 
 %% Poisson model for predicting spikes within pre-decision period 
-touchCells = find(cellfun(@(x) isfield(x.meta,'responseWindow'),U)); 
+locationUnits = find(cellfun(@(x) x.is_tuned==1,tStruct));
 trained = find(cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U));
-trained = 1:length(U);
 
-selectedUnits = intersect(touchCells,trained);
+% selectedUnits = intersect(touchCells,trained);
+selectedUnits = locationUnits;
 selectedArray = U(selectedUnits); 
 
 %GLMNET parameters
@@ -34,7 +34,7 @@ else
     [glmModel] = designMatrixBlocks_trial_average(selectedArray,glmnetOpt,glmModel);
 end
 
-selectedFeatures = [1:7];
+selectedFeatures = [1 3:5 7];
 interpOption = 'off'; %linear interpolation of missing values;
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
@@ -42,12 +42,12 @@ selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
 
 for i = 1:length(glmModel)
     disp(['iterating for neuron ' num2str(i) '/' num2str(length(selectedArray))])
-%     glmModel{i}.io.DmatY = round(glmModel{i}.io.DmatY./glmModel{i}.io.DmatX(:,end));
 
     if size(glmModel{i}.io.DmatXNormalized,1)<20
         disp(['skipping neuron ' num2str(i) 'b/c less than 20 trials'])
     else
-        glmModel{i} = poissonModel(glmModel{i}.io.DmatXNormalized, glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i}); 
+%         glmModel{i} = poissonModel(glmModel{i}.io.DmatXNormalized, glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i}); 
+        glmModel{i} = gaussianModel(glmModel{i}.io.DmatXNormalized, glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i}); 
         glmModel{i}.meta = selectedUnits(i);
         glmModel{i}.name = fileName;
     end
@@ -61,7 +61,7 @@ meangof = cellfun(@(x) mean(x.gof.devExplained),glmModel(builtUnits));
 wellfitUnits = intersect(builtUnits,find(meangof>.1)); 
 
 figure(658);clf
-for cellNum = wellfitUnits(1)
+for cellNum = wellfitUnits(3)
     %predictors
     [s_pole,idx] = sort(normalize_var(glmModel{cellNum}.raw.trimmedPole',1,-1));
     features = normalize_var(glmModel{cellNum}.io.DmatXNormalized(idx,:),-1,1);

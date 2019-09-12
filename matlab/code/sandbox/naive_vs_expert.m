@@ -28,13 +28,11 @@ hold on; bar(1:2,[naive_proportion_OL expert_proportion_OL],'facecolor',[.8 .8 .
 ylabel('proportion of units')
 set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(sum(naive))],['expert n=' num2str(sum(expert))]},'ytick',0:.25:1,'ylim',[0 .75])
 legend('touch','location tuned','location','northwest')
-
-
-    figure(99)
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
-    fn = 'unit_distribution_bar.eps';
-    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-    fix_eps_fonts([saveDir, fn])
+%     figure(99)
+%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+%     fn = 'unit_distribution_bar.eps';
+%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+%     fix_eps_fonts([saveDir, fn])
 
 %% Heatmap of tuning
 tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);

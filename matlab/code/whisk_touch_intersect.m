@@ -44,9 +44,9 @@ whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tun
 
 %scatter of whisking (Y) vs touch (X)
 figure(3850);clf
-hold on; errorbar(ones(1,length(whisk_nonIX_idx))*2.5,whisking_pw(whisk_nonIX_idx,1),whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','vertical')%plot only whisk tuned units
-hold on; errorbar(touch_pw(touch_nonIX_idx,1),ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','horizontal')%plot only touch tuned units
-hold on; errorbar(touch_pw(touch_ix_idx,1),whisking_pw(whisk_ix_idx,1),whisking_pw(whisk_ix_idx,2),whisking_pw(whisk_ix_idx,3),touch_pw(touch_ix_idx,2),touch_pw(touch_ix_idx,3),'ko')
+hold on; errorbar(whisking_pw(whisk_nonIX_idx,1),ones(1,length(whisk_nonIX_idx))*2.5,whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','horizontal')%plot only whisk tuned units
+hold on; errorbar(ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,1),touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','vertical')%plot only touch tuned units
+hold on; errorbar(whisking_pw(whisk_ix_idx,1),touch_pw(touch_ix_idx,1),touch_pw(touch_ix_idx,2),touch_pw(touch_ix_idx,3),whisking_pw(whisk_ix_idx,2),whisking_pw(whisk_ix_idx,3),'ko')
 
 lm = fitlm(touch_pw(touch_ix_idx,1),whisking_pw(whisk_ix_idx,1));
 predicts = lm.predict;
@@ -59,7 +59,7 @@ set(gca,'xlim',[-3 3],'ylim',[-3 3],'xdir','reverse','ydir','reverse',...
 hold on; plot([-1 1],[-1 1],'--k')
 legend('whisk tuned only','touch tuned only','both tuned')
 axis square
-xlabel('touch tune peak');ylabel('whisk tune peak')
+xlabel('whisk tune peak');ylabel('touch tune peak')
 title(['whisk=' num2str(numel(whisk_nonIX_idx)) ', touch=' num2str(numel(touch_nonIX_idx)) ', both=' num2str(numel(touch_ix_idx))])
 
 figure(3851);clf

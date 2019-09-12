@@ -1,4 +1,4 @@
-function [glmModel] = designMatrixBuilder_trial_average(glmModel,glmnetOpt,selectedFeatures)
+function [glmModel] = designMatrixBuilder_session(glmModel,glmnetOpt,selectedFeatures)
 
 %selectedFeatures is a vector with values corresponding to the values in
 %the DmatFields 
@@ -16,9 +16,9 @@ for i = 1:length(glmModel)
     
     DmatY = glmModel{i}.io.DmatY; 
     
-    [nan_remove,~] = find(sum(isnan(DmatX),2)>0);
-    
-    trialsToRemove = unique([nan_remove ]); 
+    [nan_remove,~] = find(isnan(DmatX));
+
+    trialsToRemove = nan_remove; 
     
     DmatX(trialsToRemove,:) = [] ;
     DmatY(trialsToRemove,:) = [] ;
@@ -27,11 +27,6 @@ for i = 1:length(glmModel)
     glmModel{i}.io.DmatX = DmatX;
     glmModel{i}.io.DmatY = DmatY; 
     glmModel{i}.io.DmatXNormalized = (DmatX - mean(DmatX)) ./ std(DmatX);
-    
-    if any(any(isnan(glmModel{i}.io.DmatXNormalized)))
-        glmModel{i}.io.DmatXNormalized = [];
-    end
-
     glmModel{i}.io.selectedFeatures.name = DmatFields([selectedFeatures]); 
     glmModel{i}.io.selectedFeatures.dims = dims;
     

@@ -180,6 +180,7 @@ for rec = 1:length(selectedCells)
                     tuneStruct{selectedCells(rec)}.is_tuned = 1;
                     tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
                     tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse) ;
+                    tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{idx};
                 end
                 
                 
