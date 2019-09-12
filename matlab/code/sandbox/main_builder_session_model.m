@@ -39,18 +39,18 @@ else
 end
 
 %GLMdesign Matrix Build
-selectedFeatures = [1:4]; 
+selectedFeatures = [1:8]; 
 selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
 [glmModel] = designMatrixBuilder_session(glmModel,glmnetOpt,selectedFeatures);
 
-for i = 1:length(glmModel)
+parfor i = 1:length(locationUnits)
     disp(['iterating for neuron ' num2str(i) '/' num2str(length(selectedArray))])
 
     if size(glmModel{i}.io.DmatXNormalized,1)<20
         disp(['skipping neuron ' num2str(i) 'b/c less than 20 trials'])
     else
-        glmModel{i} = poissonModel(glmModel{i}.io.DmatXNormalized, glmModel{i}.io.DmatY,selectedArray{i},glmnetOpt,glmModel{i});
+        glmModel{i} = poissonModel_session(glmModel{i},glmnetOpt);
         glmModel{i}.meta = selectedUnits(i);
         glmModel{i}.name = fileName;
     end

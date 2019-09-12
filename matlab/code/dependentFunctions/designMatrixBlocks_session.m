@@ -32,6 +32,11 @@ for i = 1:length(selectedArray)
            if strcmp(all_fields{g},'touchMat') || strcmp(all_fields{g},'spikes')
                ds_tmp = nansum (reshape(raw.(all_fields{g})(:), glmnetOpt.downsampling_rate,...
                    numel(raw.(all_fields{g}))./glmnetOpt.downsampling_rate));
+           elseif strcmp(all_fields{g},'DKappa') || strcmp(all_fields{g},'DTheta')
+               reshaped_tmp = reshape(raw.(all_fields{g})(:), glmnetOpt.downsampling_rate,...
+                   numel(raw.(all_fields{g}))./glmnetOpt.downsampling_rate);
+               [~,max_idx] = max(abs(reshaped_tmp));
+               ds_tmp = reshaped_tmp(sub2ind(size(reshaped_tmp),max_idx,1:size(reshaped_tmp,2)));
            else
                ds_tmp = nanmean( reshape(raw.(all_fields{g})(:), glmnetOpt.downsampling_rate,...
                    numel(raw.(all_fields{g}))./glmnetOpt.downsampling_rate));
@@ -39,15 +44,18 @@ for i = 1:length(selectedArray)
            
            if strcmp(glmnetOpt.interpOption,'yes') && any(isnan(ds_tmp))
                disp(['interpolating for ' num2str(sum(isnan(ds_tmp))) ' timepoint(s) in ' all_fields{g}])
-               ds_tmp = interp1(1:numel(ds_tmp),ds_tmp,1:numel(ds_tmp));
+               nanx = isnan(ds_tmp);
+               t    = 1:numel(ds_tmp);
+               ds_tmp(nanx) = interp1(t(~nanx), ds_tmp(~nanx), t(nanx));
            end
-  
+            
            ds.(all_fields{g}) = reshape(ds_tmp ,currentCell.t ./ glmnetOpt.downsampling_rate, currentCell.k - numel(toss_trials));
        end
    else
        error('downsampling rate must be divisible by trial length')
    end
     
+
     %lag shifting and then populating output matrix 
     all_fields_ds = fields(ds);
     shift_values = glmnetOpt.shift;
@@ -57,11 +65,13 @@ for i = 1:length(selectedArray)
         for d = 1:length(shift_values)
             cs_nan_pad(:,d) = circshift(nan_pad(:),shift_values(d));
         end
+        sum(~any(isnan(cs_nan_pad),2)==0)
         if strcmp(all_fields_ds{b},'spikes')
             glmModel{i}.io.DmatY = cs_nan_pad(~any(isnan(cs_nan_pad),2), shift_values==0);
         else
             glmModel{i}.io.components.(all_fields_ds{b}) = cs_nan_pad(~any(isnan(cs_nan_pad),2),:);
         end
+        
     end
     
     glmModel{i}.io.tossed_trials = toss_trials; 
