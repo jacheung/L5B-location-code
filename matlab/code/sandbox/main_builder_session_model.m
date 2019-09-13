@@ -26,7 +26,7 @@ glmnetOpt.numIterations = 5;
 glmnetOpt.interpOption = 'yes';
 glmnetOpt.touchDirection = []; %leave blank to use all touches 
 
-glmnetOpt.downsampling_rate = 10; %in ms, must be divisible by 4000 
+glmnetOpt.downsampling_rate = 20; %in ms, must be divisible by 4000 
 glmnetOpt.shift = -1:1; 
 
 %GLMdesign Matrix Set-up
@@ -44,7 +44,7 @@ selectedFeaturesOptions = fields(glmModel{1}.io.components);
 selectedFeaturesTitles = selectedFeaturesOptions(selectedFeatures);
 [glmModel] = designMatrixBuilder_session(glmModel,glmnetOpt,selectedFeatures);
 
-parfor i = 1:length(locationUnits)
+parfor i = 12:40
     disp(['iterating for neuron ' num2str(i) '/' num2str(length(selectedArray))])
 
     if size(glmModel{i}.io.DmatXNormalized,1)<20
@@ -56,4 +56,5 @@ parfor i = 1:length(locationUnits)
     end
 end
 
-
+cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
+save(fileName,'glmModel','-v7.3')

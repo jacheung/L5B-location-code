@@ -47,6 +47,11 @@ for i = 1:length(selectedArray)
                nanx = isnan(ds_tmp);
                t    = 1:numel(ds_tmp);
                ds_tmp(nanx) = interp1(t(~nanx), ds_tmp(~nanx), t(nanx));
+               if ~isempty(find(isnan(ds_tmp)))
+                   disp(['interpolating ' num2str(numel(find(isnan(ds_tmp)))) ' edge timepoint w/ n-1'])
+                  ds_tmp(find(isnan(ds_tmp))) = ds_tmp(find(isnan(ds_tmp))-1);
+               end
+               
            end
             
            ds.(all_fields{g}) = reshape(ds_tmp ,currentCell.t ./ glmnetOpt.downsampling_rate, currentCell.k - numel(toss_trials));
@@ -65,7 +70,6 @@ for i = 1:length(selectedArray)
         for d = 1:length(shift_values)
             cs_nan_pad(:,d) = circshift(nan_pad(:),shift_values(d));
         end
-        sum(~any(isnan(cs_nan_pad),2)==0)
         if strcmp(all_fields_ds{b},'spikes')
             glmModel{i}.io.DmatY = cs_nan_pad(~any(isnan(cs_nan_pad),2), shift_values==0);
         else
