@@ -5,155 +5,97 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 
 %% Top level parameters and definitions
 %U = defTouchResponse(U,.95,'on');
-selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
-% selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
+%% RASTER
+for i = 29
+    motors = normalize_var(U{i}.meta.motorPosition,1,-1)
+    spikes = squeeze(U{i}.R_ntk);
+    motors = U{i}.meta.motorPosition;
+    [~,sidx] = sort(motors);
+    sidx = fliplr(sidx);
+    
+    figure(38);clf
+    for g = 1:length(motors)
+        subplot(1,2,1)
+        spikeIdx = find(spikes(:,sidx(g)));
+        hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
+    end
+    set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
 
-%% population at touch pole decoding
-% GLM model parameters
-glmnetOpt = glmnetSet;
-glmnetOpt.standardize = 0; %set to 0 b/c already standardized
-glmnetOpt.alpha = 0.95;
-glmnetOpt.xfoldCV = 3;
-glmnetOpt.numIterations = 20;
-glmnetOpt.pctSamplingThreshold = .80; %what percent of total pole positions must be sampled before using that unit
-glmnetOpt.interpResolution = 40; %10mm / numBins (e.g. 40 = .25mm resolution)
-glmnetOpt.samplingOption = 'poisson';
-glmnetOpt.numberResamples = 50;
-
-fileName = 'glm_location_decoder';
-if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
-else
-    glmModel = [];
-    [glmModel] =designMatrixBlocks_poleDecoder(glmModel,pole_tuned,glmnetOpt);
-end
-
-mdlResults = {};
-
-DmatXraw = cell2mat(cellfun(@(x) x.io.DmatX,glmModel,'uniformoutput',0));
-mdlResults.io.Xnorm = (DmatXraw - mean(DmatXraw)) ./ std(DmatXraw);
-mdlResults.io.Y.normal = glmModel{1}.io.DmatY;
-
-mdlResults = multinomialModel(mdlResults,mdlResults.io.Xnorm,mdlResults.io.Y.normal,glmnetOpt);
-%% decoding resolution and probability of guesses
-gof = decoderPerformance(mdlResults);
-usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
-
-suptitle([ 'Per touch location decoding using ' num2str(size(DmatXraw,2)) ' tuned units'])
-
-%% number of neurons for resolution
-%mdl needs to have distance_from_true = cellfun(@(x,y) abs(x-y),mdl.io.trueY,mdl.io.predY,'uniformoutput',0);
-%mdl needs to have confusion matrix  mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix);
-numNeurons = [1 5 10 20 30 numel(usedUnits)];
-numIterations = 50;
-
-mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
-reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
- 
-nframe = numNeurons;
-neurometric_curve = cell(1,length(numNeurons));
-% v = VideoWriter('resolution_heatmap.avi');
-% v.FrameRate = 1; 
-% open(v)
-resamp_mdl = [];
-for g = 1:length(numNeurons)
-    for d = 1:numIterations
-        neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g));
-        
-        coeffs_to_use = reshaped_coeffs([1 neuron_to_use+1],:);
-        dmatX = [ones(length(mdlResults.io.Y.normal),1) mdlResults.io.Xnorm(:,neuron_to_use)];
-        dmatY = mdlResults.io.Y.normal;
-        
-        predicts = dmatX * coeffs_to_use;
-        probability =  1 ./ (1+exp(predicts*-1)); %convert to probability by using mean function (for binomial, it is the sigmoid f(x) 1/1+exp(-predicts))
-        
-        %highest probability = predict class
-        [~,pred{d}] = max(probability,[],2);
-        true{d} = dmatY;
+    
+    touchOn = [find(U{i}.S_ctk(9,:,:)==1)  ;find(U{i}.S_ctk(12,:,:)==1)];
+    touchOff = [find(U{i}.S_ctk(10,:,:)==1)  ;find(U{i}.S_ctk(13,:,:)==1)];
+    touch_matrix = nan(size(spikes));
+    for g = 1:length(touchOn)
+        touch_matrix(touchOn(g):touchOff(g)) = 1;
     end
     
-    resamp_mdl{g}.numNeurons = numNeurons(g);
-    resamp_mdl{g}.io.trueY = true';
-    resamp_mdl{g}.io.predY = pred';
-    gofmetrics{g} = decoderPerformance(resamp_mdl{g});
-    suptitle(['Number of neurons = ' num2str(numNeurons(g))])
+    touch_matrix = touch_matrix(:,sidx)';
+    subplot(1,2,2)
+    pcolor(touch_matrix)
+    set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
     
-    %calculate neurometric curve from matrix
-    %how do we do this? create first a confusion matrix
-    %
-    % pred(Go)    pred(nogo)
-    % aka lick    aka no lick  
-    %%%%%%%%%%%%%%%%%%%%%%%%
-    %           |           |
-    %    HIT    |    MISS   |  true(Go)
-    %           |           |
-    %%%%%%%%%%%%|%%%%%%%%%%%|
-    %           |           |
-    %    FA     |    CR     |  true(Nogo)
-    %           |           |
-    %%%%%%%%%%%%|%%%%%%%%%%%|
-    %
-    for b = 1:numIterations
-        raw_mat = confusionmat(true{b},pred{b});
-        prob_mat = raw_mat./ sum(raw_mat,2);
-        mat_shape = size(prob_mat,1);
-        lix_pred = prob_mat(:,1:(mat_shape/2)); 
-        neurometric_curve{g}(b,:) = sum(lix_pred,2);
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+    fn = 'example_raster.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
+    
+    %chunked psth 
+    sorted_spike_mat = spikes(:,sidx);
+    chunk_one = sidx(1:round(numel(sidx)/3));
+    chunk_two = sidx(round(numel(sidx)/3)+1: round(numel(sidx)/3)+1 + round(numel(sidx)/3));
+    chunk_three = setdiff(sidx,[chunk_one chunk_two]);
+    all_chunks = {chunk_three, chunk_two,chunk_one};
+    
+    figure(49);clf
+    colors = [.3 .3 .3];
+    for b = 1:length(all_chunks)
+        hold on;plot(smooth(mean(spikes(:,all_chunks{b}),2)*1000,50),'color',colors.*b)
+        set(gca,'ylim',[0 40],'xtick',0:1000:4000,'ytick',0:10:40)
+        title(['motor pos = ' num2str(mean(motors(all_chunks{b})))])
     end
+    title(['far:close ' num2str(cellfun(@(x) mean(motors(x)),all_chunks))])
     
-%     frame=getframe(gcf);
-%     writeVideo(v,frame);
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+    fn = 'example_psth.eps';
+    export_fig([saveDir, fn], '-depsc ', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
+        
 end
 
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-    fn = 'decoding_heat.eps';
+%% modulation width
+tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
+
+mod_idx_abs = cellfun(@(x) x.calculations.mod_idx_abs,pole_tuned(tuned_units));
+left_tune = cellfun(@(x) x.calculations.tune_left_width,pole_tuned(tuned_units));
+right_tune = cellfun(@(x) x.calculations.tune_right_width,pole_tuned(tuned_units));
+
+peak_response = cellfun(@(x) x.calculations.tune_peak,pole_tuned(tuned_units));
+interp_norm_y = cell(1,length(peak_response));
+for g = 1:length(peak_response)
+    sr = pole_tuned{tuned_units(g)}.stim_response;
+    centered_x = sr.values(:,1) - peak_response(g) ;
+    norm_y = normalize_var(sr.values(:,2),0,1);
+    
+    interp_centered_x = -2:.1:2;
+    raw_x = round(centered_x,2);
+    [~,idx] = unique(raw_x);
+    interp_norm_y{g} = interp1(raw_x(idx),norm_y(idx),interp_centered_x);
+    figure(30);
+    hold on; plot(interp_centered_x,interp_norm_y{g},'color',[.8 .8 .8])
+end
+
+pop_mean = nanmean(cell2mat(interp_norm_y'));
+pop_sem = nanstd(cell2mat(interp_norm_y')) ./ sqrt(sum(~isnan(cell2mat(interp_norm_y'))));
+hold on; shadedErrorBar(interp_centered_x,pop_mean,pop_sem,'k')
+
+set(gca,'xlim',[-1 1],'xdir','reverse','ytick',0:.5:1,'xtick',-2:1:2)
+xlabel('distance from peak (mm)')
+axis square
+
+        figure(30);
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+    fn = 'all_modulation_width.eps';
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
-% close(v)
-
-boneMap = flipud(jet(length(numNeurons)));
-figure(80);clf
-subplot(1,2,1)
-for d = 1:length(numNeurons)
-    hold on;
-    %     shadedErrorBar(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),gofmetrics{d}.resolution(:,3),'linecolor','b');
-    plot(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),'color',boneMap(d,:));
-end
-set(gca,'ylim',[0 1],'xlim',[0 8],'xtick',0:2:10,'xticklabel',0:.5:5,'ytick',0:.25:1) %hard coded xticklabels for single touch prediction of pole position using population of OL tuned cells
-xlabel('mm w/in prediction');ylabel('p (prediction)')
-axis square
-title('resolution')
-legend([num2str(numNeurons')])
-
-%plot neurometric curve 
-neuro_mean = cellfun(@nanmean ,neurometric_curve,'uniformoutput',0);
-neuro_sem = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),neurometric_curve,'uniformoutput',0);
-neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
-
-
-subplot(1,2,2)
-for d = 1:length(numNeurons)
-%     subplot(rc(1),rc(2),d)
-    hold on;
-    h=shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},neuro_sem{d});
-    h.patch.FaceColor = boneMap(d,:);
-%     h.patch.FaceAlpha = .5;
-    h.mainLine.Color = [0 0 0];
-%     plot(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},'color',boneMap(d,:));
-    set(gca,'xlim',[-1 1],'xtick',-1:1:1,'ylim',[0 1],'ytick',0:.25:1)
-end
-title('neurometric curve')
-ylabel('lick probability')
-xlabel('normalized pole location')
-axis square
-suptitle('number of neurons affecting prediction of:')
-
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-    fn = 'resolution_neurometric.eps';
-    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-    fix_eps_fonts([saveDir, fn])
-
-
-
-

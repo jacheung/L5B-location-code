@@ -1,5 +1,4 @@
 %% Raster
-preDecisionTouches = preDecisionTouchMat(U);
 for i = 29
     spikes = squeeze(U{i}.R_ntk);
     motors = U{i}.meta.motorPosition;

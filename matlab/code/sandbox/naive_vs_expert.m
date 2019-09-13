@@ -87,25 +87,6 @@ end
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
     
-%% width of tuning 
-tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
-naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
-expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
-
-naive_tuned_units = intersect(find(tuned_units),find(naive));
-expert_tuned_units = intersect(find(tuned_units),find(expert));
-
-tuned_units_list = {naive_tuned_units,expert_tuned_units};
-
-for b=1:length(tuned_units_list)
-    cellfun(@(x) x.calculations.tune_peak,pole_tuned(tuned_units_list{b}));
-    mod_idx_abs{b} = cellfun(@(x) x.calculations.mod_idx_abs,pole_tuned(tuned_units_list{b}));
-left_tune = cellfun(@(x) x.calculations.tune_left_width,pole_tuned(tuned_units_list{b}));
-right_tune = cellfun(@(x) x.calculations.tune_right_width,pole_tuned(tuned_units_list{b}));
-
-end
-
-
 %% shape of tuning
 tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
 naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);

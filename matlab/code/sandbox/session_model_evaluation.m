@@ -1,8 +1,7 @@
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\glm_session.mat')
 
-%
 builtUnits = find(cellfun(@(x) isfield(x,'gof'),glmModel));
 
-%%
 for i = 1:length(builtUnits)
     trial_length = glmModel{builtUnits(i)}.modelParams.trial_length;
 
@@ -19,7 +18,8 @@ for i = 1:length(builtUnits)
         sorted_raster_true = full_true(idx,:);
 %         sorted_raster_predict = poissrnd(full_predict(idx,:));
          sorted_raster_predict = full_predict(idx,:);
-        
+    
+         colormap turbo
         
         figure(40);clf
         subplot(2,1,1)
@@ -31,7 +31,8 @@ for i = 1:length(builtUnits)
         
         set(gca,'ytick',[])
         ylabel('close - far')
-        
-    meanGOF(i) = mean(glmModel{builtUnits(i)}.gof.devExplained)
+        T
+
+    meanGOF(i) = mean(glmModel{builtUnits(i)}.gof.devExplained);
 end
 
