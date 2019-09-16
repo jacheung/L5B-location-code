@@ -7,11 +7,11 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 %U = defTouchResponse(U,.95,'on');
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
-%% RASTER
+
 for i = 29
-    motors = normalize_var(U{i}.meta.motorPosition,1,-1)
+    %% raster
+    motors = normalize_var(U{i}.meta.motorPosition,1,-1);
     spikes = squeeze(U{i}.R_ntk);
-    motors = U{i}.meta.motorPosition;
     [~,sidx] = sort(motors);
     sidx = fliplr(sidx);
     
@@ -40,8 +40,8 @@ for i = 29
     fn = 'example_raster.eps';
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
-    
-    %chunked psth 
+
+    %% chunked psth 
     sorted_spike_mat = spikes(:,sidx);
     chunk_one = sidx(1:round(numel(sidx)/3));
     chunk_two = sidx(round(numel(sidx)/3)+1: round(numel(sidx)/3)+1 + round(numel(sidx)/3));
@@ -51,7 +51,7 @@ for i = 29
     figure(49);clf
     colors = [.3 .3 .3];
     for b = 1:length(all_chunks)
-        hold on;plot(smooth(mean(spikes(:,all_chunks{b}),2)*1000,50),'color',colors.*b)
+        hold on;plot(smooth(mean(spikes(:,all_chunks{b}),2)*1000,100),'color',colors.*b)
         set(gca,'ylim',[0 40],'xtick',0:1000:4000,'ytick',0:10:40)
         title(['motor pos = ' num2str(mean(motors(all_chunks{b})))])
     end
@@ -63,7 +63,51 @@ for i = 29
     fix_eps_fonts([saveDir, fn])
         
 end
+%% touch psth by quartiles of far, close and near 
+selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+pole_tuned = object_location_quantification(U,selectedCells,'pole','on'); %for old see object_location_v1.0
+tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
+pdm = preDecisionTouchMat(U); 
 
+touch_window = -25:50;
+chunks = 3;
+units_to_plot = [6 ,30, 9];
+figure(20);clf
+for g = 1:length(units_to_plot)
+    selected_unit = tuned_units(units_to_plot(g)); 
+    
+    motors = normalize_var(U{selected_unit}.meta.motorPosition,1,-1);
+    leftover = mod(length(motors),chunks);
+    new_motors = datasample(motors,numel(motors)-leftover,'Replace',false);
+    [s_motors,sidx] = sort(new_motors);
+    all_chunks = reshape(s_motors,numel(new_motors)./chunks,[]); 
+
+    
+    [tVar] = atTouch_sorter(U{selected_unit},touch_window,pdm{selected_unit});
+    touch_motors = normalize_var(tVar.allTouches.S_ctk(:,end),-1,1); 
+    
+    chunked_idx = cell(1,size(all_chunks,2));
+    chunked_responses = cell(1,size(all_chunks,2));
+    figure(20);
+    colors = [.33 .33 .33];
+    subplot(3,1,g)
+    for b = 1:size(all_chunks,2)
+        [rsmall,rbig] = bounds(all_chunks(:,b));
+        chunked_idx = intersect(find(touch_motors<rbig),find(touch_motors>rsmall)); 
+        chunked_responses{b} = tVar.allTouches.R_ntk(chunked_idx,:);
+        
+        hold on; plot(touch_window,smooth(nanmean(chunked_responses{b}).*1000,10),'color',colors.*b)
+
+    end
+
+    set(gca,'xtick',-25:25:50,'xlim',[-25 50])
+end
+
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+    fn = 'touch_psth_by_location.eps';
+    export_fig([saveDir, fn], '-depsc ', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
+    
 %% modulation width
 tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
 

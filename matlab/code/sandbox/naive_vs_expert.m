@@ -7,6 +7,24 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 hilbertVar = 'pole'
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 pole_tuned = object_location_quantification(U,selectedCells,hilbertVar,'off'); %for old see object_location_v1.0
+%% accuracy during recording sessions
+expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
+naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
+recording_accuracy = cellfun(@(x) mean(x.meta.trialCorrect),U(expert));
+naive_accuracy = cellfun(@(x) mean(x.meta.trialCorrect),U(naive));
+
+figure(51);clf
+scatter(ones(1,sum(naive)),naive_accuracy,'markeredgecolor',[.7 .7 .7]);
+hold on; errorbar(1,mean(naive_accuracy),std(naive_accuracy),'ko'); 
+scatter(ones(1,sum(expert)).*2,recording_accuracy,'markeredgecolor',[.7 .7 .7]);
+hold on; errorbar(2,mean(recording_accuracy),std(recording_accuracy),'ko'); 
+hold on; plot([0 3],[.5 .5],'--k')
+set(gca,'ylim',[0 1],'ytick',0:.25:1','xtick',[],'xlim',[0 3])
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+fn = 'naive_expert_performance.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 %% Comparison of naive vs expert
 naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
@@ -23,16 +41,25 @@ naive_proportion_OL  = num_naive_OL ./ sum(naive);
 expert_proportion_OL  = num_expert_OL ./ sum(expert);
 
 figure(99);clf
-hold on; bar(1:2,[naive_proportion_touch expert_proportion_touch],'facecolor','k')
-hold on; bar(1:2,[naive_proportion_OL expert_proportion_OL],'facecolor',[.8 .8 .8])
+subplot(1,2,1)
+hold on; bar(1:2,[naive_proportion_touch expert_proportion_touch],'facecolor',[.8 .8 .8])
+hold on; bar(1:2,[naive_proportion_OL expert_proportion_OL],'facecolor','k')
 ylabel('proportion of units')
-set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(sum(naive))],['expert n=' num2str(sum(expert))]},'ytick',0:.25:1,'ylim',[0 .75])
+set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(sum(naive))],['expert n=' num2str(sum(expert))]},'ytick',0:.25:1,'ylim',[0 1])
 legend('touch','location tuned','location','northwest')
-%     figure(99)
-%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
-%     fn = 'unit_distribution_bar.eps';
-%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-%     fix_eps_fonts([saveDir, fn])
+
+subplot(1,2,2)
+hold on; bar(1:2,[num_naive_OL./num_naive_touch, num_expert_OL./num_expert_touch],'facecolor','k')
+
+ylabel('proportion of units')
+set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(num_naive_OL)],['expert n=' num2str(num_expert_OL)]},'ytick',0:.25:1,'ylim',[0 1])
+title('proportion of touch that is OL')
+
+    figure(99)
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+    fn = 'unit_distribution_bar.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
 
 %% Heatmap of tuning
 tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
