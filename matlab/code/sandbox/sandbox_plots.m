@@ -1,3 +1,52 @@
+%% Traces of features and examples 
+
+cellNumber = 12; 
+% trialNumber = datasample(1:U{cellNumber}.k,1); %61 on cell 12 is good
+trialNumber = 61;
+
+
+touchOn = [find(U{cellNumber}.S_ctk(9,:,trialNumber)==1) find(U{cellNumber}.S_ctk(12,:,trialNumber)==1)]; 
+touchOff = [find(U{cellNumber}.S_ctk(10,:,trialNumber)==1) find(U{cellNumber}.S_ctk(13,:,trialNumber)==1)]; 
+
+angle = U{cellNumber}.S_ctk(1,:,trialNumber); 
+amp = U{cellNumber}.S_ctk(3,:,trialNumber); 
+midpoint = U{cellNumber}.S_ctk(4,:,trialNumber); 
+phase = U{cellNumber}.S_ctk(5,:,trialNumber); 
+sweep_name = ['sweepArray_' U{cellNumber}.meta.mouseName '_' U{cellNumber}.meta.sessionName '_' U{cellNumber}.meta.cellName '_' U{cellNumber}.meta.cellCode ]; 
+load(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SweepArrays\' sweep_name]);
+spikes = s.sweeps{trialNumber}.rawSignal - mean(s.sweeps{trialNumber}.rawSignal);
+downsampled_spikes = mean(reshape(spikes,10,[]));
+
+figure(8);clf
+subplot(6,1,1)
+plot(1:U{cellNumber}.t,angle);
+set(gca,'xtick',[])
+subplot(6,1,2)
+plot(1:U{cellNumber}.t,amp);
+set(gca,'xtick',[])
+subplot(6,1,3)
+plot(1:U{cellNumber}.t,midpoint);
+set(gca,'xtick',[])
+subplot(6,1,4)
+scatter(1:U{cellNumber}.t,phase,'.');
+set(gca,'xtick',[])
+subplot(6,1,5)
+if ~isempty(touchOn)
+    for b = 1:length(touchOn)
+        hold on; plot([touchOn(b) touchOff(b)],[1 1],'k')
+    end
+end
+set(gca,'xlim',[0 4000])
+subplot(6,1,6)
+plot(1:U{cellNumber}.t,downsampled_spikes(201:end));
+set(gca,'xtick',0:1000:4000)
+    
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
+fn = 'example_trial_signals.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+
 %% Raster
 for i = 29
     spikes = squeeze(U{i}.R_ntk);

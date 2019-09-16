@@ -20,12 +20,18 @@ scatter(ones(1,sum(expert)).*2,recording_accuracy,'markeredgecolor',[.7 .7 .7]);
 hold on; errorbar(2,mean(recording_accuracy),std(recording_accuracy),'ko'); 
 hold on; plot([0 3],[.5 .5],'--k')
 set(gca,'ylim',[0 1],'ytick',0:.25:1','xtick',[],'xlim',[0 3])
+% 
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+% fn = 'naive_expert_performance.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
+
+rawPsychometricCurves(U(expert))
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-fn = 'naive_expert_performance.eps';
+fn = 'expert_psycho.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
-
 %% Comparison of naive vs expert
 naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
 expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
