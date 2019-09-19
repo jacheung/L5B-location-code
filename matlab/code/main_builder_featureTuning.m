@@ -65,7 +65,7 @@ population_heat = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(selectedCe
 [~,idx] = sort(population_heat(1,:));
 figure(81);clf
 imagesc(population_heat(:,fliplr(idx)))
-colormap bone
+colormap gray
 xlabel('cell number')
 ylabel('touch order')
 colorbar
