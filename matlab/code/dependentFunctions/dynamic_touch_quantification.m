@@ -9,6 +9,11 @@ if willdisplay
     figure(25);clf
 end
 
+dt_var_list = {'dkappa','dtheta'};
+if ~any(contains(dt_var_list,dynamic_touch_variable))
+    error('use dynamic touch variables of "dkappa" or "dtheta"');
+end
+
 numTouchesPerBin = 75; %number of touches to assign in each bin for quantification.
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
@@ -48,17 +53,21 @@ for rec = 1:length(selectedCells)
     curr_dt = dt{selectedCells(rec)};
     numBins = round(size(curr_dt.stim.(dynamic_touch_variable),2) ./ numTouchesPerBin);
     
-    [sorted, sortedBy] = binslin(curr_dt.stim.(dynamic_touch_variable),mean(curr_dt.response.(dynamic_touch_variable),2),'equalN',numBins);
+    [sorted, sortedBy] = binslin(curr_dt.stim.(dynamic_touch_variable),mean(curr_dt.response.(dynamic_touch_variable),2) * 1000,'equalN',numBins);
     
     if numBins >= 2
         x = cellfun(@nanmedian,sortedBy);
         y = smooth(cellfun(@nanmean,sorted),smoothing_param);
         err = smooth(cellfun(@(x)nanstd(x)./sqrt(numel(x)),sorted),smoothing_param);
-        subplot(rc(1),rc(2),rec)
-        shadedErrorBar(x,y,err)
+        if willdisplay
+            subplot(rc(1),rc(2),rec)
+            shadedErrorBar(x,y,err)
+            title(num2str((max(y) - min(y)) ./ (max(y) + min(y))))
+        end
+        
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (max(y) - min(y)) ./ (max(y) + min(y));
     else
-        tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = 0; 
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = 0;
     end
     
     tuneStruct{selectedCells(rec)}.dynamic_touch_raw = curr_dt;

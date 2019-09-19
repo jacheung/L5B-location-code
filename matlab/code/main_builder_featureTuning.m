@@ -17,6 +17,8 @@ mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_tuned(selectedCel
 mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,mp_tuned(selectedCells));
 %% DYNAMIC FEATURES
 
+dkappa_tuned = dynamic_touch_quantification(uberarray,selectedCells,'dkappa','on');
+dtheta_tuned = dynamic_touch_quantification(uberarray,selectedCells,'dtheta','on');
 
 
 
