@@ -17,11 +17,13 @@ for i = 1:length(builtUnits)
         predicted_psth =  mean(cell2mat(predicted)',2);
     
         [sort_values,idx] = sort(polePositions);
+        [~,ia] = unique(sort_values)
+        
         full_true = cell2mat(true)'; 
         full_predict = cell2mat(predicted)';
-        sorted_raster_true = full_true(idx,:);
-        sorted_raster_predict = poissrnd(full_predict(idx,:));
-%          sorted_raster_predict = full_predict(idx,:);
+        sorted_raster_true = full_true(idx(ia),:);
+%         sorted_raster_predict = poissrnd(full_predict(idx(ia),:));
+         sorted_raster_predict = full_predict(idx,:);
     
         ceil_value = prctile(sorted_raster_true(:),99);
 
@@ -39,6 +41,13 @@ for i = 1:length(builtUnits)
         set(gca,'ytick',[])
         ylabel('close - far')
 
+        
+        %psth
+        figure(51);clf
+        plot(smooth(nanmean(sorted_raster_true)),'k')
+        hold on; 
+        plot(smooth(nanmean(sorted_raster_predict)),'r')
+        
 
     meanGOF(i) = mean(glmModel{builtUnits(i)}.gof.devExplained);
 end

@@ -107,11 +107,12 @@ for rec = 1:length(selectedCells)
         end
     end
     %% Tuning in touch response window
-    if strcmp(hilbert_feature,'phase')
-        [sorted, sortedBy] = binslin(selected_feature,response,'equalE',13,-pi,pi);
-    else
+%     if strcmp(hilbert_feature,'phase') %commenting out for modulation
+%     index calculation. Need all variables to have same amount of bins
+%         [sorted, sortedBy] = binslin(selected_feature,response,'equalE',13,-pi,pi);
+%     else
         [sorted, sortedBy] = binslin(selected_feature,response,'equalN',numBins);
-    end
+%     end
     
     quant_ol_p = anova1(cell2nanmat(sorted),[],'off');
     
