@@ -75,7 +75,7 @@ for rec = 1:length(selectedCells)
     
     maxResponse = max(adaptation{selectedCells(rec)}.lh);
     minResponse = min(adaptation{selectedCells(rec)}.lh);
-    adaptation{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(adaptation{selectedCells(rec)}.lh);
+    adaptation{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
     
     %% Touch Adaptation by ITI
     array = U{(selectedCells(rec))};
@@ -136,16 +136,4 @@ for rec = 1:length(selectedCells)
     %     axes(ax1)
     %     set(gca,'color','none')
     
-end
-
-population_heat = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation,'uniformoutput',0)')',0,1);
-[~,idx] = sort(population_heat(1,:));
-if willdisplay
-    figure(81);clf
-%     imagesc(population_heat)
-    imagesc(population_heat(:,fliplr(idx)))
-    colormap bone
-    xlabel('cell number')
-    ylabel('touch order')
-    colorbar
 end

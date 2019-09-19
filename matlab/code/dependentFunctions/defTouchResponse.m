@@ -27,16 +27,23 @@ for rec=1:length(U)
     blIdx = window(find(window==-50):find(window==0));
     
     touchSpks = spks(touchIdx+window);
+    baseline_spikes = spks(1:round(mean(array.meta.poleOnset)*1000),:);
     touchSpksShuff = spks(touchIdx+blIdx);
     
     %calculating x% confidence interval
     SEM = nanstd(touchSpksShuff(:))./ sqrt(sum(~isnan(touchSpksShuff(:,1))));
     ts = tinv(confidenceThreshold,sum(~isnan(touchSpksShuff(:,1))));
     CI = SEM.*ts;
+%     SEM = nanstd(baseline_spikes(:))./ sqrt(sum(~isnan(baseline_spikes(:,1))));
+%     ts = tinv(confidenceThreshold,sum(~isnan(baseline_spikes(:,1))));
+%     CI = SEM.*ts;
     
     touchResponse = smooth(nanmean(touchSpks),5);
     excitThreshold = mean(touchSpksShuff(:)) + CI;
     inhibThreshold = mean(touchSpksShuff(:)) - CI;
+%     excitThreshold = mean(baseline_spikes(:)) + CI; %redefining baseline as pre-pole period instead of pre-touch 
+%     inhibThreshold = mean(baseline_spikes(:)) - CI;
+    
     
     %Excitatory threshold defined as the period > mean+x%CI
     excitthreshIdx = touchResponse'>excitThreshold;
@@ -52,6 +59,10 @@ for rec=1:length(U)
     
     heatTouch{rec} = touchResponse;
     U{rec}.meta.touchProperties.responseType = 'untuned'; %deeming neuron as touch untuned less otherwise
+    
+    %quantifying modulation index
+    max_touch = max(touchResponse(find(window==0):end));
+    U{rec}.meta.touchProperties.mod_idx_relative = (max_touch - mean(baseline_spikes(:))) ./ (max_touch + mean(baseline_spikes(:)));
     
     %Defining touch responses as a period between two points that are less
     %than 5ms apart.
@@ -79,7 +90,7 @@ for rec=1:length(U)
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
                     hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50,'xlim',[-25 50])
-                    title(num2str(U{rec}.meta.touchProperties.SNR(rec)));
+                    title(num2str(U{rec}.meta.touchProperties.mod_idx_relative));
                 end
             
                 
@@ -117,7 +128,7 @@ for rec=1:length(U)
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'r','filled')
                     hold on; plot(window,ones(length(window),1).* inhibThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50)
-                    title(num2str(U{rec}.meta.touchProperties.SNR(rec)));
+                    title(num2str(U{rec}.meta.touchProperties.mod_idx_relative));
                 end
                 
             end

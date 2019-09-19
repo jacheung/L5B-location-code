@@ -119,6 +119,12 @@ for rec = 1:length(selectedCells)
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
     
+    % ONLY FOR MOD IDX CALCULATIONS
+    smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
+    [maxResponse,~] = max(smooth_response);
+    minResponse = min(smooth_response);
+    tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
+    
     % making sure we've sampled enough bins before plotting.
     % min_bins defined as a global param above.
     if numel(sortedBy)>min_bins
@@ -178,7 +184,7 @@ for rec = 1:length(selectedCells)
                     %touch excited units. Touch inhibited may need a new
                     %calculation
                     tuneStruct{selectedCells(rec)}.is_tuned = 1;
-                    tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
+                    tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
                     tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse) ;
                     tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{idx};
                 end
