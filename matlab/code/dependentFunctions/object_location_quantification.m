@@ -122,10 +122,10 @@ for rec = 1:length(selectedCells)
     
     % ONLY FOR MOD IDX CALCULATIONS
     smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
-    [maxResponse,~] = max(smooth_response);
+    [maxResponse,maxidx] = max(smooth_response);
     minResponse = min(smooth_response);
     tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
-    
+    tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
     % making sure we've sampled enough bins before plotting.
     % min_bins defined as a global param above.
     if numel(sortedBy)>min_bins
@@ -140,7 +140,7 @@ for rec = 1:length(selectedCells)
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
             if strcmp(array.meta.touchProperties.responseType,'excited')
                 [maxResponse,idx] = max(smooth_response);
-                minResponse = min(smooth_response);
+                [minResponse, minidx] = min(smooth_response);
                 
                 %plot scatter of first sig diff from max and max value
                 sd_p = nan(length(sorted),1);
@@ -185,9 +185,10 @@ for rec = 1:length(selectedCells)
                     %touch excited units. Touch inhibited may need a new
                     %calculation
                     tuneStruct{selectedCells(rec)}.is_tuned = 1;
-                    tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
-                    tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse) ;
+%                     tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
+%                     tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse) ;
                     tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{idx};
+                    tuneStruct{selectedCells(rec)}.calculations.responses_at_trough = sorted{minidx};
                 end
                 
                 

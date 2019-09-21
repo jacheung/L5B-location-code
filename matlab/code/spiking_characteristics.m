@@ -52,6 +52,10 @@ resp_window_length = cellfun(@(x) range(x.meta.touchProperties.responseWindow),U
 touch_response_spks = cellfun(@(x,y) mean(x.io.DmatY),glmModel); %average number of spikes in touch response window 
 pResponse_touch = cellfun(@(x,y) mean((x.io.DmatY*1000)>y),glmModel,excitThresh); %probability of generating spiking response > baseline + 95%CI
 pResponse_ol_peak = cellfun(@(x,y) mean((x.calculations.responses_at_peak)>y),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+pResponse_ol_trough = cellfun(@(x,y) mean((x.calculations.responses_at_trough)>y),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+
+response_ol_peak = cellfun(@(x) mean(x.calculations.responses_at_peak),pole_tuned(tuned_units));
+response_ol_trough = cellfun(@(x) mean(x.calculations.responses_at_trough),pole_tuned(tuned_units));
 
 
 whisking_fr(touchUnits);%whisking firing rate
@@ -106,7 +110,7 @@ figure(20);clf
 % hold on; histogram(non_whisking_fr(tuned_units),0:1:30)
 % title('non whisking firing rate')
 
-subplot(2,4,[1 2])
+subplot(2,6,[1 2])
 scatter(non_whisking_fr,whisking_fr,'filled','markerfacecolor',[.8 .8 .8])
 hold on;scatter(non_whisking_fr(touchUnits),whisking_fr(touchUnits),'filled','r')
 hold on; scatter(non_whisking_fr(tuned_units),whisking_fr(tuned_units),'filled','g')
@@ -115,37 +119,67 @@ set(gca,'xlim',[0 50],'ylim',[0 50])
 axis square
 xlabel('non whisking FR');ylabel('whisking FR')
 
-subplot(2,4,3)
+subplot(2,6,3)
 histogram(prop_touch,0:.05:1,'facecolor',[.8 .8 .8])
 hold on; histogram(prop_touch(touchUnits),0:.05:1)
 hold on; histogram(prop_touch(tuned_units),0:.05:1)
 title('proportion spikes in touch window')
 legend('all units','touch units','location touch units')
-subplot(2,4,4)
+subplot(2,6,4)
 histogram(prop_whisking_touch,0:.05:1,'facecolor',[.8 .8 .8])
 hold on; histogram(prop_whisking_touch(touchUnits),0:.05:1)
 hold on; histogram(prop_whisking_touch(tuned_units),0:.05:1)
 title('proportion spikes in touch+whisking window')
 
 [~,touch_tuned_idx] = intersect(touchUnits,tuned_units);
-subplot(2,4,5)
+subplot(2,6,5)
 hold on; histogram(onset_latency,0:1:35,'facecolor','r')
 hold on; histogram(onset_latency(touch_tuned_idx),0:1:35,'facecolor','g')
 title('onset latency (ms)')
 
-subplot(2,4,6);
+subplot(2,6,6);
 hold on; histogram(resp_window_length,0:1:40,'facecolor','r')
 hold on; histogram(resp_window_length(touch_tuned_idx),0:1:40,'facecolor','g')
 title('response window duration')
 
-subplot(2,4,7)
+subplot(2,6,7)
 hold on; histogram(touch_response_spks,0:.05:4,'facecolor','r')
 hold on; histogram(touch_response_spks(touch_tuned_idx),0:.05:4,'facecolor','g')
 title('spikes in touch response window')
 
-subplot(2,4,8)
+subplot(2,6,8)
 hold on; histogram(pResponse_touch,0:.05:1,'facecolor','r')
 hold on; histogram(pResponse_touch(touch_tuned_idx),0:.05:1,'facecolor','g')
 title('probability of touch response')
 
+subplot(2,6,[9 10])
+scatter(pResponse_ol_trough,pResponse_ol_peak,'filled','markerfacecolor','g')
+x = mean(pResponse_ol_trough) ;
+y = mean(pResponse_ol_peak) ; 
+xerr = std(pResponse_ol_trough) ; 
+yerr = std(pResponse_ol_peak); 
+hold on; errorbar(x,y,yerr,yerr,xerr,xerr,'ko','capsize',0)
+hold on; plot([0 1],[0 1],'--k')
+set(gca,'xlim',[0 1],'ylim',[0 1],'xtick',0:.5:1,'ytick',0:.5:1)
+axis square
+xlabel('p(response) trough');ylabel('p(response) peak')
+
+subplot(2,6,[11 12])
+ratio = response_ol_peak ./ response_ol_trough; 
+ratio(isinf(ratio)) = []; 
+scatter(response_ol_trough,response_ol_peak,'filled','markerfacecolor','g')
+x = mean(response_ol_trough) ;
+y = mean(response_ol_peak) ; 
+xerr = std(response_ol_trough) ; 
+yerr = std(response_ol_peak); 
+hold on; errorbar(x,y,yerr,yerr,xerr,xerr,'ko','capsize',0)
+hold on; plot([0 150],[0 150],'--k')
+set(gca,'xlim',[0 150],'ylim',[0 150],'xtick',0:50:150,'ytick',0:50:150)
+axis square
+xlabel('trough response');ylabel('peak response')
+
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\table1\';
+    fn = 'population_spiking_characteristics.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
 
