@@ -89,6 +89,12 @@ for rec = 1:length(selectedCells)
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
+    % ONLY FOR MOD IDX CALCULATIONS
+    smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
+    [maxResponse,maxidx] = max(smooth_response);
+    minResponse = min(smooth_response);
+    tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
+    tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
     
     if numel(sortedBy)>min_bins
         

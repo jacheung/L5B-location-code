@@ -54,7 +54,6 @@ peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,phase_tuned(selectedCells
 peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_tuned(selectedCells));
 peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,mp_tuned(selectedCells));
 
-
 %% DYNAMIC FEATURES
 
 dkappa_tuned = dynamic_touch_quantification(U,selectedCells,'dkappa','on');
@@ -210,3 +209,20 @@ fix_eps_fonts([saveDir, fn])
 
 %% WHISKING FEATURE TUNING
 
+pole_whisk = whisking_location_quantification(U,selectedCells,'pole','off');
+angle_whisk = whisking_location_quantification(U,selectedCells,'angle','off');
+midpoint_whisk = whisking_location_quantification(U,selectedCells,'midpoint','off');
+amp_whisk = whisking_location_quantification(U,selectedCells,'amplitude','off');
+phase_whisk = whisking_location_quantification(U,selectedCells,'phase','off');
+
+mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(selectedCells));
+mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,angle_whisk(selectedCells));
+mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(selectedCells));
+mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_whisk(selectedCells));
+mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,midpoint_whisk(selectedCells));
+
+peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells));
+peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,angle_whisk(selectedCells));
+peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,phase_whisk(selectedCells));
+peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_whisk(selectedCells));
+peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,midpoint_whisk(selectedCells));
