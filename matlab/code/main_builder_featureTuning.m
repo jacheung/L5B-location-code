@@ -186,7 +186,6 @@ fix_eps_fonts([saveDir, fn])
 %% HSV PLOTTING
 [~,sort_idx] = sort(peak_idx_pole);
 
-
 peaks = {peak_idx_pole,peak_idx_angle,peak_idx_phase,peak_idx_amp,peak_idx_midpoint};
 mod_idx = {mod_idx_pole,mod_idx_angle,mod_idx_phase,mod_idx_amp,mod_idx_midpoint};
 final_image = nan(numel(peaks),numel(selectedCells),3); 
@@ -215,14 +214,37 @@ midpoint_whisk = whisking_location_quantification(U,selectedCells,'midpoint','of
 amp_whisk = whisking_location_quantification(U,selectedCells,'amplitude','off');
 phase_whisk = whisking_location_quantification(U,selectedCells,'phase','off');
 
-mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(selectedCells));
-mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,angle_whisk(selectedCells));
-mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(selectedCells));
-mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_whisk(selectedCells));
-mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,midpoint_whisk(selectedCells));
+w_mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(selectedCells));
+w_mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,angle_whisk(selectedCells));
+w_mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(selectedCells));
+w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_whisk(selectedCells));
+w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,midpoint_whisk(selectedCells));
 
-peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells));
-peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,angle_whisk(selectedCells));
-peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,phase_whisk(selectedCells));
-peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_whisk(selectedCells));
-peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,midpoint_whisk(selectedCells));
+w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells));
+w_peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,angle_whisk(selectedCells));
+w_peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,phase_whisk(selectedCells));
+w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_whisk(selectedCells));
+w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,midpoint_whisk(selectedCells));
+
+
+% HSV PLOTTING WHISK
+[~,sort_idx] = sort(w_peak_idx_pole);
+
+peaks = {w_peak_idx_pole,w_peak_idx_angle,w_peak_idx_phase,w_peak_idx_amp,w_peak_idx_midpoint};
+mod_idx = {w_mod_idx_pole,w_mod_idx_angle,w_mod_idx_phase,w_mod_idx_amp,w_mod_idx_midpoint};
+final_image = nan(numel(peaks),numel(selectedCells),3); 
+for b = 1:numel(peaks)
+    hues = normalize_var(peaks{b}(sort_idx),.7,1);
+    hsv = [hues' mod_idx{b}(sort_idx)' ones(numel(hues),1)];
+    rgb_values = hsv2rgb(hsv);
+    final_image(b,:,1) = rgb_values(:,1);
+    final_image(b,:,2) = rgb_values(:,2);
+    final_image(b,:,3) = rgb_values(:,3);
+end
+
+figure(580);clf
+imshow(final_image)
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+fn = 'hsv_whisk.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])

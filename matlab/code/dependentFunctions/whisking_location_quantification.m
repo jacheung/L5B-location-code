@@ -78,11 +78,11 @@ for rec = 1:length(selectedCells)
     numBins = round(sum(~isnan(current_feature(:)))./numWhiskSamplesPerBin);
     
     %% Tuning in touch response window
-    if strcmp(hilbert_feature,'phase')
-        [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalE',13,-pi,pi);
-    else
+%     if strcmp(hilbert_feature,'phase')
+%         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalE',13,-pi,pi);
+%     else
         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',numBins);
-    end
+%     end
     
     quant_ol_p = anova1(cell2nanmat(sorted),[],'off');
     
@@ -152,7 +152,7 @@ for rec = 1:length(selectedCells)
                 tuneStruct{selectedCells(rec)}.is_tuned = 1;
 %                 tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
 %                 tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
-                tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ mean(smooth_response);
+                tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse+minResponse);
                 tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
             end
             
