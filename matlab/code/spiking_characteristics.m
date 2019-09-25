@@ -54,8 +54,10 @@ pResponse_touch = cellfun(@(x,y) mean((x.io.DmatY*1000)>y),glmModel,excitThresh)
 pResponse_ol_peak = cellfun(@(x,y) mean((x.calculations.responses_at_peak)>y),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
 pResponse_ol_trough = cellfun(@(x,y) mean((x.calculations.responses_at_trough)>y),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
 
-response_ol_peak = cellfun(@(x) mean(x.calculations.responses_at_peak),pole_tuned(tuned_units));
-response_ol_trough = cellfun(@(x) mean(x.calculations.responses_at_trough),pole_tuned(tuned_units));
+response_ol_peak = cellfun(@(x,y) mean(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y)),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+response_ol_trough = cellfun(@(x,y) mean(x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+% response_ol_peak = cellfun(@(x) mean(x.calculations.responses_at_peak),pole_tuned(tuned_units));
+% response_ol_trough = cellfun(@(x) mean(x.calculations.responses_at_trough),pole_tuned(tuned_units));
 
 
 whisking_fr(touchUnits);%whisking firing rate
@@ -163,15 +165,17 @@ hold on; plot([0 1],[0 1],'--k')
 set(gca,'xlim',[0 1],'ylim',[0 1],'xtick',0:.5:1,'ytick',0:.5:1)
 axis square
 xlabel('p(response) trough');ylabel('p(response) peak')
+[~,p,~,stat] = ttest(pResponse_ol_peak,pResponse_ol_trough)
+
 
 subplot(2,6,[11 12])
 ratio = response_ol_peak ./ response_ol_trough; 
 ratio(isinf(ratio)) = []; 
 scatter(response_ol_trough,response_ol_peak,'filled','markerfacecolor','g')
-x = mean(response_ol_trough) ;
-y = mean(response_ol_peak) ; 
-xerr = std(response_ol_trough) ; 
-yerr = std(response_ol_peak); 
+x = nanmean(response_ol_trough) ;
+y = nanmean(response_ol_peak) ; 
+xerr = nanstd(response_ol_trough) ; 
+yerr = nanstd(response_ol_peak); 
 hold on; errorbar(x,y,yerr,yerr,xerr,xerr,'ko','capsize',0)
 hold on; plot([0 150],[0 150],'--k')
 set(gca,'xlim',[0 150],'ylim',[0 150],'xtick',0:50:150,'ytick',0:50:150)
