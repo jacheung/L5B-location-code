@@ -111,10 +111,6 @@ end
 %% modulation width
 tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
 
-mod_idx_abs = cellfun(@(x) x.calculations.mod_idx_abs,pole_tuned(tuned_units));
-left_tune = cellfun(@(x) x.calculations.tune_left_width,pole_tuned(tuned_units));
-right_tune = cellfun(@(x) x.calculations.tune_right_width,pole_tuned(tuned_units));
-
 peak_response = cellfun(@(x) x.calculations.tune_peak,pole_tuned(tuned_units));
 interp_norm_y = cell(1,length(peak_response));
 for g = 1:length(peak_response)
@@ -134,7 +130,7 @@ pop_mean = nanmean(cell2mat(interp_norm_y'));
 pop_sem = nanstd(cell2mat(interp_norm_y')) ./ sqrt(sum(~isnan(cell2mat(interp_norm_y'))));
 hold on; shadedErrorBar(interp_centered_x,pop_mean,pop_sem,'k')
 
-set(gca,'xlim',[-1 1],'xdir','reverse','ytick',0:.5:1,'xtick',-2:1:2)
+set(gca,'xlim',[-2 2],'xdir','reverse','ytick',0:.5:1,'xtick',-2:1:2)
 xlabel('distance from peak (mm)')
 axis square
 

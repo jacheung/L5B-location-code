@@ -30,8 +30,8 @@ else
 end
 %% scatter of tuning preference of whisk and touch
 
-tUnits = cellfun(@(x) isfield(x.calculations,'tune_peak'),tStruct);
-wUnits = cellfun(@(x) isfield(x.calculations,'tune_peak'),wStruct);
+tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
+wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
 
 [~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
 [~,whisk_ix_idx] = intersect(find(wUnits),find(tUnits));
@@ -96,13 +96,21 @@ subplot(2,1,2)
 histogram(whisk_abs_mod,0:5:100,'facecolor','c','facealpha',1)
 set(gca,'xlim',[0 100],'ylim',[0 10],'xtick',0:25:100,'ytick',0:5:10)
 %% intersection of whisking and touch
+tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
+wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
+
+[~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
+[~,whisk_ix_idx] = intersect(find(wUnits),find(tUnits));
+
+touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
+whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
 
 whiskTuned = find(wUnits);
 touchTuned = find(tUnits);
 touch_whisk_tuned = intersect(find(tUnits),find(wUnits));
 
 % touch_OL = cellfun(@(x) x.is_tuned==1,tStruct);
-touch_OL = logical(ones(1,length(touch_OL)));
+touch_OL = logical(ones(1,length(U)));
 rc = numSubplots(sum(touch_OL));
 
 sel_tstructs = tStruct(touch_OL);
@@ -162,24 +170,37 @@ for g = 1:sum(touch_OL)
             set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'\pi','0','\pi'})
         end
         
-        %normalized responses
-        m = min(whisk_response);
-        range = max(whisk_response) - m;
-        norm_whisk= (whisk_response - m) ./ range;
-        norm_whisk_CI = (whisk_CI - m) ./ range;
+        %normalized responses MAXMIN
+%         m = min(whisk_response);
+%         range = max(whisk_response) - m;
+%         norm_whisk= (whisk_response - m) ./ range;
+%         norm_whisk_CI = (whisk_CI - m) ./ range;
+%         
+%         m = min(touch_response);
+%         range = max(touch_response) - m;
+%         norm_touch= (touch_response - m) ./ range;
+%         norm_touch_CI = (touch_CI - m) ./ range;
+%         
+        %zscoring
+        mu = nanmean(whisk_response);
+        sigma = nanstd(whisk_response);
+        norm_whisk= (whisk_response - mu) ./ sigma;
+        norm_whisk_CI = (whisk_CI - mu) ./ sigma;
         
-        m = min(touch_response);
-        range = max(touch_response) - m;
-        norm_touch= (touch_response - m) ./ range;
-        norm_touch_CI = (touch_CI - m) ./ range;
+        mu = nanmean(touch_response);
+        sigma = nanstd(touch_response);
+        norm_touch= (touch_response - mu) ./ sigma;
+        norm_touch_CI = (touch_CI - mu) ./ sigma;
         
+
+    
         figure(101);subplot(rc(1),rc(2),g)
-        %     shadedErrorBar(whisk_x,norm_whisk,norm_whisk_CI,'c')
-        %     hold on; shadedErrorBar(touch_x,norm_touch,norm_touch_CI,'b')
-        plot(whisk_x,norm_whisk,'c')
-        hold on; plot(touch_x,norm_touch,'b')
+            shadedErrorBar(whisk_x,norm_whisk,norm_whisk_CI,'c')
+            hold on; shadedErrorBar(touch_x,norm_touch,norm_touch_CI,'b')
+%         plot(whisk_x,norm_whisk,'c')
+%         hold on; plot(touch_x,norm_touch,'b')
         if strcmp(hilbertVar,'pole')
-            set(gca,'xlim',[-1 2],'xdir','reverse','ylim',[0 1])
+            set(gca,'xlim',[-1 2],'xdir','reverse','ylim',[-3 3])
             axis square
         elseif strcmp(hilbertVar,'phase')
             set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'\pi','0','\pi'})
@@ -199,12 +220,12 @@ for g = 1:sum(touch_OL)
     
 end
 
-    figure(100);
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig5\';
-    fn = 'whisk_touch_tuning_curves.eps';
-    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-    fix_eps_fonts([saveDir, fn])
-
+%     figure(100);
+%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig5\';
+%     fn = 'whisk_touch_tuning_curves.eps';
+%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+%     fix_eps_fonts([saveDir, fn])
+% 
     figure(101);
     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig5\';
     fn = 'whisk_touch_tuning_curves_normalized.eps';

@@ -15,3 +15,14 @@ for k = 1:length(array)
     array{k}.varNames{18} = 'deltaTheta';
     array{k}.S_ctk(18,:,:) = dTheta_mat;
 end
+
+%gender addition
+for k = 1:length(array)
+    if any(strcmp(array{k}.meta.mouseName,{'AHO286','AH0641','AH0669','AH0716','AH0761','AH0762','AH0976','AH01014','AH01015'}))
+        array{k}.meta.gender = 'f';
+    elseif any(strcmp(array{k}.meta.mouseName,{'AHO638','AH0657','AH0927','AH0991','AH0992'}))
+        array{k}.meta.gender = 'm';
+    else
+        array{k}.meta.gender = 'unknown';
+    end
+end

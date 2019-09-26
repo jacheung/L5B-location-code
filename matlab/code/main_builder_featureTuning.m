@@ -214,7 +214,7 @@ fix_eps_fonts([saveDir, fn])
 
 
 %% WHISKING FEATURE TUNING
-
+selectedCells = 1:length(U)
 pole_whisk = whisking_location_quantification(U,selectedCells,'pole','off');
 angle_whisk = whisking_location_quantification(U,selectedCells,'angle','off');
 midpoint_whisk = whisking_location_quantification(U,selectedCells,'midpoint','off');
