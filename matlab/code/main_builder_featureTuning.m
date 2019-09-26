@@ -32,9 +32,10 @@ fix_eps_fonts([saveDir, fn])
 
 
 %% TOUCH
-% defTouchResponse(U,.95,'off');
+U = defTouchResponse(U,.95,'off');
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 mod_idx_touch = cellfun(@(x) x.meta.touchProperties.mod_idx_relative,U(selectedCells));
+
 %% POLE + IT FEATURES
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off');
 angle_tuned = object_location_quantification(U,selectedCells,'angle','off');
@@ -48,7 +49,7 @@ mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_tuned(selecte
 mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_tuned(selectedCells));
 mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,mp_tuned(selectedCells));
 
-peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_tuned(selectedCells));
+peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_tuned(selectedCells)) * -1;
 peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,angle_tuned(selectedCells));
 peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,phase_tuned(selectedCells));
 peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_tuned(selectedCells));
@@ -75,6 +76,10 @@ saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'hsv_touch.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
+
+%% time of peak response and tuning
+peak_idx_touch = cellfun(@(x) x.meta.touchProperties.peak_index,U(selectedCells));  
+peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_tuned(selectedCells)) * -1;
 
 %% DYNAMIC FEATURES
 
@@ -222,7 +227,7 @@ w_mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(selec
 w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_whisk(selectedCells));
 w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,midpoint_whisk(selectedCells));
 
-w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells));
+w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells)) * -1;
 w_peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,angle_whisk(selectedCells));
 w_peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,phase_whisk(selectedCells));
 w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_whisk(selectedCells));

@@ -57,8 +57,13 @@ for rec=1:length(U)
     U{rec}.meta.touchProperties.baseline_varNames = {'excit base+95CI','inhib base-95CI'};
     U{rec}.meta.touchProperties.baseline = [excitThreshold inhibThreshold]*1000;
     
-    heatTouch{rec} = touchResponse;
+    heatTouch{rec} = nanmean(touchSpks)'; 
     U{rec}.meta.touchProperties.responseType = 'untuned'; %deeming neuron as touch untuned less otherwise
+    
+    post_touch_window = find(window==0) : find(window==max(window));
+    [~,response_max_index] = max(heatTouch{rec}(post_touch_window));
+    U{rec}.meta.touchProperties.peak_index = response_max_index;
+    
     
     %quantifying modulation index
     max_touch = max(touchResponse(find(window==0):end));
