@@ -82,7 +82,7 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 
-%% Raster
+%% Raster subplot(1) is unsorted and subplot(2) is sorted
 for i = 29
     spikes = squeeze(U{i}.R_ntk);
     motors = U{i}.meta.motorPosition;
@@ -91,34 +91,39 @@ for i = 29
     
     figure(38);clf
     for g = 1:length(motors)
-        subplot(1,2,1)
-        spikeIdx = find(spikes(:,g));
-        hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
-        set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
-        axis square
-        subplot(1,2,2)
-        spikeIdx = find(spikes(:,sidx(g)));
-        hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
+%         subplot(1,2,1)
+%         spikeIdx = find(spikes(:,g));
+%         hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
+%         set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
+%         axis square
+%         subplot(1,2,2)
+%         spikeIdx = find(spikes(:,sidx(g)));
+%         hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
     end
-    set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
-    axis square
+%     set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
+%     axis square
 
     touchOn = [find(U{i}.S_ctk(9,:,:)==1)  ;find(U{i}.S_ctk(12,:,:)==1)];
     touchOff = [find(U{i}.S_ctk(10,:,:)==1)  ;find(U{i}.S_ctk(13,:,:)==1)];
+    whisking = find(U{i}.S_ctk(3,:,:)>5);
     touch_matrix = nan(size(spikes));
+    whisk_matrix = nan(size(spikes)); 
     for g = 1:length(touchOn)
         touch_matrix(touchOn(g):touchOff(g)) = 1;
     end
+    whisk_matrix(setdiff(whisking,find(touch_matrix==1))) = 1; 
+
     subplot(1,2,1)
-    pcolor(touch_matrix')
-    set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
-    
-    subplot(1,2,2)
-    pcolor(touch_matrix(:,sidx)')
-    set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
-    
+    pcolor(whisk_matrix')
+    set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000],'ylim',[48 94])
+    axis square
+    %SORTED TOUCH OVERLAY
+%     subplot(1,2,2)
+%     pcolor(touch_matrix(:,sidx)')
+%set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
+%     
     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
-    fn = 'example_raster.eps';
+    fn = 'example_raster_whisk_2.eps';
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
 end

@@ -51,13 +51,16 @@ onset_latency = cellfun(@(x) x.meta.touchProperties.responseWindow(1),U(touchUni
 resp_window_length = cellfun(@(x) range(x.meta.touchProperties.responseWindow),U(touchUnits)); % length of touch response
 touch_response_spks = cellfun(@(x,y) mean(x.io.DmatY),glmModel); %average number of spikes in touch response window 
 pResponse_touch = cellfun(@(x,y) mean((x.io.DmatY*1000)>y),glmModel,excitThresh); %probability of generating spiking response > baseline + 95%CI
+
 pResponse_ol_peak = cellfun(@(x,y) mean((x.calculations.responses_at_peak)>y),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
 pResponse_ol_trough = cellfun(@(x,y) mean((x.calculations.responses_at_trough)>y),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+[~,pResponse_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak>y,x.calculations.responses_at_trough>y),pole_tuned(tuned_units),excitThresh_ol_units); %at alpha .05
+
 
 response_ol_peak = cellfun(@(x,y) mean(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y)),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
 response_ol_trough = cellfun(@(x,y) mean(x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
-% response_ol_peak = cellfun(@(x) mean(x.calculations.responses_at_peak),pole_tuned(tuned_units));
-% response_ol_trough = cellfun(@(x) mean(x.calculations.responses_at_trough),pole_tuned(tuned_units));
+[~,response_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y),x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(tuned_units),excitThresh_ol_units); %at alpha .05
+
 
 
 whisking_fr(touchUnits);%whisking firing rate
@@ -75,10 +78,10 @@ range_touch(:,2) = [cellfun(@max, touch_properties) nan(1,1)]';
 
 [~,ix_idx] = intersect(touchUnits,tuned_units);
 OL_properties = {whisking_fr(tuned_units),non_whisking_fr(tuned_units),prop_touch(tuned_units),prop_whisking_touch(tuned_units),...
-    onset_latency(ix_idx),resp_window_length(ix_idx),touch_response_spks(ix_idx),pResponse_touch(ix_idx),pResponse_ol_peak};
-mean_ol = [cellfun(@mean, OL_properties) ]';
-std_ol = [cellfun(@std, OL_properties) ]';
-median_ol = [cellfun(@median, OL_properties) ]';
+    onset_latency(ix_idx),resp_window_length(ix_idx),touch_response_spks(ix_idx),pResponse_touch(ix_idx),pResponse_ol_peak,pResponse_ol_trough,response_ol_peak,response_ol_trough};
+mean_ol = [cellfun(@nanmean, OL_properties) ]';
+std_ol = [cellfun(@nanstd, OL_properties) ]';
+median_ol = [cellfun(@nanmedian, OL_properties) ]';
 range_ol(:,1) = [cellfun(@min, OL_properties) ]';
 range_ol(:,2) = [cellfun(@max, OL_properties) ]';
 
@@ -155,7 +158,10 @@ hold on; histogram(pResponse_touch(touch_tuned_idx),0:.05:1,'facecolor','g')
 title('probability of touch response')
 
 subplot(2,6,[9 10])
-scatter(pResponse_ol_trough,pResponse_ol_peak,'filled','markerfacecolor','g')
+
+scatter(pResponse_ol_trough(pResponse_sigs<=.01),pResponse_ol_peak(pResponse_sigs<=.01),'filled','markerfacecolor','g')
+hold on; scatter(pResponse_ol_trough(pResponse_sigs>.01),pResponse_ol_peak(pResponse_sigs>.01),'go')
+
 x = mean(pResponse_ol_trough) ;
 y = mean(pResponse_ol_peak) ; 
 xerr = std(pResponse_ol_trough) ; 
@@ -171,7 +177,8 @@ xlabel('p(response) trough');ylabel('p(response) peak')
 subplot(2,6,[11 12])
 ratio = response_ol_peak ./ response_ol_trough; 
 ratio(isinf(ratio)) = []; 
-scatter(response_ol_trough,response_ol_peak,'filled','markerfacecolor','g')
+scatter(response_ol_trough(response_sigs<=.01),response_ol_peak(response_sigs<=.01),'filled','markerfacecolor','g')
+hold on; scatter(response_ol_trough(response_sigs>.01),response_ol_peak(response_sigs>.01),'go')
 x = nanmean(response_ol_trough) ;
 y = nanmean(response_ol_peak) ; 
 xerr = nanstd(response_ol_trough) ; 

@@ -71,7 +71,7 @@ pdm = preDecisionTouchMat(U);
 
 touch_window = -25:50;
 chunks = 3;
-units_to_plot = [6 ,30, 9];
+units_to_plot = [11 ,30, 6];
 figure(20);clf
 for g = 1:length(units_to_plot)
     selected_unit = tuned_units(units_to_plot(g)); 
