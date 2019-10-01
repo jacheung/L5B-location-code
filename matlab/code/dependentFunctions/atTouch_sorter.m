@@ -48,7 +48,7 @@ for g = 1:length(tOnIndices)
     varDesign{g}(:,5) = array.S_ctk(5,tOnIndices{g});%phase at touch
     varDesign{g}(:,6) = array.S_ctk(17,tOnIndices{g});%curvature at touch
     for i = 1:length(tOnIndices{g})
-        kwin=array.S_ctk(6,tOnIndices{g}(i):tOffIndices{g}(i)); %get values in touch window
+        kwin=array.S_ctk(19,tOnIndices{g}(i):tOffIndices{g}(i)); %get values in touch window
         [~ ,maxidx] = max(abs(kwin)); %find idx of max kappa within each touch window, neg or pos
         dtDesign{g}(i,2)=kwin(maxidx); %use idx to pull max kappa
         
