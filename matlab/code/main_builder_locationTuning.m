@@ -6,7 +6,6 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 %% Top level parameters and definitions
 %U = defTouchResponse(U,.95,'on');
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 
 for i = 29
     %% raster
@@ -109,6 +108,7 @@ end
     fix_eps_fonts([saveDir, fn])
     
 %% modulation width
+% pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
 
 peak_response = cellfun(@(x) x.calculations.tune_peak,pole_tuned(tuned_units));

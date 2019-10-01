@@ -70,6 +70,22 @@ for rec = 1:length(selectedCells)
         
         angle = squeeze(array.S_ctk(1,:,:));
         conversion_feature = polyval(p,angle);
+        
+        % plotting conversion of whisker angle to pole
+%         figure(48);clf
+%         scatter(cleaned(:,2)*-1,cleaned(:,1),'.k')
+%         y = min(angle(:)):1:max(angle(:));
+%         hold on; plot(polyval(p,min(angle(:)):1:max(angle(:)))*-1,y,'r');
+%         set(gca,'xlim',[-2 4],'ytick',-20:20:80)
+%         axis square
+%         title(['cell num ' num2str(selectedCells(rec))])
+%         saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+%         fn = ['angle2pole_' num2str(selectedCells(rec)) '.eps'];
+%         export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+%         fix_eps_fonts([saveDir, fn])
+        
+
+        
     end
     
     current_feature = conversion_feature(whisking_mask==1);
@@ -84,7 +100,8 @@ for rec = 1:length(selectedCells)
         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',numBins);
 %     end
     
-    quant_ol_p = anova1(cell2nanmat(sorted),[],'off');
+    [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
+    
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
@@ -95,6 +112,7 @@ for rec = 1:length(selectedCells)
     minResponse = min(smooth_response);
     tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
     tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
+    tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);    
     
     if numel(sortedBy)>min_bins
         
@@ -102,62 +120,51 @@ for rec = 1:length(selectedCells)
             figure(23);subplot(rc(1),rc(2),rec)
             shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
         end
-        
+       
         if quant_ol_p < alpha_value
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
+            [maxResponse,maxidx] = max(smooth_response);
+            [~, minidx] = min(smooth_response);
             
-            [maxResponse,idx] = max(smooth_response);
-            minResponse = min(smooth_response);
+            %right and left tuning by idx
+            compare_table = multcompare(stats,'Display','off');
+            max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);
+            sig_max_compares = max_compares(max_compares(:,end) < alpha_value,:);
+            compare_idx = sig_max_compares(:,[1 2]);
+            other_idx = compare_idx(compare_idx ~= maxidx);
             
-            %plot scatter of first sig diff from max
-            sd_p = nan(length(sorted),1);
-            pThresh = .05;
-            for g = 1:numel(sorted)
-                [~,sd_p(g)] = ttest2(sorted{idx},sorted{g});
-            end
-            all_idx = find(sd_p < pThresh); %all points sig diff from max
-            groupIdx = sort([all_idx ;idx]);
-            mid_idx = find(groupIdx==idx);
-            [~,sd_idx_tmp] = min(abs(idx - all_idx));
-            sd_idx = all_idx(sd_idx_tmp);
+            left_tuning_idx = other_idx(find(other_idx<maxidx,1,'last'));
+            right_tuning_idx = other_idx(find(other_idx>maxidx,1,'first'));
+            
+            tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
             
             %finding tuning width before peak
-            if (mid_idx-1) ~= 0
-                left_idx = groupIdx(mid_idx-1);
-                tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
-                tuneStruct{selectedCells(rec)}.calculations.tune_left_width = median(sortedBy{idx}) - median(sortedBy{left_idx}); %width defined as the first bin that's sig diff from peak response
+            if ~isempty(left_tuning_idx)
+                tuneStruct{selectedCells(rec)}.calculations.tune_left_width = median(sortedBy{maxidx})-median(sortedBy{left_tuning_idx});
+                if willdisplay
+                    hold on; scatter(median(sortedBy{maxidx}),maxResponse,'g','filled');
+                    hold on; scatter(median(sortedBy{left_tuning_idx}),smooth_response(left_tuning_idx),'r','filled');
+                end
             else
-                left_idx = [];
                 tuneStruct{selectedCells(rec)}.calculations.tune_left_width = nan;
             end
             
-            % finding tuning width after peak
-            if (mid_idx+1) <= length(groupIdx)
-                right_idx = groupIdx(mid_idx+1);
-                tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
-                tuneStruct{selectedCells(rec)}.calculations.tune_right_width = median(sortedBy{right_idx}) - median(sortedBy{idx}); %width defined as the first bin that's sig diff from peak response
+            %finding tuning width after peak
+            if ~isempty(right_tuning_idx)
+                tuneStruct{selectedCells(rec)}.calculations.tune_right_width = median(sortedBy{right_tuning_idx}) - median(sortedBy{maxidx});
+                if willdisplay
+                    hold on; scatter(median(sortedBy{maxidx}),maxResponse,'g','filled');
+                    hold on; scatter(median(sortedBy{right_tuning_idx}),smooth_response(right_tuning_idx),'r','filled');
+                end
             else
-                right_idx = [];
                 tuneStruct{selectedCells(rec)}.calculations.tune_right_width = nan;
             end
             
-            
-            if ~isempty(sd_idx) && ~isempty(idx)
-                if willdisplay
-                    hold on; scatter(median(sortedBy{idx}),maxResponse,'b','filled');
-                    hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'b','filled');
-                end
-                %calculations of tuning
-                tuneStruct{selectedCells(rec)}.is_tuned = 1;
-%                 tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{idx}); %peak modulation defined as the median value of the max bin
-%                 tuneStruct{selectedCells(rec)}.calculations.tune_width = median(sortedBy{sd_idx}); %width defined as the first bin that's sig diff from peak response
-                tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse+minResponse);
-                tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
-            end
-            
-            
-            
+            tuneStruct{selectedCells(rec)}.is_tuned = 1;
+            tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{maxidx};
+            tuneStruct{selectedCells(rec)}.calculations.responses_at_trough = sorted{minidx};
+        
         end
         
         if willdisplay

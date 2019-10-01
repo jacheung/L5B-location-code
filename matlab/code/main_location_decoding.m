@@ -59,7 +59,7 @@ neurometric_curve = cell(1,length(numNeurons));
 resamp_mdl = [];
 for g = 1:length(numNeurons)
     for d = 1:numIterations
-        neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g));
+        neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g),'Replace',false);
         
         coeffs_to_use = reshaped_coeffs([1 neuron_to_use+1],:);
         dmatX = [ones(length(mdlResults.io.Y.normal),1) mdlResults.io.Xnorm(:,neuron_to_use)];

@@ -8,6 +8,7 @@ for g = 1:length(mdl.io.trueY)
     confusionMatrix_accuracy = confusionmat(mdl.io.trueY{g},mdl.io.predY{g});
     accuracy(g) = sum(diag(confusionMatrix_accuracy)) ./ sum(confusionMatrix_accuracy(:));
 end
+
 figure(10);clf;
 subplot(1,2,1)
 predProb = confusionMatrix ./ sum(confusionMatrix); %sum(cmat,1) for precision and sum(Cmat,2) for recall/sensitivity
