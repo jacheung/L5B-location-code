@@ -11,14 +11,14 @@ for k = 1:length(array)
     dKappa_mat = zeros(curr_array.t,curr_array.k);
     for i = 1:length(touchOnIdx)
         dTheta_mat(touchOnIdx(i):touchOffIdx(i)) = curr_array.S_ctk(1,touchOnIdx(i):touchOffIdx(i)) - curr_array.S_ctk(1,touchOnIdx(i));
-        dKappa_mat(touchOnIdx(i):touchOffIdx(i)) = curr_array.S_ctk(6,touchOnIdx(i):touchOffIdx(i)) - curr_array.S_ctk(6,touchOnIdx(i));
+        dKappa_mat(touchOnIdx(i):touchOffIdx(i)) = curr_array.S_ctk(17,touchOnIdx(i):touchOffIdx(i)) - curr_array.S_ctk(17,touchOnIdx(i));
     end
     
    
     array{k}.varNames{18} = 'deltaTheta';
     array{k}.varNames{19} = 'deltaKappa_corrected';
     array{k}.S_ctk(18,:,:) = dTheta_mat;
-    array{k}.S_ctk(18,:,:)  = dKappa_mat;
+    array{k}.S_ctk(19,:,:)  = dKappa_mat;
 end
 
 %gender addition

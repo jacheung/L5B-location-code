@@ -29,13 +29,25 @@ for rec = 1:length(selectedCells)
     touchOnIdx = [find(array.S_ctk(9,:,:)==1); find(array.S_ctk(12,:,:)==1)];
     touchOffIdx = [find(array.S_ctk(10,:,:)==1); find(array.S_ctk(13,:,:)==1)];
     touch_response_window = array.meta.touchProperties.responseWindow(1): array.meta.touchProperties.responseWindow(2);
+    phase = squeeze(array.S_ctk(5,:,:)); 
+    touch_phase = phase(touchOnIdx); 
     
     for i = 1:length(touchOnIdx)
         touch_window_idx = touchOnIdx(i):touchOffIdx(i);
-        kwin=array.S_ctk(6,touch_window_idx); %get values in touch window
-        [~ ,maxidx] = max(abs(kwin)); %find idx of max kappa within each touch window, neg or pos
-        dt{selectedCells(rec)}.stim.dkappa(i)=kwin(maxidx); %use idx to pull max kappa
-        dk_response_window = touch_window_idx(maxidx) + touch_response_window ;
+        
+        pt_velocity = mean(array.S_ctk(2,touchOnIdx(i)-5:touchOnIdx(i)-1));
+        kwin=array.S_ctk(19,touch_window_idx); %get values in touch window
+        if pt_velocity>0 && touch_phase(i)<0 %if protraction touch...
+            [minValue ,val_idx] = min(kwin);
+            dt{selectedCells(rec)}.stim.dkappa(i)=minValue;
+        elseif pt_velocity<0 && touch_phase(i)>0 %if retraction touch...
+            [maxValue ,val_idx] = max(kwin);
+            dt{selectedCells(rec)}.stim.dkappa(i)=maxValue;
+        else
+            [~ ,val_idx] = max(abs(kwin)); %find idx of max kappa within each touch window, neg or pos
+             dt{selectedCells(rec)}.stim.dkappa(i)=kwin(val_idx); %use idx to pull max kappa
+        end
+        dk_response_window = touch_window_idx(val_idx) + touch_response_window ;
         dt{selectedCells(rec)}.response.dkappa(i,:) = spikes(dk_response_window);
         
         dtheta=array.S_ctk(18,touchOnIdx(i):touchOffIdx(i)); %get values in touch window

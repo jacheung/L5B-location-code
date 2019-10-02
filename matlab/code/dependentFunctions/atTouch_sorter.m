@@ -48,15 +48,24 @@ for g = 1:length(tOnIndices)
     varDesign{g}(:,5) = array.S_ctk(5,tOnIndices{g});%phase at touch
     varDesign{g}(:,6) = array.S_ctk(17,tOnIndices{g});%curvature at touch
     for i = 1:length(tOnIndices{g})
+        varDesign{g}(i,2)=mean(array.S_ctk(2,tOnIndices{g}(i)-5:tOnIndices{g}(i)-1)); %finds mean of velocity (-4:-1ms) before touch
+        % forcing protraction and retraction calculation of dkappa 
         kwin=array.S_ctk(19,tOnIndices{g}(i):tOffIndices{g}(i)); %get values in touch window
-        [~ ,maxidx] = max(abs(kwin)); %find idx of max kappa within each touch window, neg or pos
-        dtDesign{g}(i,2)=kwin(maxidx); %use idx to pull max kappa
+        if varDesign{g}(i,2)>0 && varDesign{g}(i,5)<0 %protraction
+            [minValue ,~] = min(kwin);
+            dtDesign{g}(i,2)=minValue;
+        elseif varDesign{g}(i,2)<0 && varDesign{g}(i,5)>0 %retraction
+            [maxValue ,~] = max(kwin);
+            dtDesign{g}(i,2)=maxValue;
+        else 
+            [~ ,maxidx] = max(abs(kwin)); %find idx of max kappa within each touch window, neg or pos
+            dtDesign{g}(i,2)=kwin(maxidx); %use idx to pull max kappa
+        end
+
         
         ktheta=array.S_ctk(18,tOnIndices{g}(i):tOffIndices{g}(i)); %get values in touch window
         [~ ,maxidx] = max(abs(ktheta)); %find idx of max theta within each touch window, neg or pos
         dtDesign{g}(i,3)=ktheta(maxidx); %use idx to pull max theta
-        
-        varDesign{g}(i,2)=mean(array.S_ctk(2,tOnIndices{g}(i)-5:tOnIndices{g}(i)-1)); %finds mean of velocity (-4:-1ms) before touch
         
         dtDesign_R_ntk{g}(i) = sum(spikes(tOnIndices{g}(i):tOffIndices{g}(i))); %sum spikes during touch duration 
     end

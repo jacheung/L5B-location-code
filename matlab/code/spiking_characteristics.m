@@ -22,7 +22,6 @@ prop_touch = spks_in_touch./spks_in_all; %proportion of spikes attributed to tou
 prop_whisking_touch = (spks_in_touch+spks_in_whisking)./spks_in_all;%proportion of spikes attributed to whisking + touch 
 
 
-
 % all_properties = {whisking_fr,non_whisking_fr,prop_touch,prop_whisking_touch,onset_latency,resp_window_length,touch_response_spks,pResponse_touch};
 all_properties = {whisking_fr,non_whisking_fr,prop_touch,prop_whisking_touch};
 mean_all = [cellfun(@mean, all_properties(~cellfun(@isempty,all_properties))) nan(1,5)]';
@@ -31,11 +30,21 @@ median_all= [cellfun(@median, all_properties(~cellfun(@isempty,all_properties)))
 [range_all(:,1)] = [cellfun(@min, all_properties(~cellfun(@isempty,all_properties))) nan(1,5)]';
 [range_all(:,2)] = [cellfun(@max, all_properties(~cellfun(@isempty,all_properties))) nan(1,5)]';
 
+%NON TOUCH
+non_touch = cellfun(@(x) ~strcmp(x.meta.touchProperties.responseType,'excited'),U); 
+mean_nt = [cellfun(@(x) mean(x(non_touch)),all_properties) nan(1,8)]';
+std_nt = [cellfun(@(x) std(x(non_touch)),all_properties) nan(1,8)]';
+median_nt= [cellfun(@(x) median(x(non_touch)),all_properties) nan(1,8)]';
+[range_nt(:,1)] = [cellfun(@(x) min(x(non_touch)),all_properties) nan(1,8)]';
+[range_nt(:,2)] = [cellfun(@(x) max(x(non_touch)),all_properties) nan(1,8)]';
+
+
 %% Quantification of touch excited units and their response properties 
 touchUnits = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U)~=0);
 % Define location tuned units
 pole_tuned = object_location_quantification(U,touchUnits,'pole','off'); %for old see object_location_v1.0
 tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
+non_tuned_units = setdiff(touchUnits,tuned_units); 
 
 %BUILD parameters for GLM to quantify touch units 
 glmnetOpt.buildIndices = [-25:50]; %Indices around touch
@@ -44,7 +53,7 @@ glmModel = [];
 [glmModel] = designMatrixBlocks_simplified(U(touchUnits),glmnetOpt,glmModel);
 excitThresh =  num2cell(cellfun(@(x) x.meta.touchProperties.baseline(1),U(touchUnits)));
 excitThresh_ol_units =  num2cell(cellfun(@(x) x.meta.touchProperties.baseline(1),U(tuned_units)));
-
+excitThresh_non_ol_units =  num2cell(cellfun(@(x) x.meta.touchProperties.baseline(1),U(non_tuned_units)));
 
 %touch properties and definitions 
 onset_latency = cellfun(@(x) x.meta.touchProperties.responseWindow(1),U(touchUnits)); % time of touch onset 
@@ -52,14 +61,23 @@ resp_window_length = cellfun(@(x) range(x.meta.touchProperties.responseWindow),U
 touch_response_spks = cellfun(@(x,y) mean(x.io.DmatY),glmModel); %average number of spikes in touch response window 
 pResponse_touch = cellfun(@(x,y) mean((x.io.DmatY*1000)>y),glmModel,excitThresh); %probability of generating spiking response > baseline + 95%CI
 
+%OL UNITS
 pResponse_ol_peak = cellfun(@(x,y) mean((x.calculations.responses_at_peak)>y),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
 pResponse_ol_trough = cellfun(@(x,y) mean((x.calculations.responses_at_trough)>y),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
 [~,pResponse_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak>y,x.calculations.responses_at_trough>y),pole_tuned(tuned_units),excitThresh_ol_units); %at alpha .05
 
-
 response_ol_peak = cellfun(@(x,y) mean(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y)),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
 response_ol_trough = cellfun(@(x,y) mean(x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(tuned_units),excitThresh_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
 [~,response_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y),x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(tuned_units),excitThresh_ol_units); %at alpha .05
+
+%NON_OL UNITS
+pResponse_Nol_peak = cellfun(@(x,y) mean((x.calculations.responses_at_peak)>y),pole_tuned(non_tuned_units),excitThresh_non_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+pResponse_Nol_trough = cellfun(@(x,y) mean((x.calculations.responses_at_trough)>y),pole_tuned(non_tuned_units),excitThresh_non_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+[~,pNResponse_Nsigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak>y,x.calculations.responses_at_trough>y),pole_tuned(non_tuned_units),excitThresh_non_ol_units); %at alpha .05
+
+response_Nol_peak = cellfun(@(x,y) mean(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y)),pole_tuned(non_tuned_units),excitThresh_non_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+response_Nol_trough = cellfun(@(x,y) mean(x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(non_tuned_units),excitThresh_non_ol_units); %probability of generating spiking response > baseline + 95%CI in peak bin
+[~,Nresponse_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y),x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(non_tuned_units),excitThresh_non_ol_units); %at alpha .05
 
 
 
@@ -85,17 +103,27 @@ median_ol = [cellfun(@nanmedian, OL_properties) ]';
 range_ol(:,1) = [cellfun(@min, OL_properties) ]';
 range_ol(:,2) = [cellfun(@max, OL_properties) ]';
 
+non_tuned_idx = setdiff(1:numel(touchUnits),ix_idx);
+non_OL_properties = {whisking_fr(non_tuned_units),non_whisking_fr(non_tuned_units),prop_touch(non_tuned_units),prop_whisking_touch(non_tuned_units),...
+    onset_latency(non_tuned_idx),resp_window_length(non_tuned_idx),touch_response_spks(non_tuned_idx),pResponse_touch(non_tuned_idx),pResponse_Nol_peak,pResponse_Nol_trough,response_Nol_peak,response_Nol_trough};
+mean_non_ol = [cellfun(@nanmean, non_OL_properties) ]';
+std_non_ol = [cellfun(@nanstd, non_OL_properties) ]';
+median_non_ol = [cellfun(@nanmedian, non_OL_properties) ]';
+range_non_ol(:,1) = [cellfun(@min, non_OL_properties) ]';
+range_non_ol(:,2) = [cellfun(@max, non_OL_properties) ]';
+
+
 
 %% Table output
-final_table = table(mean_all,std_all,median_all,range_all,... 
-    mean_touch,std_touch,median_touch,range_touch,...
+final_table = table(mean_nt,std_nt,median_nt,range_nt,... 
+    mean_non_ol,std_non_ol,median_non_ol,range_non_ol,...
     mean_ol,std_ol,median_ol,range_ol);
 
 id_properties = {'whisking (hz)','quiet (hz)','touch evoked','touch+w evoked',...
-    'onset latency','response window','touch response spks','p(response)','p(response} @ peak'}; 
+    'onset latency','response window','touch response spks','p(response) touch','p(response) peak','p(response} @ trough','response peak','response trough'}; 
 final_table.Properties.RowNames = id_properties;
 
-filename = 'spiking_characteristics.xlsx';
+filename = 'spiking_characteristics_raw.xlsx';
 cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
 writetable(final_table,filename)
 

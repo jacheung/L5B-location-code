@@ -123,10 +123,12 @@ for rec = 1:length(selectedCells)
     % ONLY FOR MOD IDX CALCULATIONS
     smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
     [maxResponse,maxidx] = max(smooth_response);
-    minResponse = min(smooth_response);
+    [minResponse,minidx] = min(smooth_response);
     tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
     tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
     tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
+    tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{maxidx};
+    tuneStruct{selectedCells(rec)}.calculations.responses_at_trough = sorted{minidx};
     
     % making sure we've sampled enough bins before plotting.
     % min_bins defined as a global param above.
@@ -179,8 +181,7 @@ for rec = 1:length(selectedCells)
                 end
                 
                 tuneStruct{selectedCells(rec)}.is_tuned = 1;
-                tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{maxidx};
-                tuneStruct{selectedCells(rec)}.calculations.responses_at_trough = sorted{minidx};
+
 
                 
             elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
