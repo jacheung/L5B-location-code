@@ -47,12 +47,12 @@ for rec=1:length(U)
     
     %Excitatory threshold defined as the period > mean+x%CI
     excitthreshIdx = touchResponse'>excitThreshold;
-    excitthreshIdx(1:find(window==0))=0;
+    excitthreshIdx(1:find(window==5))=0;
     
     %Inhibitory threshold defined as the period > mean-x%CI
     inhibthreshIdx = touchResponse'<inhibThreshold;
     inhibthreshIdx(inhibthreshIdx==1)= -1;
-    inhibthreshIdx(1:find(window==0))=0;
+    inhibthreshIdx(1:find(window==5))=0;
     
     U{rec}.meta.touchProperties.baseline_varNames = {'excit base+95CI','inhib base-95CI'};
     U{rec}.meta.touchProperties.baseline = [excitThreshold inhibThreshold]*1000;
