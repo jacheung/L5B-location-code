@@ -4,9 +4,6 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions 
-for g = 1:length(U)
-    U{g}.meta = rmfield(U{g}.meta,'touchProperties');
-end
 
 U = defTouchResponse(U,.95,'off');
 

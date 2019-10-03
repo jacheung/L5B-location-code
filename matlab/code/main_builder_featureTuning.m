@@ -32,17 +32,21 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 
-%% TOUCH
+%% TOUCH and FIRING RATE
 % U = defTouchResponse(U,.95,'off');
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 mod_idx_touch = cellfun(@(x) x.meta.touchProperties.mod_idx_relative,U(touchCells));
+firing_rate = log10(cellfun(@(x) mean(x.R_ntk(:))*1000,U));
 
 %% POLE + IT FEATURES
-pole_tuned = object_location_quantification(U,touchCells,'pole','on');
+pole_tuned = object_location_quantification(U,touchCells,'pole','off');
 angle_tuned = object_location_quantification(U,touchCells,'angle','off');
 phase_tuned = object_location_quantification(U,touchCells,'phase','off');
 amp_tuned = object_location_quantification(U,touchCells,'amplitude','off');
 mp_tuned = object_location_quantification(U,touchCells,'midpoint','off');
+
+tunedCells = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
+nontunedCells = setdiff(touchCells,tunedCells);
 
 mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_tuned(touchCells));
 mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,angle_tuned(touchCells));
@@ -79,10 +83,6 @@ peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,mp_tuned(touchCells));
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])
 
-%% time of peak response and tuning
-peak_idx_touch = cellfun(@(x) x.meta.touchProperties.peak_index,U(touchCells));  
-peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_tuned(touchCells)) * -1;
-
 %% DYNAMIC FEATURES
 
 dkappa_tuned = dynamic_touch_quantification(U,touchCells,'dkappa','off');
@@ -97,8 +97,7 @@ mod_idx_dt = cellfun(@(x) x.calculations.mod_idx_relative,dtheta_tuned(touchCell
 mod_idx_adaptation = cellfun(@(x) x.calculations.mod_idx_relative,adaptation(touchCells));
 
 
-tunedCells = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
-nontunedCells = setdiff(touchCells,tunedCells);
+
 %adaptation heat
 population_heat_tuned = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(tunedCells),'uniformoutput',0)')',0,1);
 population_heat_nontuned = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(nontunedCells),'uniformoutput',0)')',0,1);
@@ -252,46 +251,57 @@ nontunedCells = setdiff(touchCells,tunedCells);
 tune_map_1 = [mod_idx_touch(touchtuneidx) ; mod_idx_adaptation(touchtuneidx)];
 tune_map_it = [mod_idx_pole(touchtuneidx) ; mod_idx_angle(touchtuneidx) ; mod_idx_phase(touchtuneidx) ; mod_idx_amp(touchtuneidx) ; mod_idx_midpoint(touchtuneidx)];
 tune_map_dt = [mod_idx_dk(touchtuneidx) ; mod_idx_dt(touchtuneidx)];
+tune_map_fr = firing_rate(tunedCells); 
 
 figure(81);clf
-subplot(3,2,1);
+subplot(4,2,1);
 imagesc(tune_map_1(:,(tune_idx)))
 set(gca,'ytick',1:2,'yticklabel',{'touch','adaptation'})
 title('tuned')
 caxis([0 1])
-subplot(3,2,3);
+subplot(4,2,3);
 imagesc(tune_map_it(:,(tune_idx)))
 set(gca,'ytick',1:6,'yticklabel',{'pole','angle','phase','amp','midpoint'})
 caxis([0 1])
-subplot(3,2,5);
+subplot(4,2,5);
 imagesc(tune_map_dt(:,(tune_idx)))
 set(gca,'ytick',1:2,'yticklabel',{'max dkappa','max dtheta'})
 caxis([0 1])
+subplot(4,2,7);
+imagesc(tune_map_fr(tune_idx))
+set(gca,'ytick',1:2,'yticklabel',{'log firing rate'})
+caxis([-2 2])
 
 %nontuned
 [~,non_tune_idx] = sort(mod_idx_pole(touchnontuneidx));
-tune_map_1 = [mod_idx_touch(touchnontuneidx) ; mod_idx_adaptation(touchnontuneidx)];
-tune_map_it = [mod_idx_pole(touchnontuneidx) ; mod_idx_angle(touchnontuneidx) ; mod_idx_phase(touchnontuneidx) ; mod_idx_amp(touchnontuneidx) ; mod_idx_midpoint(touchnontuneidx)];
-tune_map_dt = [mod_idx_dk(touchnontuneidx) ; mod_idx_dt(touchnontuneidx)];
+non_tune_map_1 = [mod_idx_touch(touchnontuneidx) ; mod_idx_adaptation(touchnontuneidx)];
+non_tune_map_it = [mod_idx_pole(touchnontuneidx) ; mod_idx_angle(touchnontuneidx) ; mod_idx_phase(touchnontuneidx) ; mod_idx_amp(touchnontuneidx) ; mod_idx_midpoint(touchnontuneidx)];
+non_tune_map_dt = [mod_idx_dk(touchnontuneidx) ; mod_idx_dt(touchnontuneidx)];
+non_tune_map_fr = firing_rate(nontunedCells); 
 
-subplot(3,2,2);
-imagesc(tune_map_1(:,(non_tune_idx)))
+
+subplot(4,2,2);
+imagesc(non_tune_map_1(:,(non_tune_idx)))
 set(gca,'ytick',1:2,'yticklabel',{'touch','adaptation'})
 title('nontuned')
 caxis([0 1])
-subplot(3,2,4);
-imagesc(tune_map_it(:,(non_tune_idx)))
+subplot(4,2,4);
+imagesc(non_tune_map_it(:,(non_tune_idx)))
 set(gca,'ytick',1:6,'yticklabel',{'pole','angle','phase','amp','midpoint'})
 caxis([0 1])
-subplot(3,2,6);
-imagesc(tune_map_dt(:,(non_tune_idx)))
+subplot(4,2,6);
+imagesc(non_tune_map_dt(:,(non_tune_idx)))
 set(gca,'ytick',1:2,'yticklabel',{'max dkappa','max dtheta'})
 caxis([0 1])
+subplot(4,2,8);
+imagesc(non_tune_map_fr(non_tune_idx))
+set(gca,'ytick',1:2,'yticklabel',{'log firing rate'})
+caxis([-2 2])
 
 colormap(gray)
 colorbar
 
-
+% 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'touch_feature_map_split.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
@@ -331,24 +341,24 @@ fix_eps_fonts([saveDir, fn])
 
 
 %% WHISKING FEATURE TUNING
-touchCells = 1:length(U)
-pole_whisk = whisking_location_quantification(U,touchCells,'pole','off');
-angle_whisk = whisking_location_quantification(U,touchCells,'angle','off');
-midpoint_whisk = whisking_location_quantification(U,touchCells,'midpoint','off');
-amp_whisk = whisking_location_quantification(U,touchCells,'amplitude','off');
-phase_whisk = whisking_location_quantification(U,touchCells,'phase','off');
+selectedCells = 1:length(U)
+pole_whisk = whisking_location_quantification(U,selectedCells,'pole','off');
+angle_whisk = whisking_location_quantification(U,selectedCells,'angle','off');
+midpoint_whisk = whisking_location_quantification(U,selectedCells,'midpoint','off');
+amp_whisk = whisking_location_quantification(U,selectedCells,'amplitude','off');
+phase_whisk = whisking_location_quantification(U,selectedCells,'phase','off');
 
-w_mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(touchCells));
-w_mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,angle_whisk(touchCells));
-w_mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(touchCells));
-w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_whisk(touchCells));
-w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,midpoint_whisk(touchCells));
+w_mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(selectedCells));
+w_mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,angle_whisk(selectedCells));
+w_mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(selectedCells));
+w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_whisk(selectedCells));
+w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,midpoint_whisk(selectedCells));
 
-w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(touchCells)) * -1;
-w_peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,angle_whisk(touchCells));
-w_peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,phase_whisk(touchCells));
-w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_whisk(touchCells));
-w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,midpoint_whisk(touchCells));
+w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells)) * -1;
+w_peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,angle_whisk(selectedCells));
+w_peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,phase_whisk(selectedCells));
+w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_whisk(selectedCells));
+w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,midpoint_whisk(selectedCells));
 
 
 % HSV PLOTTING WHISK
@@ -356,7 +366,7 @@ w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,midpoint_whisk(touch
 
 peaks = {w_peak_idx_pole,w_peak_idx_angle,w_peak_idx_phase,w_peak_idx_amp,w_peak_idx_midpoint};
 mod_idx = {w_mod_idx_pole,w_mod_idx_angle,w_mod_idx_phase,w_mod_idx_amp,w_mod_idx_midpoint};
-final_image = nan(numel(peaks),numel(touchCells),3); 
+final_image = nan(numel(peaks),numel(selectedCells),3); 
 for b = 1:numel(peaks)
     hues = normalize_var(peaks{b}(sort_idx),.7,1);
     hsv = [hues' mod_idx{b}(sort_idx)' ones(numel(hues),1)];
