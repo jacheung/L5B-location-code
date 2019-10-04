@@ -96,77 +96,16 @@ mod_idx_dt = cellfun(@(x) x.calculations.mod_idx_relative,dtheta_tuned(touchCell
 [adaptation] = adaptation_quantification(U,touchCells,'off');
 mod_idx_adaptation = cellfun(@(x) x.calculations.mod_idx_relative,adaptation(touchCells));
 
-
-
-%adaptation heat
-population_heat_tuned = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(tunedCells),'uniformoutput',0)')',0,1);
-population_heat_nontuned = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(nontunedCells),'uniformoutput',0)')',0,1);
-[~,idx] = sort(population_heat_tuned(1,:));
-[~,idx_non] = sort(population_heat_nontuned(1,:));
-figure(81);clf
-subplot(1,2,1)
-imagesc(population_heat_tuned(:,fliplr(idx)))
-caxis([0 1])
-title('location tuned')
-subplot(1,2,2); 
-imagesc(population_heat_nontuned(:,fliplr(idx_non)))
-caxis([0 1])
-title('non-location tuned')
-colormap gray
-xlabel('cell number')
-ylabel('touch order')
-colorbar
-set(gca,'ydir','reverse')
-
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-fn = 'adaptation_map.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+% fn = 'adaptation_map.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 %% PROTRACTION VS RETRACTION
-alpha_values = 0.05;
-figure(9);clf
-for rec = 1:length(touchCells)
-    array = U{(touchCells(rec))};
-    
-    spks = squeeze(array.R_ntk(:,:,:));
-    response_window = array.meta.touchProperties.responseWindow(1):array.meta.touchProperties.responseWindow(2);
-    touch_times = [find(array.S_ctk(9,:,:)==1) ; find(array.S_ctk(12,:,:)==1)];
-    phase = squeeze(array.S_ctk(5,:,:));
-    velocity = squeeze(array.S_ctk(2,:,:));
-    pt_vel = mean(velocity(touch_times - [-5:-1]),2);
-    touch_phase = phase(touch_times);
-    
-    touch_response = mean(spks(touch_times + response_window),2);
-    pro_touches = intersect(find(touch_phase<0),find(pt_vel>0));
-    ret_touches = intersect(find(touch_phase>0),find(pt_vel<0));
-    
-    pro_resp = max(touch_response(pro_touches));
-    ret_resp = max(touch_response(ret_touches));
-    dir_mod{(touchCells(rec))}.mod_idx_relative = (pro_resp-ret_resp) ./  (pro_resp+ret_resp);
-    
-    pro_responses = touch_response(pro_touches)*1000;
-    ret_responses = touch_response(ret_touches)*1000;
-    [~,p] = ttest2(pro_responses,ret_responses);
-    ret_error = std(ret_responses)./sqrt(numel(ret_touches));
-    pro_error = std(pro_responses)./ sqrt(numel(pro_touches));
-    hold on; errorbar(mean(ret_responses),mean(pro_responses),pro_error,pro_error,ret_error,ret_error,'k','CapSize',0)
-    if p < alpha_values
-        if mean(pro_responses)>mean(ret_responses)
-            hold on; scatter(mean(ret_responses),mean(pro_responses),'filled','markerfacecolor','r')
-        else
-            hold on; scatter(mean(ret_responses),mean(pro_responses),'filled','markerfacecolor','b')
-        end
-    else
-        hold on; scatter(mean(ret_responses),mean(pro_responses),'filled','markerfacecolor',[.8 .8 .8])
-    end
-    
-end
 
-hold on; plot([0 100],[0 100],'--k')
-set(gca,'xlim',[0 100],'ylim',[0 100],'ytick',0:25:100,'xtick',0:25:100)
-axis square
-xlabel('retraction responses');ylabel('protraction responses')
+alpha_value = 0.05;
+dir_mod = touch_directional_selectivity(U,touchCells,alpha_value,'off');
+mod_idx_directional = cellfun(@(x) x.mod_idx_relative,dir_mod(touchCells));
 
 % saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 % fn = 'pro_vs_ret_unity_scatter.eps';
@@ -174,134 +113,64 @@ xlabel('retraction responses');ylabel('protraction responses')
 % fix_eps_fonts([saveDir, fn])
 
 
-mod_idx_directional = cellfun(@(x) x.mod_idx_relative,dir_mod(touchCells));
-%% PLOTTING
+%% PLOTTING TUNED UNITS vs UNTUNED
+
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 tunedCells = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
 nontunedCells = setdiff(touchCells,tunedCells);
 
+tuned_touch_idx = find(ismember(touchCells,tunedCells));
+nontuned_touch_idx = find(ismember(touchCells,nontunedCells));
 
-figure(8);clf
 [~,idx] = sort(mod_idx_pole);
+tunedidx = ismember(idx,tuned_touch_idx);
+nontunedidx = ismember(idx,nontuned_touch_idx);
+
 tune_map_1 = [mod_idx_touch ; mod_idx_adaptation];
 tune_map_it = [mod_idx_pole ; mod_idx_angle ; mod_idx_phase ; mod_idx_amp ; mod_idx_midpoint];
 tune_map_dt = [mod_idx_dk ; mod_idx_dt];
-subplot(3,1,1);
-imagesc(tune_map_1(:,(idx)))
-set(gca,'ytick',1:2,'yticklabel',{'touch','adaptation'})
-caxis([0 1])
-subplot(3,1,2);
-imagesc(tune_map_it(:,(idx)))
-set(gca,'ytick',1:6,'yticklabel',{'pole','angle','phase','amp','midpoint'})
-caxis([0 1])
-subplot(3,1,3);
-imagesc(tune_map_dt(:,(idx)))
-set(gca,'ytick',1:2,'yticklabel',{'max dkappa','max dtheta'})
-caxis([0 1])
-% reverse_bone = flipud(bone(500));
-colormap(gray)
-colorbar
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-fn = 'touch_feature_map_all.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
-
-figure(9);clf
-imagesc(mod_idx_directional((idx)))
-stretch_resolution = 500 ;
-stretch_map = redbluecmap;
-new_map = nan(stretch_resolution,3);
-for j = 1:3
-    new_map(:,j) = interp1(linspace(1,stretch_resolution,length(stretch_map)),stretch_map(:,j),1:stretch_resolution);
-end
-colormap(new_map)
-caxis([-1 1])
-colorbar
-set(gca,'ytick',1:5,'yticklabel',{'direction'})
-
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-fn = 'touch_feature_map_direction.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
-
-% Feature correlation
-mod_idx_correlation = corr([tune_map_it ; tune_map_dt ; tune_map_1]');
-figure(143);clf
-imagesc(abs(mod_idx_correlation))
-colormap(gray)
-colorbar
-caxis([0 1])
-axis square
-
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-fn = 'mod_depth_correlation.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
-
-%% TUNED UNITS vs UNTUNED
-
-touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-tunedCells = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
-nontunedCells = setdiff(touchCells,tunedCells);
-
-[~,touchtuneidx] = intersect(touchCells,tunedCells);
-[~,touchnontuneidx] = intersect(touchCells,nontunedCells);
-%tuned
-[~,tune_idx] = sort(mod_idx_pole(touchtuneidx));
-tune_map_1 = [mod_idx_touch(touchtuneidx) ; mod_idx_adaptation(touchtuneidx)];
-tune_map_it = [mod_idx_pole(touchtuneidx) ; mod_idx_angle(touchtuneidx) ; mod_idx_phase(touchtuneidx) ; mod_idx_amp(touchtuneidx) ; mod_idx_midpoint(touchtuneidx)];
-tune_map_dt = [mod_idx_dk(touchtuneidx) ; mod_idx_dt(touchtuneidx)];
-tune_map_fr = firing_rate(tunedCells); 
+tune_map_fr = firing_rate(touchCells); 
 
 figure(81);clf
 subplot(4,2,1);
-imagesc(tune_map_1(:,(tune_idx)))
+imagesc(tune_map_1(:,idx(tunedidx)))
 set(gca,'ytick',1:2,'yticklabel',{'touch','adaptation'})
 title('tuned')
 caxis([0 1])
 subplot(4,2,3);
-imagesc(tune_map_it(:,(tune_idx)))
+imagesc(tune_map_it(:,idx(tunedidx)))
 set(gca,'ytick',1:6,'yticklabel',{'pole','angle','phase','amp','midpoint'})
 caxis([0 1])
 subplot(4,2,5);
-imagesc(tune_map_dt(:,(tune_idx)))
+imagesc(tune_map_dt(:,idx(tunedidx)))
 set(gca,'ytick',1:2,'yticklabel',{'max dkappa','max dtheta'})
 caxis([0 1])
 subplot(4,2,7);
-imagesc(tune_map_fr(tune_idx))
+imagesc(tune_map_fr(idx(tunedidx)))
 set(gca,'ytick',1:2,'yticklabel',{'log firing rate'})
 caxis([-2 2])
 
-%nontuned
-[~,non_tune_idx] = sort(mod_idx_pole(touchnontuneidx));
-non_tune_map_1 = [mod_idx_touch(touchnontuneidx) ; mod_idx_adaptation(touchnontuneidx)];
-non_tune_map_it = [mod_idx_pole(touchnontuneidx) ; mod_idx_angle(touchnontuneidx) ; mod_idx_phase(touchnontuneidx) ; mod_idx_amp(touchnontuneidx) ; mod_idx_midpoint(touchnontuneidx)];
-non_tune_map_dt = [mod_idx_dk(touchnontuneidx) ; mod_idx_dt(touchnontuneidx)];
-non_tune_map_fr = firing_rate(nontunedCells); 
-
-
 subplot(4,2,2);
-imagesc(non_tune_map_1(:,(non_tune_idx)))
+imagesc(tune_map_1(:,idx(nontunedidx)))
 set(gca,'ytick',1:2,'yticklabel',{'touch','adaptation'})
 title('nontuned')
 caxis([0 1])
 subplot(4,2,4);
-imagesc(non_tune_map_it(:,(non_tune_idx)))
+imagesc(tune_map_it(:,idx(nontunedidx)))
 set(gca,'ytick',1:6,'yticklabel',{'pole','angle','phase','amp','midpoint'})
 caxis([0 1])
 subplot(4,2,6);
-imagesc(non_tune_map_dt(:,(non_tune_idx)))
+imagesc(tune_map_dt(:,idx(nontunedidx)))
 set(gca,'ytick',1:2,'yticklabel',{'max dkappa','max dtheta'})
 caxis([0 1])
 subplot(4,2,8);
-imagesc(non_tune_map_fr(non_tune_idx))
+imagesc(tune_map_fr(idx(nontunedidx)))
 set(gca,'ytick',1:2,'yticklabel',{'log firing rate'})
 caxis([-2 2])
 
 colormap(gray)
 colorbar
 
-% 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'touch_feature_map_split.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
@@ -341,6 +210,11 @@ fix_eps_fonts([saveDir, fn])
 
 
 %% WHISKING FEATURE TUNING
+touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+nontouchCells = find(cellfun(@(x) ~strcmp(x.meta.touchProperties.responseType,'excited'),U));
+tunedCells = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
+nontunedCells = setdiff(touchCells,tunedCells);
+
 selectedCells = 1:length(U)
 pole_whisk = whisking_location_quantification(U,selectedCells,'pole','off');
 angle_whisk = whisking_location_quantification(U,selectedCells,'angle','off');
@@ -385,13 +259,39 @@ end
 
 % HEAT GRAY WHISK 
 [~,idx] = sort(w_mod_idx_pole);
+nontouchidx = ismember(idx,nontouchCells);
+tunedidx = ismember(idx,tunedCells);
+nontunedidx = ismember(idx,nontunedCells);
+
 tune_map = [w_mod_idx_pole ; w_mod_idx_angle ; w_mod_idx_phase ; w_mod_idx_amp ; w_mod_idx_midpoint];
+fr_map  =  firing_rate;
 figure(19);clf
-imagesc(tune_map(:,(idx)))
+subplot(2,3,1)
+imagesc(tune_map(:,idx(nontouchidx)))
 set(gca,'ytick',1:6,'yticklabel',{'pole','angle','phase','amp','midpoint'})
+caxis([0 1])
+subplot(2,3,2)
+imagesc(tune_map(:,idx(tunedidx)))
+caxis([0 1])
+subplot(2,3,3)
+imagesc(tune_map(:,idx(nontunedidx)))
 caxis([0 1])
 colormap(gray)
 colorbar
+
+subplot(2,3,4)
+imagesc(fr_map(:,idx(nontouchidx)))
+set(gca,'ytick',1,'yticklabel',{'log firing rate'})
+caxis([0 1])
+subplot(2,3,5)
+imagesc(fr_map(:,idx(tunedidx)))
+caxis([0 1])
+subplot(2,3,6)
+imagesc(fr_map(:,idx(nontunedidx)))
+caxis([-2 2])
+colormap(gray)
+colorbar
+
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'gray_whisk.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')

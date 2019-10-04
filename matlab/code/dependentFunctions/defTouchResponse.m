@@ -7,7 +7,7 @@ function [U] = defTouchResponse(U,confidenceThreshold,displayOpt)
 if (nargin < 3), displayOpt = 'on'; end
 willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
     | strcmp(displayOpt,'off'));
-
+%%
 if willdisplay
     rc = numSubplots(length(U));
     figure(3000);clf
@@ -20,12 +20,11 @@ for rec=1:length(U)
     window = [-50:50];
     touchIdx= [find(array.S_ctk(9,:,:)==1) ; find(array.S_ctk(12,:,:)==1)];
     spks = squeeze(array.R_ntk);
-    
-    within_range = ~ (logical(sum((touchIdx + window) > numel(spks),2)) | logical(sum((touchIdx + window) < 0, 2)));
-    touchIdx = touchIdx(within_range); 
-       
     blIdx = window(find(window==-50):find(window==0));
     
+    %clean touches that have windows exceeding trial periods
+    within_range = ~ (logical(sum((touchIdx + window) > numel(spks),2)) | logical(sum((touchIdx + window) < 0, 2)));
+    touchIdx = touchIdx(within_range); 
     touchSpks = spks(touchIdx+window);
     baseline_spikes = spks(1:round(mean(array.meta.poleOnset)*1000),:);
     touchSpksShuff = spks(touchIdx+blIdx);
@@ -34,17 +33,11 @@ for rec=1:length(U)
     SEM = nanstd(touchSpksShuff(:))./ sqrt(sum(~isnan(touchSpksShuff(:,1))));
     ts = tinv(confidenceThreshold,sum(~isnan(touchSpksShuff(:,1))));
     CI = SEM.*ts;
-%     SEM = nanstd(baseline_spikes(:))./ sqrt(sum(~isnan(baseline_spikes(:,1))));
-%     ts = tinv(confidenceThreshold,sum(~isnan(baseline_spikes(:,1))));
-%     CI = SEM.*ts;
     
     touchResponse = smooth(nanmean(touchSpks),5);
     excitThreshold = mean(touchSpksShuff(:)) + CI;
     inhibThreshold = mean(touchSpksShuff(:)) - CI;
-%     excitThreshold = mean(baseline_spikes(:)) + CI; %redefining baseline as pre-pole period instead of pre-touch 
-%     inhibThreshold = mean(baseline_spikes(:)) - CI;
-    
-    
+
     %Excitatory threshold defined as the period > mean+x%CI
     excitthreshIdx = touchResponse'>excitThreshold;
     excitthreshIdx(1:find(window==5))=0;
@@ -60,46 +53,40 @@ for rec=1:length(U)
     heatTouch{rec} = nanmean(touchSpks)'; 
     U{rec}.meta.touchProperties.responseType = 'untuned'; %deeming neuron as touch untuned less otherwise
     
-    post_touch_window = find(window==0) : find(window==max(window));
-    [~,response_max_index] = max(heatTouch{rec}(post_touch_window));
-    U{rec}.meta.touchProperties.peak_index = response_max_index;
-    
-    
-    %quantifying modulation index
+    %calculations for peaks and modulation index
     max_touch = max(touchResponse(find(window==0):end));
     U{rec}.meta.touchProperties.mod_idx_relative = (max_touch - mean(baseline_spikes(:))) ./ (max_touch + mean(baseline_spikes(:)));
     
     %Defining touch responses as a period between two points that are less
     %than 5ms apart.
     if sum(excitthreshIdx)>0 && sum(excitthreshIdx)>sum(inhibthreshIdx) 
-%     if sum(excitthreshIdx)>0 && min([find(excitthreshIdx) 100])<min([find(inhibthreshIdx) 100])
         tps = window(excitthreshIdx);
         if ~isempty(tps)
+            %defining touch response window 
             startPoint = tps(1);
             endPoint = tps(find(diff(diff(tps)<10)==-1,1,'first'));
             if isempty(endPoint)
                 endPoint = tps(end);
             end
             
-            %used below to eliminate touch responses that are sig but way
-            %too small.
+            %hard coded two restrictions to define touch excitation 
+            % 1) firing rate has to be above 2Hz
+            % 2) response window has to be greater than or equal to 4ms 
             if mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) > 2 && endPoint - startPoint >= 4
                 U{rec}.meta.touchProperties.responseType = 'excited';
                 U{rec}.meta.touchProperties.responseWindow=[startPoint endPoint];
-                
                 U{rec}.meta.touchProperties.SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
+                
+                %plotting
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
-%                     hold on; bar(window,touchResponse*1000,'b','facealpha',.2,'edgealpha',.2);
-                    hold on; bar(window,touchResponse*1000,'b');
+                    hold on; bar(window,touchResponse*1000,'b','facealpha',.2,'edgealpha',.2);
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
                     hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50,'xlim',[-25 50])
                     title(num2str(U{rec}.meta.touchProperties.mod_idx_relative));
                 end
-            
-                
-                
+              
             else
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
@@ -110,7 +97,7 @@ for rec=1:length(U)
             end
         end
         
-    elseif sum(excitthreshIdx)<sum(inhibthreshIdx)
+    elseif sum(excitthreshIdx)<sum(inhibthreshIdx) %deprecated code as of 190728 
         tps = window(inhibthreshIdx);
         if ~isempty(tps)
             startPoint = tps(1);
@@ -119,8 +106,9 @@ for rec=1:length(U)
                 endPoint = tps(end);
             end
             
-            %used below to eliminate touch responses that are sig but small
-            %firing rates (<2Hz) or are short (responses < 4ms)
+            %hard coded two restrictions to define touch inhibition 
+            % 1) firing rate has to be above 2Hz
+            % 2) response window has to be greater than or equal to 4ms 
             if mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) > 2 && endPoint - startPoint >= 4
                 U{rec}.meta.touchProperties.responseType = 'inhibited';
                 U{rec}.meta.touchProperties.responseWindow=[startPoint endPoint];

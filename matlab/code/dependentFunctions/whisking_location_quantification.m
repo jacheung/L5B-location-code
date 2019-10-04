@@ -28,7 +28,7 @@ smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
 
 %dependent function to id all touches and pre/post decision touches
-preDecisionTouches = preDecisionTouchMat(uberarray(selectedCells));
+% preDecisionTouches = preDecisionTouchMat(uberarray(selectedCells));
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
@@ -57,7 +57,7 @@ for rec = 1:length(selectedCells)
         conversion_feature = squeeze(array.S_ctk(6,:,:));
     elseif strcmp(hilbert_feature,'pole') %conversion of angle to pole using touch positions
         viewWindow = -25:50;
-        [tVar] = atTouch_sorter(array,viewWindow,preDecisionTouches{rec});
+        [tVar] = atTouch_sorter(array,viewWindow);
         pole_at_touch = normalize_var(tVar.allTouches.S_ctk(:,end),-1,1);
         angle_at_touch = tVar.allTouches.S_ctk(:,1);
         

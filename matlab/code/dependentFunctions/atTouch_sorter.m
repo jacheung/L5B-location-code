@@ -12,7 +12,13 @@
 
 %INPUT: vector with time points you want to view (ie [-25:50])
 
+
 function [tVar] = atTouch_sorter(array,range,preDecisionMat)
+
+if (nargin < 3) 
+    preDecisionMat = []; 
+end
+
 
 %find touch indices 
 touchOnIdx = [find(array.S_ctk(9,:,:)==1); find(array.S_ctk(12,:,:)==1)];
@@ -22,14 +28,19 @@ spikes = squeeze(array.R_ntk);
 touchOnIdx = sort(touchOnIdx(touchOnIdx<(numel(spikes)-range(end))));
 touchOffIdx = sort(touchOffIdx(1:length(touchOnIdx)));
 
-pretOnIdx = find(preDecisionMat==1);
-postOnIdx = setdiff(touchOnIdx,pretOnIdx);
-
-pretOffIdx = touchOffIdx(ismember(touchOnIdx,pretOnIdx));
-posttOffIdx =  setdiff(touchOffIdx,pretOffIdx);
-
-tOnIndices = {touchOnIdx,pretOnIdx,postOnIdx};
-tOffIndices = {touchOffIdx,pretOffIdx,posttOffIdx};
+if ~isempty(preDecisionMat)
+    pretOnIdx = find(preDecisionMat==1);
+    postOnIdx = setdiff(touchOnIdx,pretOnIdx);
+    
+    pretOffIdx = touchOffIdx(ismember(touchOnIdx,pretOnIdx));
+    posttOffIdx =  setdiff(touchOffIdx,pretOffIdx);
+    
+    tOnIndices = {touchOnIdx,pretOnIdx,postOnIdx};
+    tOffIndices = {touchOffIdx,pretOffIdx,posttOffIdx};
+else
+    tOnIndices = {touchOnIdx};
+    tOffIndices = {touchOffIdx};
+end
 
 %R_ntk spikes all around touches 
 spikesIdx = cellfun(@(x) x+repmat(range,length(x),1),tOnIndices,'uniformoutput',0);
@@ -81,19 +92,20 @@ tVar.allTouches.R_ntk = spikesAligned{1};
 tVar.allTouches.dtS_ctk = dtDesign{1};
 tVar.allTouches.dtR_ntk = dtDesign_R_ntk{1}; %these are all the spikes that occur DURING the whole touch window
 
-tVar.allTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
-tVar.preDecisionTouches.dtNames = {'touchDuration','max dK','max dTheta'};
-tVar.preDecisionTouches.S_ctk = varDesign{2};
-tVar.preDecisionTouches.R_ntk = spikesAligned{2}; 
-tVar.preDecisionTouches.dtS_ctk = dtDesign{2}; 
-tVar.preDecisionTouches.dtR_ntk = dtDesign_R_ntk{2}; 
-
-tVar.allTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
-tVar.postDecisionTouches.dtNames = {'touchDuration','max dK','max dTheta'};
-tVar.postDecisionTouches.S_ctk = varDesign{3};
-tVar.postDecisionTouches.R_ntk = spikesAligned{3}; 
-tVar.postDecisionTouches.dtS_ctk = dtDesign{3}; 
-tVar.preDecisionTouches.dtR_ntk = dtDesign_R_ntk{3}; 
-
+if ~isempty(preDecisionMat)
+    tVar.preDecisionTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
+    tVar.preDecisionTouches.dtNames = {'touchDuration','max dK','max dTheta'};
+    tVar.preDecisionTouches.S_ctk = varDesign{2};
+    tVar.preDecisionTouches.R_ntk = spikesAligned{2};
+    tVar.preDecisionTouches.dtS_ctk = dtDesign{2};
+    tVar.preDecisionTouches.dtR_ntk = dtDesign_R_ntk{2};
+    
+    tVar.postDecisionTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};
+    tVar.postDecisionTouches.dtNames = {'touchDuration','max dK','max dTheta'};
+    tVar.postDecisionTouches.S_ctk = varDesign{3};
+    tVar.postDecisionTouches.R_ntk = spikesAligned{3};
+    tVar.postDecisionTouches.dtS_ctk = dtDesign{3};
+    tVar.preDecisionTouches.dtR_ntk = dtDesign_R_ntk{3};
+end
 
 

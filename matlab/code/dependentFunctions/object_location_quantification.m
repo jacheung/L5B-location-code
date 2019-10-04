@@ -26,7 +26,7 @@ min_bins = 5; %minimum number of angle bins to consider quantifying
 gauss_filt = .5; %2D smoothing filter for heatmap
 
 %dependent function to id all touches and pre/post decision touches
-preDecisionTouches = preDecisionTouchMat(uberarray);
+% preDecisionTouches = preDecisionTouchMat(uberarray);
 
 
 %populating struct for tuning quantification
@@ -45,7 +45,8 @@ end
 for rec = 1:length(selectedCells)
     %stimulus and response variables definitions
     array = uberarray{selectedCells(rec)};
-    [tVar] = atTouch_sorter(array,viewWindow,preDecisionTouches{selectedCells(rec)});
+%     [tVar] = atTouch_sorter(array,viewWindow,preDecisionTouches{selectedCells(rec)});
+    [tVar] = atTouch_sorter(array,viewWindow);
     
     if ~isempty(hilbert_feature)
         if strcmp(hilbert_feature,'angle')
