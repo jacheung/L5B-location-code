@@ -1,4 +1,4 @@
-function poisson_sampling_justification(Uarray,tune_struct)
+function [ff_bin] = poisson_sampling_justification(Uarray,tune_struct)
 
 selectedCells = find(cellfun(@(x) x.is_tuned==1,tune_struct));
 
@@ -46,16 +46,24 @@ end
 all_bin_ff = cell2mat(cellfun(@(x) x.fano_factor,ff_bin,'uniformoutput',0)');
 all_bin_fr = cell2mat(cellfun(@(x) x.num_spks,ff_bin,'uniformoutput',0)');
 
+mean_bin_ff = cell2mat(cellfun(@(x) nanmean(x.fano_factor),ff_bin,'uniformoutput',0)');
+mean_bin_fr = cell2mat(cellfun(@(x) nanmean(x.num_spks),ff_bin,'uniformoutput',0)');
+
+mega_mean_FF = mean(mean_bin_ff);
+mega_SEM_FF = std(mean_bin_ff);
+mega_mean_FR = mean(mean_bin_fr);
+mega_SEM_FR = std(mean_bin_fr);
 
 figure(80);clf
 scatter(all_bin_fr,all_bin_ff,'k.')
-hold on; scatter(ff_group.num_spks,ff_group.fano_factor,'filled','b')%FF not accounting for pole position
-hold on; scatter(ff_group.num_spks,ff_group.fano_factor,'filled','r')%
+hold on; scatter(mean_bin_fr,mean_bin_ff,'filled','r')%
+hold on; errorbar(mega_mean_FR,mega_mean_FF,mega_SEM_FF,mega_SEM_FF,mega_SEM_FR,mega_SEM_FR,'ko','capsize',0)
+% hold on; scatter(ff_group.num_spks,ff_group.fano_factor,'filled','b')%FF not accounting for pole position
 set(gca,'ylim',[0 3],'ytick',0:.5:3,'xlim',[0 4],'xtick',0:.5:4)
 xlabel('Mean spike count');ylabel('Fano factor')
 axis square
-legend('FF, location binned response','FF, all response')
-
+legend('FF, location binned response','FF, all "location regressed" response')
+% legend('FF, location binned response','FF, all "location regressed" response','FF, all response')
 % 
 % figure(48);clf
 % scatter(pcheck(:,1),pcheck(:,2),'k')

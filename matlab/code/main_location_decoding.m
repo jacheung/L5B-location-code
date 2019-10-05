@@ -10,7 +10,20 @@ selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'ex
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 
 %% Justification for decoder - fano factor check
-poisson_sampling_justification(U,pole_tuned); %only plots for location tuned units
+tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1); 
+[ff_bin] = poisson_sampling_justification(U,pole_tuned); %only plots for location tuned units
+
+mod_idx_relative = cellfun(@(x) x.calculations.mod_idx_relative,pole_tuned(tuned_cells));
+regressed_ff = cellfun(@(x) nanmean(x.fano_factor),ff_bin); 
+
+figure(8);clf
+% scatter(mod_idx_relative,regressed_ff,'k')
+% axis square
+% xlabel('location mod. depth');ylabel('"regressed" FF')
+lm = fitlm(mod_idx_relative,regressed_ff);
+lm.plot
+axis square
+xlabel('location mod. depth');ylabel('"regressed" FF')
 
 %% population at touch pole decoding
 % GLM model parameters
@@ -18,7 +31,7 @@ glmnetOpt = glmnetSet;
 glmnetOpt.standardize = 0; %set to 0 b/c already standardized
 glmnetOpt.alpha = 0.95;
 glmnetOpt.xfoldCV = 3;
-glmnetOpt.numIterations = 20;
+glmnetOpt.numIterations = 10;
 glmnetOpt.pctSamplingThreshold = .80; %what percent of total pole positions must be sampled before using that unit
 glmnetOpt.interpResolution = 40; %10mm / numBins (e.g. 40 = .25mm resolution)
 glmnetOpt.samplingOption = 'poisson';
@@ -49,7 +62,7 @@ suptitle([ 'Per touch location decoding using ' num2str(size(DmatXraw,2)) ' tune
 %mdl needs to have distance_from_true = cellfun(@(x,y) abs(x-y),mdl.io.trueY,mdl.io.predY,'uniformoutput',0);
 %mdl needs to have confusion matrix  mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix);
 numNeurons = [1 5 10 20 30 numel(usedUnits)];
-numIterations = 50;
+numIterations = 20;
 
 mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
 reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
@@ -62,7 +75,8 @@ neurometric_curve = cell(1,length(numNeurons));
 resamp_mdl = [];
 for g = 1:length(numNeurons)
     for d = 1:numIterations
-        neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g),'Replace',false);
+%         neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g),'Replace',false);
+        neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g));
         
         coeffs_to_use = reshaped_coeffs([1 neuron_to_use+1],:);
         dmatX = [ones(length(mdlResults.io.Y.normal),1) mdlResults.io.Xnorm(:,neuron_to_use)];
@@ -109,15 +123,21 @@ for g = 1:length(numNeurons)
 %     writeVideo(v,frame);
 end
 
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-    fn = 'decoding_heat.eps';
-    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-    fix_eps_fonts([saveDir, fn])
+%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+%     fn = 'decoding_heat.eps';
+%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+%     fix_eps_fonts([saveDir, fn])
 % close(v)
+figure(80);clf
+subplot(1,3,1);
+ imagesc(gofmetrics{g}.cmat)
+ caxis([0 .4])
+axis square
+
 
 boneMap = flipud(jet(length(numNeurons)));
-figure(80);clf
-subplot(1,2,1)
+
+subplot(1,3,2)
 for d = 1:length(numNeurons)
     hold on;
     %     shadedErrorBar(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),gofmetrics{d}.resolution(:,3),'linecolor','b');
@@ -135,7 +155,7 @@ neuro_sem = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),neurometric_curve,'unif
 neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
 
 
-subplot(1,2,2)
+subplot(1,3,3)
 for d = 1:length(numNeurons)
 %     subplot(rc(1),rc(2),d)
     hold on;
@@ -151,11 +171,11 @@ ylabel('lick probability')
 xlabel('normalized pole location')
 axis square
 suptitle('number of neurons affecting prediction of:')
-
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-    fn = 'resolution_neurometric.eps';
-    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-    fix_eps_fonts([saveDir, fn])
+% 
+%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+%     fn = 'resolution_neurometric.eps';
+%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+%     fix_eps_fonts([saveDir, fn])
 
 
 
