@@ -10,11 +10,11 @@ selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'ex
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 
 %% Justification for decoder - fano factor check
-tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1); 
+tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1);
 [ff_bin] = poisson_sampling_justification(U,pole_tuned); %only plots for location tuned units
 
 mod_idx_relative = cellfun(@(x) x.calculations.mod_idx_relative,pole_tuned(tuned_cells));
-regressed_ff = cellfun(@(x) nanmean(x.fano_factor),ff_bin); 
+regressed_ff = cellfun(@(x) nanmean(x.fano_factor),ff_bin);
 
 figure(8);clf
 % scatter(mod_idx_relative,regressed_ff,'k')
@@ -62,20 +62,22 @@ suptitle([ 'Per touch location decoding using ' num2str(size(DmatXraw,2)) ' tune
 %mdl needs to have distance_from_true = cellfun(@(x,y) abs(x-y),mdl.io.trueY,mdl.io.predY,'uniformoutput',0);
 %mdl needs to have confusion matrix  mdl.gof.confusionMatrix ./ sum(mdl.gof.confusionMatrix);
 numNeurons = [1 5 10 20 30 numel(usedUnits)];
-numIterations = 20;
+numIterations = 50;
 
 mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
 reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
- 
+
 nframe = numNeurons;
 neurometric_curve = cell(1,length(numNeurons));
 % v = VideoWriter('resolution_heatmap.avi');
-% v.FrameRate = 1; 
+% v.FrameRate = 1;
 % open(v)
 resamp_mdl = [];
 for g = 1:length(numNeurons)
+%     pred = cell(1,numIterations);
+%     true = cell(1,numIterations);
     for d = 1:numIterations
-%         neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g),'Replace',false);
+%                 neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g),'Replace',false);
         neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g));
         
         coeffs_to_use = reshaped_coeffs([1 neuron_to_use+1],:);
@@ -100,7 +102,7 @@ for g = 1:length(numNeurons)
     %how do we do this? create first a confusion matrix
     %
     % pred(Go)    pred(nogo)
-    % aka lick    aka no lick  
+    % aka lick    aka no lick
     %%%%%%%%%%%%%%%%%%%%%%%%
     %           |           |
     %    HIT    |    MISS   |  true(Go)
@@ -115,12 +117,12 @@ for g = 1:length(numNeurons)
         raw_mat = confusionmat(true{b},pred{b});
         prob_mat = raw_mat./ sum(raw_mat,2);
         mat_shape = size(prob_mat,1);
-        lix_pred = prob_mat(:,1:(mat_shape/2)); 
+        lix_pred = prob_mat(:,1:(mat_shape/2));
         neurometric_curve{g}(b,:) = sum(lix_pred,2);
     end
     
-%     frame=getframe(gcf);
-%     writeVideo(v,frame);
+    %     frame=getframe(gcf);
+    %     writeVideo(v,frame);
 end
 
 %     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
@@ -128,20 +130,35 @@ end
 %     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 %     fix_eps_fonts([saveDir, fn])
 % close(v)
+figure(79);clf
+for i = 1:6
+    subplot(2,3,i)
+    imagesc(gofmetrics{i}.cmat)
+    caxis([0 .5])
+    title(num2str(numNeurons(i)));
+    set(gca,'xtick',[],'ytick',[]);
+    axis square
+end
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+fn = 'decoding_heat_replace.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn]);
+
+%%
+
 figure(80);clf
 subplot(1,3,1);
- imagesc(gofmetrics{g}.cmat)
- caxis([0 .4])
+imagesc(gofmetrics{g}.cmat)
+caxis([0 .5])
+set(gca,'xtick',[],'ytick',[]);
 axis square
 
-
-boneMap = flipud(jet(length(numNeurons)));
-
+my_Map = flipud(jet(length(numNeurons)));
 subplot(1,3,2)
 for d = 1:length(numNeurons)
     hold on;
     %     shadedErrorBar(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),gofmetrics{d}.resolution(:,3),'linecolor','b');
-    plot(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),'color',boneMap(d,:));
+    plot(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),'color',my_Map(d,:));
 end
 set(gca,'ylim',[0 1],'xlim',[0 8],'xtick',0:2:10,'xticklabel',0:.5:5,'ytick',0:.25:1) %hard coded xticklabels for single touch prediction of pole position using population of OL tuned cells
 xlabel('mm w/in prediction');ylabel('p (prediction)')
@@ -149,7 +166,7 @@ axis square
 title('resolution')
 legend([num2str(numNeurons')])
 
-%plot neurometric curve 
+%plot neurometric curve
 neuro_mean = cellfun(@nanmean ,neurometric_curve,'uniformoutput',0);
 neuro_sem = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),neurometric_curve,'uniformoutput',0);
 neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
@@ -157,13 +174,13 @@ neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
 
 subplot(1,3,3)
 for d = 1:length(numNeurons)
-%     subplot(rc(1),rc(2),d)
+    %     subplot(rc(1),rc(2),d)
     hold on;
     h=shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},neuro_sem{d});
-    h.patch.FaceColor = boneMap(d,:);
-%     h.patch.FaceAlpha = .5;
+    h.patch.FaceColor = my_Map(d,:);
+    %     h.patch.FaceAlpha = .5;
     h.mainLine.Color = [0 0 0];
-%     plot(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},'color',boneMap(d,:));
+    %     plot(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},'color',boneMap(d,:));
     set(gca,'xlim',[-1 1],'xtick',-1:1:1,'ylim',[0 1],'ytick',0:.25:1)
 end
 title('neurometric curve')
@@ -171,11 +188,11 @@ ylabel('lick probability')
 xlabel('normalized pole location')
 axis square
 suptitle('number of neurons affecting prediction of:')
-% 
-%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-%     fn = 'resolution_neurometric.eps';
-%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-%     fix_eps_fonts([saveDir, fn])
+
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+    fn = 'resolution_neurometric_replace.eps';
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
 
 
 
