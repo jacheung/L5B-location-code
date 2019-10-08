@@ -94,6 +94,7 @@ mod_idx_dt = cellfun(@(x) x.calculations.mod_idx_relative,dtheta_tuned(touchCell
 
 %% ADAPTATION
 [adaptation] = adaptation_quantification(U,touchCells,'off');
+[adaptation] = adaptation_quantification(U,tunedCells,'off');
 mod_idx_adaptation = cellfun(@(x) x.calculations.mod_idx_relative,adaptation(touchCells));
 
 % saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';

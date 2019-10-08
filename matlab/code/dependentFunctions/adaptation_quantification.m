@@ -80,11 +80,12 @@ for rec = 1:length(selectedCells)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% REMOVE THIS BEORE RUNNING. BUILT FOR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TESTING
     %     rec=datasample(1:length(selectedCells),1);
-    
+%     rec = 7
+   
     array = U{(selectedCells(rec))};
     smooth_param = 5;
     alpha_value = 0.05;
-    num_touches_per_bin = 150;
+    num_touches_per_bin = 75;
     
     spks = squeeze(array.R_ntk(:,:,:));
     response_window = array.meta.touchProperties.responseWindow(1):array.meta.touchProperties.responseWindow(2);
@@ -111,44 +112,44 @@ for rec = 1:length(selectedCells)
         mean_responses = cellfun(@(x) mean(sum(x,2)./numel(response_window)),sorted_calc);
         sem_responses = cellfun(@(x) std(sum(x,2)./numel(response_window)) ./ sqrt(size(x,1)),sorted_calc);
         
-                
+        
         [g_x,unique_idx] = unique(medianx);
         g_y = smooth(mean_responses(unique_idx),smooth_param);
         if numel(g_x>2)
-            g_vy{rec} = interp1(g_x,g_y,0:25:1000);
+            g_vy{rec} = interp1(g_x,g_y,50:25:4000);
         end
         
         
-    
-%         figure(8);clf
-%         plot_elements = numBins-1;
-%         for g = 1:plot_elements
-%             subplot(3,plot_elements+1,g+1)
-%             shadedErrorBar(-25:50,smooth(y{g},smooth_param),smooth(err{g},smooth_param))
-%             title([num2str(minx(g)) '-' num2str(maxx(g))])
-%             set(gca,'ylim',[0 max(cell2mat(y),[],'all')])
-%             
-%             if g == 1
-%                 subplot(3,plot_elements+1,1)
-%                 shadedErrorBar(-25:50,smooth(y{end},smooth_param),smooth(err{end},smooth_param))
-%                 title('"first touch"')
-%                 set(gca,'ylim',[0 max(cell2mat(y),[],'all')])
-%             end
-%             
-%         end
-%         
-%         subplot(3,plot_elements+1,[(plot_elements+2) : (2*(plot_elements+1))])
-%         errorbar(medianx,smooth(mean_responses,smooth_param),smooth(sem_responses,smooth_param),'vertical','ko-')
-%         set(gca,'xlim',[0 max(medianx)])
-%         xlabel('ITI')
-%         ylabel('response window fr')
-%         suptitle(['cell num = ' num2str(selectedCells(rec))])
-%         
-%         subplot(3,plot_elements+1,[(plot_elements+plot_elements+3) : (3*(plot_elements+1))])
-%         f = fit(ITI,sum(calc_touch_response,2),'smoothingspline','SmoothingParam',.000001);
-%         hold on; plot(f,ITI,sum(calc_touch_response,2))
-%         set(gca,'xlim',[0 max(medianx)])
-        
+        if willdisplay
+            figure(8);clf
+            plot_elements = numBins-1;
+            for g = 1:plot_elements
+                subplot(3,plot_elements+1,g+1)
+                shadedErrorBar(-25:50,smooth(y{g},smooth_param),smooth(err{g},smooth_param))
+                title([num2str(minx(g)) '-' num2str(maxx(g))])
+                set(gca,'ylim',[0 max(cell2mat(y),[],'all')],'xlim',[min(response_window) max(response_window)])
+                
+                if g == 1
+                    subplot(3,plot_elements+1,1)
+                    shadedErrorBar(-25:50,smooth(y{end},smooth_param),smooth(err{end},smooth_param))
+                    title('"first touch"')
+                    set(gca,'ylim',[0 max(cell2mat(y),[],'all')],'xlim',[min(response_window) max(response_window)])
+                end
+                
+            end
+            
+            subplot(3,plot_elements+1,[(plot_elements+2) : (2*(plot_elements+1))])
+            errorbar(medianx,smooth(mean_responses,smooth_param),smooth(sem_responses,smooth_param),'vertical','ko-')
+            set(gca,'xlim',[0 max(medianx)])
+            xlabel('ITI')
+            ylabel('response window fr')
+            suptitle(['cell num = ' num2str(selectedCells(rec))])
+            
+            subplot(3,plot_elements+1,[(plot_elements+plot_elements+3) : (3*(plot_elements+1))])
+            f = fit(ITI,sum(calc_touch_response,2),'smoothingspline','SmoothingParam',.000001);
+            hold on; plot(f,ITI,sum(calc_touch_response,2))
+            set(gca,'xlim',[0 max(medianx)])
+        end
 
     end
     
@@ -229,15 +230,26 @@ if willdisplay
     
     
     ITI_mat = normalize_var(cell2mat(g_vy')',0,1);
-    ITI_mat(ITI_mat>.95) = 1
-    
+
     [~,maxidx] = max(ITI_mat,[],1);
     [~,idx] = sort(maxidx);
     
     figure(8324);clf
-    imagesc(ITI_mat(:,idx))
-    set(gca,'ytick',0:4:41,'yticklabel',0:100:1000,'ylim',[1 20])
-
+    imagesc(ITI_mat(:,idx)')
+    set(gca,'xtick',1:4:41,'xticklabel',50:100:1000,'xlim',[1 40])
+    xlabel('touch ITI')
+    ylabel('neurons sorted by time to peak response') 
+    caxis([0 1])
+    colorbar
     
+    
+    figure(8880);clf
+    hold on; plot(ITI_mat,'color',[.9 .9 .9])
+    errorbar(1:size(ITI_mat,1),nanmean(ITI_mat,2),nanstd(ITI_mat,[],2) ./ sqrt(sum(~isnan(ITI_mat),2)),'k')
+    hold on; errorbar(1:size(ITI_mat,1),nanmean(ITI_mat(:,idx(1:17)),2),nanstd(ITI_mat(:,idx(1:17)),[],2) ./ sqrt(sum(~isnan(ITI_mat(:,idx(1:17))),2)),'r')
+        hold on; errorbar(1:size(ITI_mat,1),nanmean(ITI_mat(:,idx(18:end)),2),nanstd(ITI_mat(:,idx(18:end)),[],2) ./ sqrt(sum(~isnan(ITI_mat(:,idx(18:end))),2)),'b')
+    set(gca,'xtick',1:4:size(ITI_mat,1),'xticklabel',50:100:1000,'xlim',[1 40])
+    xlabel('touch ITI')
+    ylabel('normalized touch response') 
     
 end
