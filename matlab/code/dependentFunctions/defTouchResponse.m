@@ -34,7 +34,8 @@ for rec=1:length(U)
     ts = tinv(confidenceThreshold,sum(~isnan(touchSpksShuff(:,1))));
     CI = SEM.*ts;
     
-    touchResponse = smooth(nanmean(touchSpks),5);
+%     touchResponse = smooth(nanmean(touchSpks),5);
+    touchResponse = nanmean(touchSpks);
     excitThreshold = mean(touchSpksShuff(:)) + CI;
     inhibThreshold = mean(touchSpksShuff(:)) - CI;
 

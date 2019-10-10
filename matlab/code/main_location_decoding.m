@@ -82,8 +82,8 @@ for g = 1:length(numNeurons)
 %     pred = cell(1,numIterations);
 %     true = cell(1,numIterations);
     for d = 1:numIterations
-          neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g),'Replace',false);
-%         neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g));
+%           neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g),'Replace',false);
+        neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g));
         
         coeffs_to_use = reshaped_coeffs([1 neuron_to_use+1],:);
         dmatX = [ones(length(mdlResults.io.Y.normal),1) mdlResults.io.Xnorm(:,neuron_to_use)];

@@ -80,7 +80,7 @@ for rec = 1:length(selectedCells)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% REMOVE THIS BEORE RUNNING. BUILT FOR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TESTING
     %     rec=datasample(1:length(selectedCells),1);
-%     rec = 7
+    rec = 7
    
     array = U{(selectedCells(rec))};
     smooth_param = 5;
@@ -120,7 +120,7 @@ for rec = 1:length(selectedCells)
         end
         
         
-        if willdisplay
+        
             figure(8);clf
             plot_elements = numBins-1;
             for g = 1:plot_elements
@@ -140,7 +140,7 @@ for rec = 1:length(selectedCells)
             
             subplot(3,plot_elements+1,[(plot_elements+2) : (2*(plot_elements+1))])
             errorbar(medianx,smooth(mean_responses,smooth_param),smooth(sem_responses,smooth_param),'vertical','ko-')
-            set(gca,'xlim',[0 max(medianx)])
+            set(gca,'xlim',[0 max(medianx)],'xscale','log')
             xlabel('ITI')
             ylabel('response window fr')
             suptitle(['cell num = ' num2str(selectedCells(rec))])
@@ -148,8 +148,8 @@ for rec = 1:length(selectedCells)
             subplot(3,plot_elements+1,[(plot_elements+plot_elements+3) : (3*(plot_elements+1))])
             f = fit(ITI,sum(calc_touch_response,2),'smoothingspline','SmoothingParam',.000001);
             hold on; plot(f,ITI,sum(calc_touch_response,2))
-            set(gca,'xlim',[0 max(medianx)])
-        end
+            set(gca,'xlim',[0 max(medianx)],'xscale','log')
+      
 
     end
     
@@ -244,11 +244,14 @@ if willdisplay
     
     
     figure(8880);clf
-    hold on; plot(ITI_mat,'color',[.9 .9 .9])
-    errorbar(1:size(ITI_mat,1),nanmean(ITI_mat,2),nanstd(ITI_mat,[],2) ./ sqrt(sum(~isnan(ITI_mat),2)),'k')
-    hold on; errorbar(1:size(ITI_mat,1),nanmean(ITI_mat(:,idx(1:17)),2),nanstd(ITI_mat(:,idx(1:17)),[],2) ./ sqrt(sum(~isnan(ITI_mat(:,idx(1:17))),2)),'r')
-        hold on; errorbar(1:size(ITI_mat,1),nanmean(ITI_mat(:,idx(18:end)),2),nanstd(ITI_mat(:,idx(18:end)),[],2) ./ sqrt(sum(~isnan(ITI_mat(:,idx(18:end))),2)),'b')
-    set(gca,'xtick',1:4:size(ITI_mat,1),'xticklabel',50:100:1000,'xlim',[1 40])
+    x = repmat((50:25:4000)',1,size(ITI_mat,2))';
+    y = ITI_mat';
+     hold on; plot(x' ,y','color',[.9 .9 .9])
+    shadedErrorBar(50:25:4000,nanmean(ITI_mat,2),nanstd(ITI_mat,[],2) ./ sqrt(sum(~isnan(ITI_mat),2)),'k')
+    hold on; shadedErrorBar(50:25:4000,nanmean(ITI_mat(:,idx(1:16)),2),nanstd(ITI_mat(:,idx(1:16)),[],2) ./ sqrt(sum(~isnan(ITI_mat(:,idx(1:16))),2)),'r')
+        hold on; shadedErrorBar(50:25:4000,nanmean(ITI_mat(:,idx(17:end)),2),nanstd(ITI_mat(:,idx(17:end)),[],2) ./ sqrt(sum(~isnan(ITI_mat(:,idx(17:end))),2)),'b')
+        set(gca,'xscale','log')
+%     set(gca,'xtick',1:4:size(ITI_mat,1),'xticklabel',50:100:1000,'xlim',[1 40])
     xlabel('touch ITI')
     ylabel('normalized touch response') 
     
