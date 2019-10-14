@@ -10,7 +10,7 @@ selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'ex
 
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 
-tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1)
+tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1);
 untuned_cells = intersect(find(~(cellfun(@(x) x.is_tuned,pole_tuned)==1)),selectedCells);
 builtUnits = find(cellfun(@(x) isfield(x,'stim_response'),pole_tuned));
 sampledSpace = cellfun(@(x) range(x.stim_response.values(:,1)),pole_tuned(builtUnits)) ./ 2;
@@ -19,6 +19,12 @@ units_2_use = builtUnits(sampledSpace > .8);
 %% Justification for decoder - fano factor check
 tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1);
 [ff_bin] = poisson_sampling_justification(U,pole_tuned); %only plots for location tuned units
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+fn = 'poisson_fano_factor.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn]);
+
 
 mod_idx_relative = cellfun(@(x) x.calculations.mod_idx_relative,pole_tuned(tuned_cells));
 regressed_ff = cellfun(@(x) nanmean(x.fano_factor),ff_bin);

@@ -5,12 +5,11 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 
 %% STIMULUS CORRELATION
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-preDecisionTouches = preDecisionTouchMat(U);
 corr_mat = zeros(7, 7);
 for rec = 1:length(touchCells)
     %stimulus and response variables definitions
     array = U{touchCells(rec)};
-    [tVar] = atTouch_sorter(array,-25:50,preDecisionTouches{touchCells(rec)});
+    [tVar] = atTouch_sorter(array,-25:50);
     it_features = tVar.allTouches.S_ctk(:,[7 1 5 3 4]);
     dt_features = tVar.allTouches.dtS_ctk(:,2:3);
     all_features = [it_features dt_features];
