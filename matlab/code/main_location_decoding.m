@@ -20,23 +20,31 @@ units_2_use = builtUnits(sampledSpace > .8);
 tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1);
 [ff_bin] = poisson_sampling_justification(U,pole_tuned); %only plots for location tuned units
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
-fn = 'poisson_fano_factor.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn]);
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+% fn = 'poisson_fano_factor.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn]);
 
 
 mod_idx_relative = cellfun(@(x) x.calculations.mod_idx_relative,pole_tuned(tuned_cells));
 regressed_ff = cellfun(@(x) nanmean(x.fano_factor),ff_bin);
 
 figure(8);clf
-% scatter(mod_idx_relative,regressed_ff,'k')
-% axis square
-% xlabel('location mod. depth');ylabel('"regressed" FF')
-lm = fitlm(mod_idx_relative,regressed_ff);
-lm.plot
+scatter(mod_idx_relative,regressed_ff,'filled','k')
 axis square
 xlabel('location mod. depth');ylabel('"regressed" FF')
+lm = fitlm(mod_idx_relative,regressed_ff);
+x = (0:.1:1)';
+y = lm.predict(x);
+hold on; plot(x,y,'r')
+title(num2str(lm.Rsquared.ordinary));
+axis square
+xlabel('location mod. depth');ylabel('"regressed" FF')
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+fn = 'poisson_fano_factor_x_mod_depth.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn]);
 
 %% population at touch pole decoding
 % GLM model parameters
