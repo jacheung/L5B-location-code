@@ -1,7 +1,9 @@
-%% TOUCH FEATURE TUNING
+%% GLOBALS 
 clear
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 
 %% STIMULUS CORRELATION
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
@@ -25,7 +27,7 @@ axis square
 colormap gray
 caxis([0 1])
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+
 fn = 'stimulus_correlation.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
@@ -92,7 +94,6 @@ mod_idx_dt = cellfun(@(x) x.calculations.mod_idx_relative,dtheta_tuned(touchCell
 
 
 %% ADAPTATION
-[adaptation] = adaptation_quantification(U,touchCells,'off');
 [adaptation] = adaptation_quantification(U,tunedCells,'off');
 mod_idx_adaptation = cellfun(@(x) x.calculations.mod_idx_relative,adaptation(touchCells));
 
@@ -210,6 +211,40 @@ fix_eps_fonts([saveDir, fn])
 
 
 %% WHISKING FEATURE TUNING
+
+%whisk x quiet
+masks = cellfun(@(x) maskBuilder(x),U,'uniformoutput',0);
+whisking_spks_mat = cellfun(@(x,y) squeeze(x.R_ntk).*y.whisking .*y.touch,U,masks,'uniformoutput',0);
+quiet_spks_mat = cellfun(@(x,y) squeeze(x.R_ntk).*y.quiet .*y.touch,U,masks,'uniformoutput',0);
+whisking_tp = cellfun(@(x,y) nansum(nansum(y.whisking .*y.touch)),U,masks);
+quiet_tp = cellfun(@(x,y) nansum(nansum(y.quiet .*y.touch)),U,masks);
+
+[~,p] = cellfun(@(x,y) ttest2(x(:),y(:)),whisking_spks_mat,quiet_spks_mat);
+fr_whisk = (cellfun(@(x) nansum(x(:)),whisking_spks_mat)./whisking_tp)*1000;
+fr_quiet = (cellfun(@(x) nansum(x(:)),quiet_spks_mat)./quiet_tp)*1000;
+
+red_dots = intersect(find(p<.05),find(fr_whisk>fr_quiet));
+blue_dots = intersect(find(p<.05),find(fr_whisk<fr_quiet));
+gray_dots = setdiff(1:numel(masks),[red_dots blue_dots]);
+
+figure(480);clf
+scatter(fr_quiet(red_dots),fr_whisk(red_dots),'filled','r')
+hold on; scatter(fr_quiet(blue_dots),fr_whisk(blue_dots),'filled','b')
+hold on; scatter(fr_quiet(gray_dots),fr_whisk(gray_dots),'filled','markerfacecolor',[.8 .8 .8])
+axis square
+hold on; plot([0 max([fr_quiet fr_whisk])],[0 max([fr_quiet fr_whisk])],'--k')
+set(gca,'xlim',[0 max([fr_quiet fr_whisk])],'ylim',[0 max([fr_quiet fr_whisk])])
+xlabel('quiet FR');ylabel('whisking FR')
+title(['red=' num2str(numel(red_dots)) ' blue=' num2str(numel(blue_dots)) ' gray=' num2str(numel(gray_dots))])
+
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+fn = 'whisk_quiet_unity.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+
+%%
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 nontouchCells = find(cellfun(@(x) ~strcmp(x.meta.touchProperties.responseType,'excited'),U));
 tunedCells = find(cellfun(@(x) x.is_tuned==1,pole_tuned));

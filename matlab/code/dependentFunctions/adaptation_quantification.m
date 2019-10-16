@@ -80,11 +80,9 @@ for rec = 1:length(selectedCells)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% REMOVE THIS BEORE RUNNING. BUILT FOR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TESTING
     %     rec=datasample(1:length(selectedCells),1);
-    rec = 7
-   
+
     array = U{(selectedCells(rec))};
     smooth_param = 5;
-    alpha_value = 0.05;
     num_touches_per_bin = 75;
     
     spks = squeeze(array.R_ntk(:,:,:));

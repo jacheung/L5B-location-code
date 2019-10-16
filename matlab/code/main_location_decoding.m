@@ -80,7 +80,7 @@ usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
 suptitle([ 'Per touch location decoding using ' num2str(size(DmatXraw,2)) ' tuned units'])
 
 %% number of neurons for resolution
-numNeurons = [1 5 10 20 30 numel(usedUnits)];
+numNeurons = [1 3 7 15 30 numel(usedUnits)];
 numIterations = 50;
 
 mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
@@ -149,26 +149,21 @@ end
 %     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 %     fix_eps_fonts([saveDir, fn])
 % close(v)
-figure(79);clf
-for i = 1:6
-    subplot(2,3,i)
-    imagesc(gofmetrics{i}.cmat)
-    caxis([0 .5])
-    title(num2str(numNeurons(i)));
-    set(gca,'xtick',[],'ytick',[]);
-    axis square
-end
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-fn = 'decoding_heat_replace.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn]);
+
+publication_data_location = 'C:\Users\jacheung\Dropbox\LocalizationBehavior\DataStructs\publication';
+dataStructLocation = publication_data_location;
+load([dataStructLocation filesep 'behavioral_structure.mat'])
+psycho = rawPsychometricCurves(BV);
+interp_psycho = cellfun(@(x) interp1(linspace(1,40,10),x(:,3),1:40),psycho,'uniformoutput',0);
+real_psycho_mean = fliplr(mean(cell2mat(interp_psycho'))); 
+real_psycho_sem = fliplr(std(cell2mat(interp_psycho')) ./ sqrt(numel(BV))); 
+
 
 %%
-
 figure(80);clf
 subplot(1,3,1);
 imagesc(gofmetrics{g}.cmat)
-caxis([0 .5])
+caxis([0 .4])
 set(gca,'xtick',[],'ytick',[]);
 axis square
 
@@ -189,9 +184,12 @@ legend([num2str(numNeurons')])
 neuro_mean = cellfun(@nanmean ,neurometric_curve,'uniformoutput',0);
 neuro_sem = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),neurometric_curve,'uniformoutput',0);
 neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
-
+MAE = cellfun(@(x) mean(abs(x-fliplr(pop_real_psycho))),neuro_mean);
+[minMAE,minidx] = min(MAE);
 
 subplot(1,3,3)
+numNeurons_toPlot = [1 3 7 15 30 34]; 
+
 for d = 1:length(numNeurons)
     %     subplot(rc(1),rc(2),d)
     hold on;
@@ -202,13 +200,15 @@ for d = 1:length(numNeurons)
     %     plot(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},'color',boneMap(d,:));
     set(gca,'xlim',[-1 1],'xtick',-1:1:1,'ylim',[0 1],'ytick',0:.25:1)
 end
-title('neurometric curve')
+
+hold on; shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),real_psycho_mean,real_psycho_sem,'k')
+title(['neurometric curve (opt = ' num2str(numNeurons(minidx)) ')'])
 ylabel('lick probability')
 xlabel('normalized pole location')
 axis square
 suptitle('number of neurons affecting prediction of:')
 
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
     fn = 'resolution_neurometric_replace.eps';
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
