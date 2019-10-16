@@ -17,9 +17,7 @@ if (nargin < 4), displayOpt = 'on'; end
 willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
     | strcmp(displayOpt,'off'));
 
-if willdisplay
-    rc = numSubplots(numel(selectedCells));
-end
+rc = numSubplots(numel(selectedCells));
 
 %function parameters
 numWhiskSamplesPerBin = 3000; %number of whisks to assign in each bin for quantification.
@@ -38,7 +36,7 @@ for i = 1:length(uberarray)
 end
 
 all_masks = cellfun(@maskBuilder,uberarray(selectedCells)); %build masks
-
+%%
 for rec = 1:length(selectedCells)
     array = uberarray{selectedCells(rec)};
     curr_mask = all_masks(rec);
@@ -72,19 +70,19 @@ for rec = 1:length(selectedCells)
         conversion_feature = polyval(p,angle);
         
         % plotting conversion of whisker angle to pole
-%         figure(48);clf
-%         scatter(cleaned(:,2)*-1,cleaned(:,1),'.k')
-%         y = min(angle(:)):1:max(angle(:));
-%         hold on; plot(polyval(p,min(angle(:)):1:max(angle(:)))*-1,y,'r');
-%         set(gca,'xlim',[-2 4],'ytick',-20:20:80)
-%         axis square
-%         title(['cell num ' num2str(selectedCells(rec))])
-%         saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-%         fn = ['angle2pole_' num2str(selectedCells(rec)) '.eps'];
-%         export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-%         fix_eps_fonts([saveDir, fn])
+        %         figure(48);clf
+        %         scatter(cleaned(:,2)*-1,cleaned(:,1),'.k')
+        %         y = min(angle(:)):1:max(angle(:));
+        %         hold on; plot(polyval(p,min(angle(:)):1:max(angle(:)))*-1,y,'r');
+        %         set(gca,'xlim',[-2 4],'ytick',-20:20:80)
+        %         axis square
+        %         title(['cell num ' num2str(selectedCells(rec))])
+        %         saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+        %         fn = ['angle2pole_' num2str(selectedCells(rec)) '.eps'];
+        %         export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+        %         fix_eps_fonts([saveDir, fn])
         
-
+        
         
     end
     
@@ -94,39 +92,72 @@ for rec = 1:length(selectedCells)
     numBins = round(sum(~isnan(current_feature(:)))./numWhiskSamplesPerBin);
     
     %% Tuning in touch response window
-%     if strcmp(hilbert_feature,'phase')
-%         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalE',13,-pi,pi);
-%     else
-        [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',numBins);
-%     end
+    %     if strcmp(hilbert_feature,'phase')
+    %         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalE',13,-pi,pi);
+    %     else
+    [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',numBins);
+    %     end
     
     [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
-    
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
-    % ONLY FOR MOD IDX CALCULATIONS
-    smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
+    
+    %BARSP FOR MOD IDX CALCULATIONS
+    x = cellfun(@median,sortedBy);
+    y = cellfun(@mean, sorted);
+    
+    if strcmp(hilbert_feature,'phase')
+        xq = min(cellfun(@median,sortedBy)):.1:max(cellfun(@median,sortedBy));
+    else
+        xq = min(cellfun(@median,sortedBy)):1:max(cellfun(@median,sortedBy));
+    end
+    yq = interp1(x,y,xq);
+    
+    barsFit = [];
+    try
+        barsFit = barsP(yq,[min(xq) max(xq)],numWhiskSamplesPerBin);
+    catch
+        disp(['skipping ' num2str(rec) ' due to ill fitting of bars'])
+    end
+    
+    if ~isempty(barsFit)
+        figure(9);subplot(rc(1),rc(2),rec)
+        bar(x,y,'k','facecolor',[.8 .8 .8])
+        hold on; plot(xq,barsFit.mean)
+        hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param));
+%         legend('raw','bars','smooth raw')
+        
+        smooth_response = barsFit.mean;
+        smooth_stimulus = xq;
+
+        [maxResponse,maxidx] = max(smooth_response);
+        [minResponse,minidx] = min(smooth_response);
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
+        tuneStruct{selectedCells(rec)}.calculations.tune_peak = smooth_stimulus(maxidx);
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
+    else
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = 0;
+        tuneStruct{selectedCells(rec)}.calculations.tune_peak = nan;
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = 0;
+    end
+    
+    
+    smooth_response = smooth(cellfun(@mean,sorted),smoothing_param); %OLD
+    smooth_stimulus = cellfun(@median,sortedBy);
     [maxResponse,maxidx] = max(smooth_response);
-    minResponse = min(smooth_response);
-    tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
-    tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
-    tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);    
+    [minResponse,minidx] = min(smooth_response);
     
     if numel(sortedBy)>min_bins
         
         if willdisplay
             figure(23);subplot(rc(1),rc(2),rec)
-            shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
+            shadedErrorBar(smooth_stimulus,smooth_response,smooth(CI,smoothing_param),'k')
+%             plot(smooth_stimulus,smooth_response,'k')
         end
-       
+        
         if quant_ol_p < alpha_value
-            %plot smoothed response first
-            smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
-            [maxResponse,maxidx] = max(smooth_response);
-            [~, minidx] = min(smooth_response);
-            
             %right and left tuning by idx
             compare_table = multcompare(stats,'Display','off');
             max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);
@@ -164,7 +195,7 @@ for rec = 1:length(selectedCells)
             tuneStruct{selectedCells(rec)}.is_tuned = 1;
             tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{maxidx};
             tuneStruct{selectedCells(rec)}.calculations.responses_at_trough = sorted{minidx};
-        
+            
         end
         
         if willdisplay
