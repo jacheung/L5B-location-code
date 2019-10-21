@@ -49,7 +49,7 @@ for d = 1:numel(sel_wstructs)
     curr_w = curr_w(~any(isnan(curr_w),2),:); 
     
     if strcmp(hilbertVar,'pole')
-        whisk_x = -1:.1:2;
+        whisk_x = -2:.1:2;
     elseif strcmp(hilbertVar,'phase')
         whisk_x = linspace(-pi,pi,21);
     else
@@ -57,81 +57,93 @@ for d = 1:numel(sel_wstructs)
     end
     whisk_heat{d} = interp1(curr_w(:,1),curr_w(:,2),whisk_x);
 end
-
+%%
 figure(50);clf
 
 %plotting all touch object location tuned units
 subplot(3,2,1)
-unsorted_heat = normalize_var(cell2mat(touch_heat')',0,1);
+% unsorted_heat = normalize_var(cell2mat(touch_heat')',0,1);
+unsorted_heat = norm_new(cell2mat(touch_heat')');
 [~,t_max_idx] = max(unsorted_heat,[],1);
 [~,t_idx] = sort(t_max_idx);
 data = unsorted_heat(:,t_idx)'; 
 %set unsampled heatmap to nan; 
 [nr,nc] = size(data);
 pcolor([data nan(nr,1); nan(1,nc+1)]);
+caxis([0 1])
 shading flat;
 set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
 title('all touch sorted')
 
 %plotting all whisk object location tuned units
 subplot(3,2,2)
-unsorted__whisk_heat = normalize_var(cell2mat(whisk_heat')',0,1);
+% unsorted__whisk_heat = normalize_var(cell2mat(whisk_heat')',0,1);
+unsorted__whisk_heat = norm_new(cell2mat(whisk_heat')');
 [~,w_max_idx] = max(unsorted__whisk_heat,[],1);
 [~,w_idx] = sort(w_max_idx);
 data = unsorted__whisk_heat(:,w_idx)'; 
 %set unsampled heatmap to nan; 
 [nr,nc] = size(data);
 pcolor([data nan(nr,1); nan(1,nc+1)]);
+caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-1:1:2,'ydir','reverse')
+set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-2:1:2,'ydir','reverse')
 title('all whisk sorted')
 
 %plotting all whisk+touch object location tuned units touch responses sorted by touch peak 
 subplot(3,2,3)
-unsorted_heat_touch = normalize_var(cell2mat(touch_heat(touch_ix_idx)')',0,1);
+% unsorted_heat_touch = normalize_var(cell2mat(touch_heat(touch_ix_idx)')',0,1);
+unsorted_heat_touch = norm_new(cell2mat(touch_heat(touch_ix_idx)')');
 [~,t_max_idx] = max(unsorted_heat_touch,[],1);
 [~,t_idx_ix] = sort(t_max_idx);
 data = unsorted_heat_touch(:,t_idx_ix)'; 
 %set unsampled heatmap to nan; 
 [nr,nc] = size(data);
 pcolor([data nan(nr,1); nan(1,nc+1)]);
+caxis([0 1])
 shading flat;
 set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
 title('ix touch sorted')
 
 %plotting all whisk+touch object location tuned units whisk responses sorted by whisk peak 
 subplot(3,2,4)
-unsorted_whisk_heat = normalize_var(cell2mat(whisk_heat(whisk_ix_idx)')',0,1);
+% unsorted_whisk_heat = normalize_var(cell2mat(whisk_heat(whisk_ix_idx)')',0,1);
+unsorted_whisk_heat = norm_new(cell2mat(whisk_heat(whisk_ix_idx)')');
 [~,w_max_idx] = max(unsorted_whisk_heat,[],1);
 [~,w_idx_ix] = sort(w_max_idx);
 data = unsorted_whisk_heat(:,w_idx_ix)'; 
 %set unsampled heatmap to nan; 
 [nr,nc] = size(data);
 pcolor([data nan(nr,1); nan(1,nc+1)]);
+caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-1:1:2,'ydir','reverse')
+set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-2:1:2,'ydir','reverse')
 title('ix whisk sorted')
 
 %plotting all whisk+touch object location tuned units touch responses sorted by whisk peak 
 subplot(3,2,5)
-unsorted_heat_touch = normalize_var(cell2mat(touch_heat(touch_ix_idx)')',0,1);
+% unsorted_heat_touch = normalize_var(cell2mat(touch_heat(touch_ix_idx)')',0,1);
+unsorted_heat_touch = norm_new(cell2mat(touch_heat(touch_ix_idx)')');
 data = unsorted_heat_touch(:,w_idx_ix)'; 
 %set unsampled heatmap to nan; 
 [nr,nc] = size(data);
 pcolor([data nan(nr,1); nan(1,nc+1)]);
+caxis([0 1])
 shading flat;
 set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
 title('ix touch whisk sorted by whisk')
 
 %plotting all whisk+touch object location tuned units whisk responses sorted by touch peak 
 subplot(3,2,6)
-unsorted_whisk_heat = normalize_var(cell2mat(whisk_heat(whisk_ix_idx)')',0,1);
+% unsorted_whisk_heat = normalize_var(cell2mat(whisk_heat(whisk_ix_idx)')',0,1);
+unsorted_whisk_heat = norm_new(cell2mat(whisk_heat(whisk_ix_idx)')');
 data = unsorted_whisk_heat(:,t_idx_ix)'; 
 %set unsampled heatmap to nan; 
 [nr,nc] = size(data);
 pcolor([data nan(nr,1); nan(1,nc+1)]);
+caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-1:1:2,'ydir','reverse')
+set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-2:1:2,'ydir','reverse')
 title('ix whisk sorted by touch')
 
 

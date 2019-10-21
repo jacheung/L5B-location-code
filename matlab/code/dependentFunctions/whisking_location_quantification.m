@@ -98,7 +98,10 @@ for rec = 1:length(selectedCells)
     [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',numBins);
     %     end
     
-    [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
+    nonzero_bins = sum(cellfun(@mean, sorted)~=0);
+    nanmat = cell2nanmat(sorted); 
+    [quant_ol_p,~,stats] = anova1(nanmat,[],'off');
+%     [shuff_ol_p,~,~] = anova1(reshape(randperm(numel(nanmat)),size(nanmat)),[],'off');
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
@@ -108,7 +111,7 @@ for rec = 1:length(selectedCells)
     x = cellfun(@median,sortedBy);
     y = cellfun(@mean, sorted);
     
-    if strcmp(hilbert_feature,'phase')
+    if strcmp(hilbert_feature,'phase') || strcmp(hilbert_feature,'pole') 
         xq = min(cellfun(@median,sortedBy)):.1:max(cellfun(@median,sortedBy));
     else
         xq = min(cellfun(@median,sortedBy)):1:max(cellfun(@median,sortedBy));
@@ -122,15 +125,14 @@ for rec = 1:length(selectedCells)
         disp(['skipping ' num2str(rec) ' due to ill fitting of bars'])
     end
     
-    if ~isempty(barsFit)
-        figure(9);subplot(rc(1),rc(2),rec)
-        bar(x,y,'k','facecolor',[.8 .8 .8])
-        hold on; plot(xq,barsFit.mean)
-        hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param));
-%         legend('raw','bars','smooth raw')
-        
-        smooth_response = barsFit.mean;
-        smooth_stimulus = xq;
+    if ~isempty(barsFit) && nonzero_bins>10
+%         figure(9);subplot(rc(1),rc(2),rec)
+%         bar(x,y,'facecolor',[.8 .8 .8])
+%         hold on; plot(xq(1:end-1),barsFit.mean(1:end-1),'b') %bars fitting
+%          hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param),'r'); %smooth fitting
+     
+        smooth_response = barsFit.mean(2:end-1);
+        smooth_stimulus = xq(2:end-1);
 
         [maxResponse,maxidx] = max(smooth_response);
         [minResponse,minidx] = min(smooth_response);
@@ -153,8 +155,9 @@ for rec = 1:length(selectedCells)
         
         if willdisplay
             figure(23);subplot(rc(1),rc(2),rec)
-            shadedErrorBar(smooth_stimulus,smooth_response,smooth(CI,smoothing_param),'k')
-%             plot(smooth_stimulus,smooth_response,'k')
+%             shadedErrorBar(smooth_stimulus,smooth_response,smooth(CI,smoothing_param),'k')
+            shadedErrorBar(barsFit.mean(2:end-1), xq(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
+
         end
         
         if quant_ol_p < alpha_value

@@ -7,7 +7,6 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 hilbertVar = 'phase';
 
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-defTouchResponse(U(selectedCells),.95,'off')
 %     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 %     fn = 'touch_all.eps';
 %     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')

@@ -165,7 +165,7 @@ for rec = 1:length(selectedCells)
                     if willdisplay
                         hold on; scatter(median(sortedBy{maxidx}),maxResponse,'g','filled');
                         hold on; scatter(median(sortedBy{left_tuning_idx}),smooth_response(left_tuning_idx),'r','filled');
-                    end
+                    end 
                 else
                     tuneStruct{selectedCells(rec)}.calculations.tune_left_width = nan;
                 end
@@ -182,8 +182,6 @@ for rec = 1:length(selectedCells)
                 end
                 
                 tuneStruct{selectedCells(rec)}.is_tuned = 1;
-
-
                 
             elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
                 [minResponse,idx] = min(smooth_response);

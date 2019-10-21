@@ -8,7 +8,7 @@ if willdisplay
     figure(80);clf
 end
 
-rc = numSubplots(numel(selectedCells));
+rc = numSubplots(numel(U));
 %%
 adaptation = cell(1,numel(U));
 g_vy = cell(1,numel(selectedCells));
@@ -72,10 +72,13 @@ for rec = 1:length(selectedCells)
         end
     end
     
-    maxResponse = max(adaptation{selectedCells(rec)}.lh);
-    minResponse = min(adaptation{selectedCells(rec)}.lh);
-    adaptation{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
-    
+%     maxResponse = max(adaptation{selectedCells(rec)}.lh);
+%     minResponse = min(adaptation{selectedCells(rec)}.lh);
+%     adaptation{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
+    adaptation{selectedCells(rec)}.calculations.mod_idx_relative = mean(adaptation{selectedCells(rec)}.lh(2:end)) ./ adaptation{selectedCells(rec)}.lh(1);
+    adaptation{selectedCells(rec)}.calculations.adapt_ratio =  (adaptation{selectedCells(rec)}.lh) ./ adaptation{selectedCells(rec)}.lh(1);
+    adaptation{selectedCells(rec)}.sampleNumber_x_y = [1:10 ; histcounts(touchNumber,.5:10.5)];
+    title(num2str(mean(adaptation{selectedCells(rec)}.lh(2:end)) ./ adaptation{selectedCells(rec)}.lh(1)));
     %% Touch Adaptation by ITI
     
     time_interp = 20:10:4000; 
@@ -86,7 +89,7 @@ for rec = 1:length(selectedCells)
     array = U{(selectedCells(rec))};
     smooth_param = 5;
     num_touches_per_bin = 75;
-    
+%     
     spks = squeeze(array.R_ntk(:,:,:));
     response_window = array.meta.touchProperties.responseWindow(1):array.meta.touchProperties.responseWindow(2);
     touch_times = [find(array.S_ctk(9,:,:)==1) ; find(array.S_ctk(12,:,:)==1)];
@@ -212,25 +215,36 @@ end
 %POPULATION PLOTTING
 
 if willdisplay
-    population_heat_tuned = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(tunedCells),'uniformoutput',0)')',0,1);
-    population_heat_nontuned = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(nontunedCells),'uniformoutput',0)')',0,1);
-    [~,idx] = sort(population_heat_tuned(1,:));
-    [~,idx_non] = sort(population_heat_nontuned(1,:));
-    figure(81);clf
-    subplot(1,2,1)
-    imagesc(population_heat_tuned(:,fliplr(idx)))
-    caxis([0 1])
-    title('location tuned')
-    subplot(1,2,2);
-    imagesc(population_heat_nontuned(:,fliplr(idx_non)))
-    caxis([0 1])
-    title('non-location tuned')
-    colormap gray
-    xlabel('cell number')
-    ylabel('touch order')
-    colorbar
-    set(gca,'ydir','reverse')
-    %%
+    %% TOUCH ORDER PLOTTING
+    figure(9);clf
+    subplot(2,1,1)
+    sample_mat = cell2mat(cellfun(@(x) x.sampleNumber_x_y(2,:),adaptation(selectedCells),'uniformoutput',0)')';
+    sampled_proportions = sample_mat./sum(sample_mat);
+    cdf_proportions = cumsum(sample_mat)./sum(sample_mat);
+    yyaxis left
+    shadedErrorBar(1:10,mean(sampled_proportions,2),std(sampled_proportions,[],2) ./ sqrt(numel(selectedCells)),'b')
+    ylabel('proportion of touches')
+    yyaxis right
+    shadedErrorBar(1:10,mean(cdf_proportions,2),std(cdf_proportions,[],2) ./ sqrt(numel(selectedCells)),'r')
+    ylabel('CDF of touches')
+    title('touch order sampling')
+    set(gca,'xlim',[1 10])
+    
+    
+    subplot(2,1,2)
+    adapt_mat = cell2mat(cellfun(@(x) x.calculations.adapt_ratio,adaptation(selectedCells),'uniformoutput',0)')';
+    adapt = find(mean(adapt_mat(2:end,:))<1);
+    facil = find(mean(adapt_mat(2:end,:))>1);
+    plot(1:10,adapt_mat,'color',[.8 .8 .8])
+    hold on; shadedErrorBar(1:10,mean(adapt_mat(:,adapt),2),std(adapt_mat(:,adapt),[],2)./sqrt(numel(adapt)),'r')
+    hold on; shadedErrorBar(1:10,mean(adapt_mat(:,facil),2),std(adapt_mat(:,facil),[],2)./sqrt(numel(facil)),'b')
+    title(['facil(blue n=' num2str(numel(facil)) ') and adapt (red n=' num2str(numel(adapt)) ')'])
+    ylabel('adaptation ratio (x/first touch response)')
+    hold on; plot([1 10],[1 1],'--k')
+    set(gca,'ylim',[0 3],'xlim',[1 10],'ytick',0:1:3)
+    xlabel('touch order')
+    
+    %% ITI PLOTTING 
     
     ITI_mat = normalize_var(cell2mat(g_vy')',0,1);
     x = linspace(25,3995,398);
@@ -247,8 +261,7 @@ if willdisplay
     %CDF OF SAMPLES
     cdf = cumsum(ITI_data.histogram) ./ sum(ITI_data.histogram);
     yyaxis right
-%     plot(x, cdf,'color',[.8 .8 .8])
-    hold on; shadedErrorBar(x,mean(cdf,2),std(cdf,[],2)./sqrt(size(cdf,2)),'r-')
+    hold on; shadedErrorBar(x,nanmean(cdf,2),nanstd(cdf,[],2)./ sqrt(sum(~isnan(cdf),2)),'r-')
     set(gca,'xscale','log','xlim',[0 4000],'xtick',[25 50 100 500 1000 4000],'ylim',[0 1])
     xlabel('ITI')
     ylabel('CDF of touches')
@@ -264,7 +277,7 @@ if willdisplay
     
     %HEATMAP OF ITI RESPONSE
     subplot(3,10,11)
-    imagesc(ITI_mat(end,idx)')
+    imagesc(flipud(ITI_mat(end,idx)')); %had to flipUD to keep it consistent with pcolor which doesnt reverse
     ylabel('neurons sorted by time to peak response')
     set(gca,'xtick',1,'xticklabel','1st')
     caxis([0 1])
@@ -277,15 +290,31 @@ if willdisplay
     
     %MEAN ITI RESPONSE x GROUPING
     subplot(3,10,21:30)
-    facil = idx(1:15);
-    adapt = idx(16:end); 
+    facil = idx(1:19);
+    adapt = idx(20:end); 
     shadedErrorBar(time_interp,nanmean(ITI_mat,2),(nanstd(ITI_mat,[],2)./size(ITI_mat,2)),'k')
     hold on; shadedErrorBar(time_interp,nanmean(ITI_mat(:,facil),2),(nanstd(ITI_mat(:,facil),[],2)./ sum(~isnan(ITI_mat(:,facil)),2) ),'b')
     hold on; shadedErrorBar(time_interp,nanmean(ITI_mat(:,adapt),2),(nanstd(ITI_mat(:,adapt),[],2)./sum(~isnan(ITI_mat(:,adapt)),2)),'r')
-    title('gray:all, blue:last 15, red:first 29')
-    set(gca,'xscale','log','xlim',[20 4000],'xtick',[25 50 100 500 1000 4000])
+    title('gray:all, blue:last 19, red:first 41')
+    set(gca,'xscale','log','xlim',[25 4000],'xtick',[25 50 100 500 1000 4000])
     xlabel('ITI')
     ylabel('normalized touch response')
-
+    
+    %look at this for cutoff (this is the time to peak response)
+    %sort(maxidx)*10, cut off arbitrarily set at 250ms
+    
+    
+    
+    circ_mat = [ITI_mat ; ITI_mat];
+    final_adapt = nan(size(mat_view,1),50);
+    for g = 1:size(mat_view,1)
+        adapt_raw = circ_mat(maxidx(g)+(0:399),g);
+        filt_adapt = adapt_raw(~isnan(adapt_raw));
+        final_adapt(g,1:50) = filt_adapt(1:50);
+    end
+    figure(9);clf
+    imagesc(final_adapt(idx,:))
+    caxis([.5 1])
+    
     
 end

@@ -1,4 +1,4 @@
-%% GLOBALS 
+%% GLOBALS
 clear
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
@@ -64,10 +64,10 @@ peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,mp_tuned(touchCells));
 % HSV PLOTTING
 
 % [~,sort_idx] = sort(peak_idx_pole);
-% 
+%
 % peaks = {peak_idx_pole,peak_idx_angle,peak_idx_phase,peak_idx_amp,peak_idx_midpoint};
 % mod_idx = {mod_idx_pole,mod_idx_angle,mod_idx_phase,mod_idx_amp,mod_idx_midpoint};
-% final_image = nan(numel(peaks),numel(selectedCells),3); 
+% final_image = nan(numel(peaks),numel(selectedCells),3);
 % for b = 1:numel(peaks)
 %     hues = normalize_var(peaks{b}(sort_idx),.7,1);
 %     hsv = [hues' mod_idx{b}(sort_idx)' ones(numel(hues),1)];
@@ -76,7 +76,7 @@ peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,mp_tuned(touchCells));
 %     final_image(b,:,2) = rgb_values(:,2);
 %     final_image(b,:,3) = rgb_values(:,3);
 % end
-% 
+%
 % figure(580);clf
 % imshow(final_image)
 % saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
@@ -94,9 +94,29 @@ mod_idx_dt = cellfun(@(x) x.calculations.mod_idx_relative,dtheta_tuned(touchCell
 
 
 %% ADAPTATION
-[adaptation] = adaptation_quantification(U,tunedCells,'off');
+[adaptation] = adaptation_quantification(U,touchCells,'on');
+% [adaptation] = adaptation_quantification(U,tunedCells,'off');
 mod_idx_adaptation = cellfun(@(x) x.calculations.mod_idx_relative,adaptation(touchCells));
 
+% TOUCH ORDER HEAT
+population_heat_tuned = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(tunedCells),'uniformoutput',0)')',0,1);
+population_heat_nontuned = normalize_var(cell2mat(cellfun(@(x) x.lh,adaptation(nontunedCells),'uniformoutput',0)')',0,1);
+[~,idx] = sort(population_heat_tuned(1,:));
+[~,idx_non] = sort(population_heat_nontuned(1,:));
+figure(81);clf
+subplot(1,2,1)
+imagesc(population_heat_tuned(:,fliplr(idx)))
+caxis([0 1])
+title('location tuned')
+subplot(1,2,2);
+imagesc(population_heat_nontuned(:,fliplr(idx_non)))
+caxis([0 1])
+title('non-location tuned')
+colormap gray
+xlabel('cell number')
+ylabel('touch order')
+colorbar
+set(gca,'ydir','reverse')
 % saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 % fn = 'adaptation_map.eps';
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
@@ -130,7 +150,7 @@ nontunedidx = ismember(idx,nontuned_touch_idx);
 tune_map_1 = [mod_idx_touch ; mod_idx_adaptation];
 tune_map_it = [mod_idx_pole ; mod_idx_angle ; mod_idx_phase ; mod_idx_amp ; mod_idx_midpoint];
 tune_map_dt = [mod_idx_dk ; mod_idx_dt];
-tune_map_fr = firing_rate(touchCells); 
+tune_map_fr = firing_rate(touchCells);
 
 figure(81);clf
 subplot(4,2,1);
@@ -250,7 +270,7 @@ nontouchCells = find(cellfun(@(x) ~strcmp(x.meta.touchProperties.responseType,'e
 tunedCells = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
 nontunedCells = setdiff(touchCells,tunedCells);
 
-selectedCells = 1:length(U)
+selectedCells = 1:length(U);
 pole_whisk = whisking_location_quantification(U,selectedCells,'pole','off');
 angle_whisk = whisking_location_quantification(U,selectedCells,'angle','off');
 midpoint_whisk = whisking_location_quantification(U,selectedCells,'midpoint','off');
@@ -271,20 +291,20 @@ w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,midpoint_whisk(selec
 
 
 % HSV PLOTTING WHISK
-[~,sort_idx] = sort(w_peak_idx_pole);
-
-peaks = {w_peak_idx_pole,w_peak_idx_angle,w_peak_idx_phase,w_peak_idx_amp,w_peak_idx_midpoint};
-mod_idx = {w_mod_idx_pole,w_mod_idx_angle,w_mod_idx_phase,w_mod_idx_amp,w_mod_idx_midpoint};
-final_image = nan(numel(peaks),numel(selectedCells),3); 
-for b = 1:numel(peaks)
-    hues = normalize_var(peaks{b}(sort_idx),.7,1);
-    hsv = [hues' mod_idx{b}(sort_idx)' ones(numel(hues),1)];
-    rgb_values = hsv2rgb(hsv);
-    final_image(b,:,1) = rgb_values(:,1);
-    final_image(b,:,2) = rgb_values(:,2);
-    final_image(b,:,3) = rgb_values(:,3);
-end
-% 
+% [~,sort_idx] = sort(w_peak_idx_pole);
+%
+% peaks = {w_peak_idx_pole,w_peak_idx_angle,w_peak_idx_phase,w_peak_idx_amp,w_peak_idx_midpoint};
+% mod_idx = {w_mod_idx_pole,w_mod_idx_angle,w_mod_idx_phase,w_mod_idx_amp,w_mod_idx_midpoint};
+% final_image = nan(numel(peaks),numel(selectedCells),3);
+% for b = 1:numel(peaks)
+%     hues = normalize_var(peaks{b}(sort_idx),.7,1);
+%     hsv = [hues' mod_idx{b}(sort_idx)' ones(numel(hues),1)];
+%     rgb_values = hsv2rgb(hsv);
+%     final_image(b,:,1) = rgb_values(:,1);
+%     final_image(b,:,2) = rgb_values(:,2);
+%     final_image(b,:,3) = rgb_values(:,3);
+% end
+% %
 % figure(580);clf
 % imshow(final_image)
 % saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
@@ -292,7 +312,7 @@ end
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])
 
-% HEAT GRAY WHISK 
+% HEAT GRAY WHISK
 [~,idx] = sort(w_mod_idx_pole);
 nontouchidx = ismember(idx,nontouchCells);
 tunedidx = ismember(idx,tunedCells);
@@ -327,22 +347,21 @@ caxis([-2 2])
 colormap(gray)
 colorbar
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'gray_whisk.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
-figure(144);clf
-imagesc(abs(corr(tune_map')))
-colormap(gray)
-colorbar
-caxis([0 1])
-axis square
-set(gca,'xtick',[],'ytick',[])
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-fn = 'mod_depth_correlation_whisk.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% figure(144);clf
+% imagesc(abs(corr(tune_map')))
+% colormap(gray)
+% colorbar
+% caxis([0 1])
+% axis square
+% set(gca,'xtick',[],'ytick',[])
+%
+% fn = 'mod_depth_correlation_whisk.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 
 
