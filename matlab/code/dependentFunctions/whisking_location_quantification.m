@@ -89,6 +89,10 @@ for rec = 1:length(selectedCells)
     current_feature = conversion_feature(whisking_mask==1);
     filtered_spikes =spikes(whisking_mask==1);
     
+%     filtered_spikes = circshift(filtered_spikes,12); %12ms lag
+%     filtered_spikes =spikes(whisking_mask==1);
+    
+    
     numBins = round(sum(~isnan(current_feature(:)))./numWhiskSamplesPerBin);
     
     %% Tuning in touch response window
@@ -128,9 +132,9 @@ for rec = 1:length(selectedCells)
     if ~isempty(barsFit) && nonzero_bins>10
 %         figure(9);subplot(rc(1),rc(2),rec)
 %         bar(x,y,'facecolor',[.8 .8 .8])
-%         hold on; plot(xq(1:end-1),barsFit.mean(1:end-1),'b') %bars fitting
-%          hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param),'r'); %smooth fitting
-     
+%         hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
+% %          hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param),'r'); %smooth fitting
+%      
         smooth_response = barsFit.mean(2:end-1);
         smooth_stimulus = xq(2:end-1);
 
@@ -215,6 +219,10 @@ for rec = 1:length(selectedCells)
         tuneStruct{selectedCells(rec)}.stim_response.values = [cellfun(@nanmedian, sortedBy) smooth(cellfun(@nanmean,sorted),smoothing_param) smooth(cellfun(@nanstd,sorted),smoothing_param) smooth(CI,smoothing_param)];
         tuneStruct{selectedCells(rec)}.stim_response.raw_stim = sortedBy;
         tuneStruct{selectedCells(rec)}.stim_response.raw_response = sorted;
+        if ~isempty(barsFit)
+            tuneStruct{selectedCells(rec)}.stim_response.bars_fit= barsFit;
+            tuneStruct{selectedCells(rec)}.stim_response.bars_stim = xq;
+        end
     else
         tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples
     end
