@@ -20,7 +20,7 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 rc = numSubplots(numel(selectedCells));
 
 %function parameters
-numWhiskSamplesPerBin = 3000; %number of whisks to assign in each bin for quantification.
+numWhiskSamplesPerBin = 5000; %number of whisks to assign in each bin for quantification.
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
@@ -89,7 +89,7 @@ for rec = 1:length(selectedCells)
     current_feature = conversion_feature(whisking_mask==1);
     filtered_spikes =spikes(whisking_mask==1);
     
-%     filtered_spikes = circshift(filtered_spikes,12); %12ms lag
+    filtered_spikes = circshift(filtered_spikes,4); %12ms lag
 %     filtered_spikes =spikes(whisking_mask==1);
     
     
@@ -131,10 +131,15 @@ for rec = 1:length(selectedCells)
     
     if ~isempty(barsFit) && nonzero_bins>10
 %         figure(9);subplot(rc(1),rc(2),rec)
-%         bar(x,y,'facecolor',[.8 .8 .8])
-%         hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
-% %          hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param),'r'); %smooth fitting
-%      
+%         bar(x,y,'k')
+%         if quant_ol_p<0.05
+%             hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'g')
+%         else
+%             hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
+%         end
+        %          hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param),'r'); %smooth fitting
+        
+        
         smooth_response = barsFit.mean(2:end-1);
         smooth_stimulus = xq(2:end-1);
 
