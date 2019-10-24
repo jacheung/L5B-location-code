@@ -137,7 +137,51 @@ fn = 'fr_x_modulation_index.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
+%% CDF of sampling
+built = find(cellfun(@(x) isfield(x,'stim_response'),angle_whisk)); 
+bars_built = cellfun(@(x) isfield(x.stim_response,'bars_fit'),angle_whisk(built));
+full_build = built(bars_built);
 
+masks = cellfun(@(x) maskBuilder(x),U(full_build),'uniformoutput',0);
+
+thetas = cellfun(@(x,y) squeeze(x.S_ctk(1,:,:)) .* y.whisking,U(full_build),masks,'uniformoutput',0);
+
+hist_thetas = cellfun(@(x) histcounts(x(:),-25.5:80.5),thetas,'uniformoutput',0);
+
+cdf_sums = cell2mat(cellfun(@(x) cumsum(x),hist_thetas','uniformoutput',0))';
+cdf_mat = cdf_sums./(cdf_sums(end,:));
+
+mean_time_per_trial_whisking = cellfun(@(x) nansum(x.whisking(:))./size(x.whisking,2)./1000,masks); % in seconds
+num_bins_per_cell = cellfun(@(x) numel(x.stim_response.raw_stim),angle_whisk(full_build)); 
+
+figure(23);clf
+subplot(2,3,[1 2 4 5])
+plot(repmat(-25:80,size(cdf_mat,2),1)',cdf_mat,'color',[.9 .9 .9])
+hold on; shadedErrorBar(-25:80,nanmean(cdf_mat,2),nanstd(cdf_mat,[],2)./sqrt(numel(full_build)))
+axis square
+set(gca,'ytick',0:.2:1,'xtick',-20:20:80)
+xlabel('whisker angle during whisking')
+ylabel('cumulative proportion of whisks')
+
+subplot(2,3,3);
+scatter(ones(1,numel(full_build)),mean_time_per_trial_whisking,'k','markeredgecolor',[.9 .9 .9])
+hold on; errorbar(1,mean(mean_time_per_trial_whisking),std(mean_time_per_trial_whisking),'ko')
+set(gca,'ylim',[0 3],'ytick',0:1:3,'xtick',[])
+ylabel('time spent whisking per trial (s)');
+axis square
+title(['mean=' num2str(mean(mean_time_per_trial_whisking)) ' , SD=' num2str(std(mean_time_per_trial_whisking))])
+
+subplot(2,3,6);
+scatter(ones(1,numel(full_build)),num_bins_per_cell,'k','markeredgecolor',[.9 .9 .9])
+hold on; errorbar(1,mean(num_bins_per_cell),std(num_bins_per_cell),'ko')
+set(gca,'ylim',[0 80],'ytick',0:25:100,'xtick',[])
+ylabel('number of whisking bins');
+axis square
+title(['mean=' num2str(mean(num_bins_per_cell)) ' , SD=' num2str(std(num_bins_per_cell))])
+
+fn = 'whisk_sampling.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 %% pop map 
 built = find(cellfun(@(x) isfield(x,'stim_response'),angle_whisk)); 
@@ -188,7 +232,6 @@ fix_eps_fonts([saveDir, fn])
 
 
 %% scatter of all whisk components (deep dive but not sure if necessary)
-
 
 
 
