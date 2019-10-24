@@ -83,6 +83,46 @@ peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,mp_tuned(touchCells));
 % fn = 'hsv_touch.eps';
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])
+%% EMERGENCE OF TUNING THAT GOES BEYOND PHASE (pushing boundary laid by Curtis and Kleinfeld 2009) 
+% pushes boundary because Curtis and Kleinfeld show ONLY phase at touch
+% modulation and relatively low angle at touch modulation. THUS L5b must be
+% performing some deeper level of computation/merging of other features to reveal angle at touch
+% tuning. 
+touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+angle_tuned = object_location_quantification(U,touchCells,'angle','off');
+phase_tuned = object_location_quantification(U,touchCells,'phase','off');
+
+mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,angle_tuned(touchCells));
+mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_tuned(touchCells));
+
+mod_idx_abs_angle = cellfun(@(x) x.calculations.mod_idx_abs,angle_tuned(touchCells));
+mod_idx_abs_phase = cellfun(@(x) x.calculations.mod_idx_abs,phase_tuned(touchCells));
+
+figure(480);clf
+
+subplot(1,2,1)
+scatter(mod_idx_phase,mod_idx_angle,'k')
+hold on; plot([0 1],[0 1],'--k')
+set(gca,'xlim',[0 1],'ylim',[0 1])
+axis square
+xlabel('mod idx phase')
+ylabel('mod idx angle')
+[~,p_rel] = ttest(mod_idx_phase,mod_idx_angle);
+title(num2str(p_rel))
+
+subplot(1,2,2)
+scatter(mod_idx_abs_phase,mod_idx_abs_angle,'k')
+hold on; plot([.1 150],[.1 150],'--k')
+set(gca,'xlim',[1 150],'ylim',[1 150],'xscale','log','yscale','log')
+axis square
+xlabel('mod idx abs phase')
+ylabel('mod idx abs angle')
+[~,p_abs] = ttest(mod_idx_abs_phase,mod_idx_abs_angle);
+title(num2str(p_abs));
+
+fn = 'phase_vs_angle_depth.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 %% DYNAMIC FEATURES
 

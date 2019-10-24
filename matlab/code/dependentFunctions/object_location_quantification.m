@@ -126,6 +126,7 @@ for rec = 1:length(selectedCells)
     [maxResponse,maxidx] = max(smooth_response);
     [minResponse,minidx] = min(smooth_response);
     tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
+    tuneStruct{selectedCells(rec)}.calculations.mod_depth = (maxResponse - minResponse) ./ mean(smooth_response);
     tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
     tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
     tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{maxidx};
