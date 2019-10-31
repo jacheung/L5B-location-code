@@ -91,36 +91,67 @@ peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,mp_tuned(touchCells));
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 angle_tuned = object_location_quantification(U,touchCells,'angle','off');
 phase_tuned = object_location_quantification(U,touchCells,'phase','off');
+amp_tuned = object_location_quantification(U,touchCells,'amplitude','off');
+mp_tuned = object_location_quantification(U,touchCells,'midpoint','off');
 
-mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,angle_tuned(touchCells));
-mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,phase_tuned(touchCells));
+phase_tuned_cells = ismember(touchCells,find(cellfun(@(x) x.is_tuned==1,phase_tuned)));
+
+mod_depth_angle = cellfun(@(x) x.calculations.mod_depth,angle_tuned(touchCells));
+mod_depth_phase = cellfun(@(x) x.calculations.mod_depth,phase_tuned(touchCells));
+mod_depth_amp = cellfun(@(x) x.calculations.mod_depth,amp_tuned(touchCells));
+mod_depth_mp = cellfun(@(x) x.calculations.mod_depth,mp_tuned(touchCells));
+
 
 mod_idx_abs_angle = cellfun(@(x) x.calculations.mod_idx_abs,angle_tuned(touchCells));
 mod_idx_abs_phase = cellfun(@(x) x.calculations.mod_idx_abs,phase_tuned(touchCells));
+mod_idx_abs_amp = cellfun(@(x) x.calculations.mod_idx_abs,amp_tuned(touchCells));
+mod_idx_abs_mp = cellfun(@(x) x.calculations.mod_idx_abs,mp_tuned(touchCells));
 
+abs_against = {mod_idx_abs_angle,mod_idx_abs_amp,mod_idx_abs_mp};
+depth_against = {mod_depth_angle,mod_depth_amp,mod_depth_mp};
+labels = {'angle','amp','mp'};
 figure(480);clf
+for g = 1:length(abs_against)
+    subplot(2,3,g)
+    scatter(mod_depth_phase,depth_against{g},'k')
+    hold on; scatter(mod_depth_phase(phase_tuned_cells),depth_against{g}(phase_tuned_cells),'filled','k')
+    hold on; plot([0 10],[0 10],'--k')
+    set(gca,'xlim',[0 4],'ylim',[0 4])
+    axis square
+    xlabel('mod depth phase')
+    ylabel(['mod depth ' labels{g}])
+    [~,p_rel] = ttest(mod_depth_phase,depth_against{g});
+    title(num2str(p_rel))
+    
+    subplot(2,3,g+3)
+    scatter(mod_idx_abs_phase,abs_against{g},'k')
+    hold on; scatter(mod_idx_abs_phase(phase_tuned_cells),abs_against{g}(phase_tuned_cells),'filled','k')
+    hold on; plot([.1 150],[.1 150],'--k')
+    set(gca,'xlim',[1 150],'ylim',[1 150],'xscale','log','yscale','log')
+    axis square
+    xlabel('mod idx abs phase')
+    ylabel(['mod idx abs ' labels{g}])
+    [~,p_abs] = ttest(mod_idx_abs_phase,abs_against{g});
+    title(num2str(p_abs));
+end
 
-subplot(1,2,1)
-scatter(mod_idx_phase,mod_idx_angle,'k')
-hold on; plot([0 1],[0 1],'--k')
-set(gca,'xlim',[0 1],'ylim',[0 1])
-axis square
-xlabel('mod idx phase')
-ylabel('mod idx angle')
-[~,p_rel] = ttest(mod_idx_phase,mod_idx_angle);
-title(num2str(p_rel))
+fn = 'phase_vs_feat_modulation.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
-subplot(1,2,2)
-scatter(mod_idx_abs_phase,mod_idx_abs_angle,'k')
-hold on; plot([.1 150],[.1 150],'--k')
-set(gca,'xlim',[1 150],'ylim',[1 150],'xscale','log','yscale','log')
-axis square
-xlabel('mod idx abs phase')
-ylabel('mod idx abs angle')
-[~,p_abs] = ttest(mod_idx_abs_phase,mod_idx_abs_angle);
-title(num2str(p_abs));
 
-fn = 'phase_vs_angle_depth.eps';
+group = {mod_depth_angle,mod_depth_amp,mod_depth_mp};
+
+figure(452);clf
+for g = 1:length(group)
+hold on; scatter(group{g}./mod_depth_phase,ones(numel(group{g}),1).*g,'filled','markerfacecolor',[.8 .8 .8])
+hold on; errorbar(nanmean(group{g}./mod_depth_phase),g,nanstd(group{g}./mod_depth_phase),'horizontal','ro')
+end
+hold on; plot([1 1],[0 4],'k--')
+set(gca,'ytick',1:3,'yticklabel',{'angle','amp','midpoint'},'ylim',[.5 3.5])
+xlabel('modulation ratio over phase')
+
+fn = 'mod_ratio.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 

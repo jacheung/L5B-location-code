@@ -121,7 +121,8 @@ for rec = 1:length(selectedCells)
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
     
-    % ONLY FOR MOD IDX CALCULATIONS
+    
+%     % ONLY FOR MOD IDX CALCULATIONS
     smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
     [maxResponse,maxidx] = max(smooth_response);
     [minResponse,minidx] = min(smooth_response);
