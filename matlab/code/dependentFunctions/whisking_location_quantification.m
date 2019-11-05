@@ -20,13 +20,11 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 rc = numSubplots(numel(selectedCells));
 
 %function parameters
-numWhiskSamplesPerBin = 5000; %number of whisks to assign in each bin for quantification.
+numWhiskSamplesPerBin = 7500; %number of whisks to assign in each bin for quantification.
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 10; %minimum number of angle bins to consider quantifying
-
-%dependent function to id all touches and pre/post decision touches
-% preDecisionTouches = preDecisionTouchMat(uberarray(selectedCells));
+binslin_bins = 50; 
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
@@ -35,35 +33,26 @@ for i = 1:length(uberarray)
     tuneStruct{i}.calculations = [];
 end
 
-try
-    all_masks = cellfun(@maskBuilder,uberarray(selectedCells)); %build masks
-end
 %%
 for rec = 1:length(selectedCells)
     array = uberarray{selectedCells(rec)};
     spikes = squeeze(array.R_ntk);
-    try
-        curr_mask = all_masks(rec);
-        whisking_mask = curr_mask.whisking .*curr_mask.touch;
-    catch
-        timePostTouchToTrim = 30;
-        touchOnIdx = [find(array.S_ctk(9,:,:)==1); find(array.S_ctk(12,:,:)==1)];
-        touchOffIdx = [find(array.S_ctk(10,:,:)==1); find(array.S_ctk(13,:,:)==1)];
-        touchOnIdx = touchOnIdx(touchOffIdx<numel(spikes)-timePostTouchToTrim+5);
-        touchOffIdx = touchOffIdx(touchOffIdx<numel(spikes)-timePostTouchToTrim+5);
-        touchEx_mask = ones(size(squeeze(array.S_ctk(1,:,:))));
-        for i = 1:length(touchOnIdx)
-            touchEx_mask(touchOnIdx(i):touchOffIdx(i)+timePostTouchToTrim) = NaN; %added 30 to add time from touch offset
-        end
-        touchEx_mask(1:100,:) = 1; %since bleedover from end of trials before, tihs ensure we keep end
-        
-        amplitude = squeeze(array.S_ctk(3,:,:));
-        whisking = nan(size(squeeze(array.S_ctk(1,:,:))));
-        whisking(amplitude>5)=1;
-        
-        whisking_mask = whisking .* touchEx_mask;
-        
+    
+    %whisking mask 
+    timePostTouchToTrim = 30;
+    touchOnIdx = [find(array.S_ctk(9,:,:)==1); find(array.S_ctk(12,:,:)==1)];
+    touchOffIdx = [find(array.S_ctk(10,:,:)==1); find(array.S_ctk(13,:,:)==1)];
+    touchOnIdx = touchOnIdx(touchOffIdx<numel(spikes)-timePostTouchToTrim+5);
+    touchOffIdx = touchOffIdx(touchOffIdx<numel(spikes)-timePostTouchToTrim+5);
+    touchEx_mask = ones(size(squeeze(array.S_ctk(1,:,:))));
+    for i = 1:length(touchOnIdx)
+        touchEx_mask(touchOnIdx(i):touchOffIdx(i)+timePostTouchToTrim) = NaN; %added 30 to add time from touch offset
     end
+    touchEx_mask(1:100,:) = 1; %since bleedover from end of trials before, tihs ensure we keep end
+    amplitude = squeeze(array.S_ctk(3,:,:));
+    whisking = nan(size(squeeze(array.S_ctk(1,:,:))));
+    whisking(amplitude>5)=1;
+    whisking_mask = whisking .* touchEx_mask;
     
     
     
@@ -106,31 +95,26 @@ for rec = 1:length(selectedCells)
         %         export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
         %         fix_eps_fonts([saveDir, fn])
         
-        
-        
+
     end
     
     current_feature = conversion_feature(whisking_mask==1);
     filtered_spikes =spikes(whisking_mask==1);
+
     
-%     filtered_spikes = circshift(filtered_spikes,4); %12ms lag
-    %     filtered_spikes =spikes(whisking_mask==1);
-    
-    
-    numBins = round(sum(~isnan(current_feature(:)))./numWhiskSamplesPerBin);
-    
-    %% Tuning in touch response window
-    %     if strcmp(hilbert_feature,'phase')
-    %         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalE',13,-pi,pi);
-    %     else
-    [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',numBins);
-    %     end
+    %% Tuning in whisk windows
+%     equalN_numBins = round(sum(~isnan(current_feature(:)))./numWhiskSamplesPerBin);
+%     if strcmp(hilbert_feature,'phase')
+%         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalE',equalE_bins,-pi,pi);
+%     else
+%         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalE',equalE_bins,min(current_feature),max(current_feature));
+        [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',binslin_bins);
+%     end
     
     nonzero_bins = sum(cellfun(@mean, sorted)~=0);
     nanmat = cell2nanmat(sorted);
     [quant_ol_p,~,stats] = anova1(nanmat,[],'off');
-    %     [shuff_ol_p,~,~] = anova1(reshape(randperm(numel(nanmat)),size(nanmat)),[],'off');
-    
+
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
@@ -148,21 +132,22 @@ for rec = 1:length(selectedCells)
     
     barsFit = [];
     try
-        barsFit = barsP(yq,[min(xq) max(xq)],numWhiskSamplesPerBin);
+        barsFit = barsP(yq,[min(xq) max(xq)],round(mean(cellfun(@numel,sorted))));
+        barsFit.x = xq;
     catch
         disp(['skipping ' num2str(rec) ' due to ill fitting of bars'])
     end
     
     if ~isempty(barsFit) && nonzero_bins>10
-%         figure(9);subplot(rc(1),rc(2),rec)
-%         bar(x,y,'k')
-%         if quant_ol_p<0.05
-%             hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'g')
-%         else
-%             hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
-%         end
-%         %           hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param),'r'); %smooth fitting
-%         %
+        figure(9);subplot(rc(1),rc(2),rec)
+        bar(x,y,'k')
+        if quant_ol_p<0.05
+            hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'g')
+        else
+            hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
+        end
+        %           hold on; plot(cellfun(@median,sortedBy),smooth(cellfun(@mean,sorted),smoothing_param),'r'); %smooth fitting
+        %
         
         smooth_response = barsFit.mean(2:end-1);
         smooth_stimulus = xq(2:end-1);

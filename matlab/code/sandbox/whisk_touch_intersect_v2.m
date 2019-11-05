@@ -117,5 +117,6 @@ for g = 1:numel(whisk_units)
         yyaxis right
         hold on; plot(linspace(min(x),max(x),20),f(linspace(min(x),max(x),20)),'g');
         hold on; plot(wStruct{whisk_units(g)}.stim_response.values(:,1),wStruct{whisk_units(g)}.stim_response.values(:,2),'r')
+        hold on; plot(wStruct{whisk_units(g)}.stim_response.bars_fit.x,wStruct{whisk_units(g)}.stim_response.bars_fit.mean,'b')
     end
 end
