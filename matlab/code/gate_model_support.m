@@ -8,9 +8,33 @@ saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig7\';
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 pole_tuned = object_location_quantification(U,touchCells,'pole','off');
 location_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
+%% link between phase and amp vs angle
+for rec = datasample(1:numel(location_units),1)
+    %stimulus and response variables definitions
+    array = U{location_units(rec)};
+    touch_response_window = array.meta.touchProperties.responseWindow;
+    [tVar] = atTouch_sorter(array,-25:50);
+    
+    phase = tVar.allTouches.S_ctk(:,5);
+    midpoint = tVar.allTouches.S_ctk(:,4);
+    amp = tVar.allTouches.S_ctk(:,3);
+    angle = tVar.allTouches.S_ctk(:,1);
+    
+    figure(480);clf
+    subplot(1,2,1);
+    scatter3(phase,amp,angle,'k.')
+    xlabel('phase');ylabel('amp');zlabel('angle')
+    axis square
+    
+    subplot(1,2,2);
+    scatter3(phase,midpoint,angle,'k.')
+    xlabel('phase');ylabel('midpoint');zlabel('angle')
+    axis square
+end
+
 %%
 % location_unit 21 may be a good example
-for rec = datasample(1:length(location_units),1)
+for rec = 4
     %stimulus and response variables definitions
     array = U{location_units(rec)};
     touch_response_window = array.meta.touchProperties.responseWindow;
@@ -28,9 +52,10 @@ for rec = datasample(1:length(location_units),1)
     for d = 1:3
         feature = tVar.allTouches.S_ctk(:,feat_numbers(d));
         subplot(1,3,d)
-        for g = 2:numel(unique_responses)
+        for g = 1:numel(unique_responses)
             hold on; scatter(phase(unique_idx==g),feature(unique_idx==g),'filled','markerfacecolor',[1 1 1] .* unique_color_codes(g))
         end
+        set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'})
         xlabel('phase at touch');
         ylabel([y_names(d) ' at touch'])
     end
@@ -39,6 +64,9 @@ for rec = datasample(1:length(location_units),1)
     
 end
 
+fn = 'feature_scatter_response_2.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 
 %% phase tuning at low amp vs high amp
@@ -56,6 +84,7 @@ for rec = 1:length(location_units)
     touch_response_window = array.meta.touchProperties.responseWindow;
     [tVar] = atTouch_sorter(array,-25:50);
     
+    angle = tVar.allTouches.S_ctk(:,1); 
     phase = tVar.allTouches.S_ctk(:,5);
     amp = tVar.allTouches.S_ctk(:,3);
     amp_counts = histcounts(amp,min(amp_range)-.5:1:max(amp_range)+.5);
@@ -65,6 +94,7 @@ for rec = 1:length(location_units)
     midpoint_counts = histcounts(midpoint,min(midpoint_range)-.5:1:max(midpoint_range)+.5);
     midpoint_cdf(:,rec) = cumsum(midpoint_counts) ./ sum(midpoint_counts);
     
+    phase_angle_corr(rec) = corr(phase,amp,'rows','complete');
     phase_amp_corr(rec) = corr(phase,amp,'rows','complete');
     phase_mp_corr(rec) = corr(phase,midpoint,'rows','complete');
 end
@@ -91,14 +121,14 @@ hold on; errorbar(2,mean(phase_mp_corr),std(phase_mp_corr),'ko')
 axis square
 set(gca,'xlim',[.5 2.5],'xtick',1:2,'xticklabel',{'amp','mp'})
 
-% 
+%
 fn = 'slow_feature_distribution.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 %%
 amp_threshold = 11;
-midpoint_threshold = 11; 
+midpoint_threshold = 11;
 rc = numSubplots(numel(location_units));
 figure(669);clf
 figure(670);clf
@@ -120,7 +150,7 @@ for rec = 1:length(location_units)
     low_mp = midpoint<prctile(midpoint,50);
     high_mp = midpoint>=prctile(midpoint,50);
     
-    %samples 
+    %samples
     low_amp_samples = histcounts(phase(low_amp),linspace(-3.15,3.15,13));
     low_amp_cdf = cumsum(low_amp_samples)./sum(low_amp_samples);
     high_amp_samples = histcounts(phase(high_amp),linspace(-3.15,3.15,13));
@@ -147,39 +177,39 @@ for rec = 1:length(location_units)
     low_mean_midpoint = cellfun(@(x) nanmean(x),low_sorted_midpoint);
     low_sem_midpoint = cellfun(@(x) nanstd(x)./sqrt(numel(x)),low_sorted_midpoint);
     
-%     figure(669); %plotting sampling at low vs high amp
-%     subplot(rc(1),rc(2),rec)
-%     hold on;bar(linspace(-pi,pi,12),low_amp_samples,'b','facealpha',1)
-%     hold on;bar(linspace(-pi,pi,12),high_amp_samples,'r','facealpha',1)
-%     yyaxis right
-%     hold on; plot(linspace(-pi,pi,12),low_amp_cdf,'b--');
-%     hold on; plot(linspace(-pi,pi,12),high_amp_cdf,'r--');
-%     set(gca,'xtick',[-pi 0 pi],'xticklabel',{'-\pi',0,'\pi'})
-
+    %     figure(669); %plotting sampling at low vs high amp
+    %     subplot(rc(1),rc(2),rec)
+    %     hold on;bar(linspace(-pi,pi,12),low_amp_samples,'b','facealpha',1)
+    %     hold on;bar(linspace(-pi,pi,12),high_amp_samples,'r','facealpha',1)
+    %     yyaxis right
+    %     hold on; plot(linspace(-pi,pi,12),low_amp_cdf,'b--');
+    %     hold on; plot(linspace(-pi,pi,12),high_amp_cdf,'r--');
+    %     set(gca,'xtick',[-pi 0 pi],'xticklabel',{'-\pi',0,'\pi'})
+    
     
     figure(670); %plotting phase tuning at touch for low vs high amp
     subplot(rc(1),rc(2),rec)
     hold on; errorbar(linspace(-pi,pi,12),low_mean,low_sem,'bo-')
     hold on;errorbar(linspace(-pi,pi,12),high_mean,high_sem,'ro-')
     set(gca,'xtick',[-pi 0 pi],'xticklabel',{'-\pi',0,'\pi'})
-
     
-%     figure(679); %plotting sampling at low vs high amp
-%     subplot(rc(1),rc(2),rec)
-%     hold on;bar(linspace(-pi,pi,12),low_mp_samples,'b','facealpha',.5)
-%     hold on;bar(linspace(-pi,pi,12),high_mp_samples,'r','facealpha',.5)
-%     yyaxis right
-%     hold on; plot(linspace(-pi,pi,12),low_mp_cdf,'b--');
-%     hold on; plot(linspace(-pi,pi,12),high_mp_cdf,'r--');
-%     set(gca,'xtick',[-pi 0 pi],'xticklabel',{'-\pi',0,'\pi'})
-
+    
+    %     figure(679); %plotting sampling at low vs high amp
+    %     subplot(rc(1),rc(2),rec)
+    %     hold on;bar(linspace(-pi,pi,12),low_mp_samples,'b','facealpha',.5)
+    %     hold on;bar(linspace(-pi,pi,12),high_mp_samples,'r','facealpha',.5)
+    %     yyaxis right
+    %     hold on; plot(linspace(-pi,pi,12),low_mp_cdf,'b--');
+    %     hold on; plot(linspace(-pi,pi,12),high_mp_cdf,'r--');
+    %     set(gca,'xtick',[-pi 0 pi],'xticklabel',{'-\pi',0,'\pi'})
+    
     
     figure(680); %plotting phase tuning at touch for low vs high amp
     subplot(rc(1),rc(2),rec)
     hold on; errorbar(linspace(-pi,pi,12),low_mean_midpoint,low_sem_midpoint,'bo-')
     hold on;errorbar(linspace(-pi,pi,12),high_mean_midpoint,high_sem_midpoint,'ro-')
     set(gca,'xtick',[-pi 0 pi],'xticklabel',{'-\pi',0,'\pi'})
-
+    
     
     
     

@@ -67,8 +67,11 @@ for rec = 1:length(selectedCells)
     else
         error('select features of "angle", "amplitude", "midpoint", "phase", "curvature", or "pole"')
     end
-    
-    rw = find(viewWindow == array.meta.touchProperties.responseWindow(1)) : find(viewWindow == array.meta.touchProperties.responseWindow(2));
+    try
+        rw = find(viewWindow == array.meta.touchProperties.responseWindow(1)) : find(viewWindow == array.meta.touchProperties.responseWindow(2));
+    catch
+        rw = 8:20;
+    end
     response = mean(tVar.allTouches.R_ntk(:,rw),2) * 1000;
     numBins = round(numel(selected_feature)./numTouchesPerBin);
     
@@ -145,7 +148,7 @@ for rec = 1:length(selectedCells)
         if quant_ol_p < alpha_value
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
-            if strcmp(array.meta.touchProperties.responseType,'excited')
+%             if strcmp(array.meta.touchProperties.responseType,'excited')
                 [maxResponse,maxidx] = max(smooth_response);
                 [~, minidx] = min(smooth_response);
                 
@@ -185,25 +188,25 @@ for rec = 1:length(selectedCells)
                 
                 tuneStruct{selectedCells(rec)}.is_tuned = 1;
                 
-            elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
-                [minResponse,idx] = min(smooth_response);
-                
-                %plot scatter of first sig diff from min
-                sd_p = nan(length(sorted),1);
-                pThresh = .05;
-                for g = 1:numel(sorted)
-                    [~,sd_p(g)] = ttest2(sorted{idx},sorted{g});
-                end
-                all_idx = find(sd_p < pThresh); %all points sig diff from min
-                [~,sd_idx_tmp] = min(abs(idx - all_idx));
-                
- 
-                if ~isempty(sd_idx) && ~isempty(idx) && willdisplay
-                    hold on; scatter(median(sortedBy{idx}),minResponse,'r','filled');
-                    hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'r','filled');
-                end
-            end
-            
+%             elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
+%                 [minResponse,idx] = min(smooth_response);
+%                 
+%                 %plot scatter of first sig diff from min
+%                 sd_p = nan(length(sorted),1);
+%                 pThresh = .05;
+%                 for g = 1:numel(sorted)
+%                     [~,sd_p(g)] = ttest2(sorted{idx},sorted{g});
+%                 end
+%                 all_idx = find(sd_p < pThresh); %all points sig diff from min
+%                 [~,sd_idx_tmp] = min(abs(idx - all_idx));
+%                 
+%  
+%                 if ~isempty(sd_idx) && ~isempty(idx) && willdisplay
+%                     hold on; scatter(median(sortedBy{idx}),minResponse,'r','filled');
+%                     hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'r','filled');
+%                 end
+%             end
+%             
         end
         
         if willdisplay
