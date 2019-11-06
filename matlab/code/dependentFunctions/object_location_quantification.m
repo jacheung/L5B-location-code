@@ -19,7 +19,7 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 
 %function parameters
 viewWindow = [-25:50]; %viewing window around touch
-numTouchesPerBin = 75; %number of touches to assign in each bin for quantification.
+numTouchesPerBin = 100; %number of touches to assign in each bin for quantification.
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
@@ -88,7 +88,6 @@ for rec = 1:length(selectedCells)
             heat_resp = cell2mat(cellfun(@(x) mean(x,1),sorted_heat,'uniformoutput',0));
             smoothed_heat_resp = imgaussfilt(heat_resp,gauss_filt,'padding','replicate');
             
-            
             figure(22);subplot(rc(1),rc(2),rec)
             imagesc(smoothed_heat_resp)
             hold on; plot([find(viewWindow==0) find(viewWindow==0)],[1 length(sortedBy_heat)],'-.w')
@@ -119,6 +118,9 @@ for rec = 1:length(selectedCells)
     %     end
     
     [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
+    
+    p_shuff_nums = 1000;
+    randperm(size(cell2nanmat(sorted)));
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);

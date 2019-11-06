@@ -124,9 +124,9 @@ for rec = 1:length(selectedCells)
     y = cellfun(@mean, sorted);
     
     if strcmp(hilbert_feature,'phase') || strcmp(hilbert_feature,'pole')
-        xq = min(cellfun(@median,sortedBy)):.1:max(cellfun(@median,sortedBy));
+        xq = min(x):.1:max(x);
     else
-        xq = min(cellfun(@median,sortedBy)):1:max(cellfun(@median,sortedBy));
+        xq = min(x):1:max(x);
     end
     yq = interp1(x,y,xq);
     
