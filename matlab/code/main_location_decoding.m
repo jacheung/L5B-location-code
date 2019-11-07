@@ -79,9 +79,18 @@ usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
 
 suptitle([ 'Per touch location decoding using ' num2str(size(DmatXraw,2)) ' tuned units'])
 
+%% real psychometric curve 
+publication_data_location = 'C:\Users\jacheung\Dropbox\LocalizationBehavior\DataStructs\publication';
+dataStructLocation = publication_data_location;
+load([dataStructLocation filesep 'behavioral_structure.mat'])
+psychometric_curve = rawPsychometricCurves(BV);
+interp_psycho = cellfun(@(x) interp1(linspace(1,40,10),x(:,3),1:40),psychometric_curve,'uniformoutput',0);
+real_psycho_mean = fliplr(mean(cell2mat(interp_psycho'))); 
+real_psycho_sem = fliplr(std(cell2mat(interp_psycho')) ./ sqrt(numel(BV))); 
+
 %% number of neurons for resolution
-numNeurons = [1 3 7 15 30 numel(usedUnits)];
-numIterations = 50;
+numNeurons = [1:2:20 25 30];
+numIterations = 1000;
 
 mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
 reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
@@ -92,9 +101,11 @@ neurometric_curve = cell(1,length(numNeurons));
 % v.FrameRate = 1;
 % open(v)
 resamp_mdl = [];
+gofmetrics = []; 
 for g = 1:length(numNeurons)
-%     pred = cell(1,numIterations);
-%     true = cell(1,numIterations);
+    
+    pred = cell(1,numIterations);
+    true = cell(1,numIterations);
     for d = 1:numIterations
 %           neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g),'Replace',false);
         neuron_to_use = datasample(1:numel(usedUnits),numNeurons(g));
@@ -150,50 +161,75 @@ end
 %     fix_eps_fonts([saveDir, fn])
 % close(v)
 
-publication_data_location = 'C:\Users\jacheung\Dropbox\LocalizationBehavior\DataStructs\publication';
-dataStructLocation = publication_data_location;
-load([dataStructLocation filesep 'behavioral_structure.mat'])
-psycho = rawPsychometricCurves(BV);
-interp_psycho = cellfun(@(x) interp1(linspace(1,40,10),x(:,3),1:40),psycho,'uniformoutput',0);
-real_psycho_mean = fliplr(mean(cell2mat(interp_psycho'))); 
-real_psycho_sem = fliplr(std(cell2mat(interp_psycho')) ./ sqrt(numel(BV))); 
 
 
 %%
 figure(80);clf
-subplot(1,3,1);
+subplot(2,2,1);
 imagesc(gofmetrics{g}.cmat)
 caxis([0 .4])
 set(gca,'xtick',[],'ytick',[]);
+colormap turbo
+colorbar
 axis square
 
-my_Map = flipud(jet(length(numNeurons)));
-subplot(1,3,2)
-for d = 1:length(numNeurons)
+numNeurons_toPlot = [1 5 9 15 30]; 
+[~,idx] = intersect(numNeurons,numNeurons_toPlot);
+
+my_Map = flipud(jet(length(idx)));
+subplot(2,2,2)
+for d = 1:length(idx)
     hold on;
     %     shadedErrorBar(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),gofmetrics{d}.resolution(:,3),'linecolor','b');
-    plot(gofmetrics{d}.resolution(:,1),gofmetrics{d}.resolution(:,2),'color',my_Map(d,:));
+    plot(gofmetrics{idx(d)}.resolution(:,1),gofmetrics{idx(d)}.resolution(:,2),'color',my_Map(d,:));
 end
 set(gca,'ylim',[0 1],'xlim',[0 8],'xtick',0:2:10,'xticklabel',0:.5:5,'ytick',0:.25:1) %hard coded xticklabels for single touch prediction of pole position using population of OL tuned cells
 xlabel('mm w/in prediction');ylabel('p (prediction)')
 axis square
 title('resolution')
-legend([num2str(numNeurons')])
+legend([num2str(numNeurons(idx)')])
 
 %plot neurometric curve
 neuro_mean = cellfun(@nanmean ,neurometric_curve,'uniformoutput',0);
 neuro_sem = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),neurometric_curve,'uniformoutput',0);
 neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
-MAE = cellfun(@(x) mean(abs(x-fliplr(pop_real_psycho))),neuro_mean);
-[minMAE,minidx] = min(MAE);
+MAE = cellfun(@(x) abs(x-real_psycho_mean),neurometric_curve,'uniformoutput',0);
+mean_MAE = cellfun(@(x) mean(median(x,2)),MAE);
+sem_MAE = cellfun(@(x) std(median(x,2))./sqrt(numIterations),MAE);
+std_MAE = cellfun(@(x) std(median(x,2)),MAE);
+[minMAE,minidx] = min(mean_MAE);
 
-subplot(1,3,3)
-numNeurons_toPlot = [1 3 7 15 30 34]; 
+MAE_for_anova = cellfun(@(x) median(x,2),MAE,'uniformoutput',0);
+[p,~,stats] = anova1(cell2mat(MAE_for_anova),[],'off');
+alpha_value = 0.01;
+if p<alpha_value
+    compare_table = multcompare(stats,'Display','off');
+    max_compares = compare_table(any(compare_table(:,[1 2]) == minidx,2),:);
+    sig_max_compares = max_compares(max_compares(:,end) < alpha_value,:);
+    compare_idx = sig_max_compares(:,[1 2]);
+    other_idx = compare_idx(compare_idx ~= minidx);
+    
+    left_tuning_idx = other_idx(find(other_idx<minidx,1,'last'));
+    right_tuning_idx = other_idx(find(other_idx>minidx,1,'first'));
+end
 
-for d = 1:length(numNeurons)
+subplot(2,2,3)
+errorbar(numNeurons,mean_MAE,std_MAE,'ko-')
+hold on;scatter(numNeurons(minidx),mean_MAE(minidx),'filled','r')
+try
+    hold on;scatter(numNeurons(left_tuning_idx),mean_MAE(left_tuning_idx),'filled','g')
+    hold on;scatter(numNeurons(right_tuning_idx),mean_MAE(right_tuning_idx),'filled','g')
+end
+set(gca,'ylim',[0.05 .5],'xtick',0:5:30)
+xlabel('number of neurons')
+ylabel('median absolute error')
+axis square
+
+subplot(2,2,4)
+for d = 1:length(idx)
     %     subplot(rc(1),rc(2),d)
     hold on;
-    h=shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),neuro_mean{d},neuro_sem{d});
+    h=shadedErrorBar(linspace(-1,1,numel(neuro_mean{idx(d)})),neuro_mean{idx(d)},neuro_sem{idx(d)});
     h.patch.FaceColor = my_Map(d,:);
     %     h.patch.FaceAlpha = .5;
     h.mainLine.Color = [0 0 0];

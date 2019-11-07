@@ -5,9 +5,6 @@ disp('Iterating BARS fitting over cells and different bins. This may take a whil
 whisk_num_bins = [200, 100, 50, 20, 10];
 touches_per_bin = [10 25 50 75 100 125 150 175 200];
 
-whisk_ol_p = cell(1,numel(uberarray));
-touch_ol_p = cell(1,numel(uberarray));
-
 whisk = [];
 touch = [];
 
@@ -50,7 +47,7 @@ for rec = 1:numel(uberarray)
     for b = 1:numel(whisk_num_bins)
         [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',whisk_num_bins(b));
         nanmat = cell2nanmat(sorted);
-        [whisk_ol_p{rec}(b),~,~] = anova1(nanmat,[],'off');
+        [whisk.p_value{rec}(b),~,~] = anova1(nanmat,[],'off');
         
 %         BARS fitting
         x = cellfun(@median,sortedBy);
@@ -61,9 +58,9 @@ for rec = 1:numel(uberarray)
             xq = min(x):1:max(x);
         end
         yq = interp1(x,y,xq);
-        
-        barsFit = [];
-        try
+
+        try 
+            barsFit = [];
             barsFit = barsP(yq,[min(xq) max(xq)],round(mean(cellfun(@numel,sorted))));
             barsFit.x = xq;
             smooth_response = barsFit.mean(2:end-1);
@@ -84,7 +81,7 @@ for rec = 1:numel(uberarray)
     
     %% TOUCH
     %stimulus and response variables definitions
-    if isfield(array.meta,'touchProperties')
+    if isfield(array.meta.touchProperties,'responseWindow')
         touch_rw = array.meta.touchProperties.responseWindow;
         [tVar] = atTouch_sorter(array,touch_rw(1):touch_rw(2));
         
@@ -115,7 +112,7 @@ for rec = 1:numel(uberarray)
             if numBins > 1
                 [sorted_touch, sorted_by_touch] = binslin(selected_feature,response,'equalN',numBins);
                 nanmat = cell2nanmat(sorted_touch);
-                [touch_ol_p{rec}(b),~,~] = anova1(nanmat,[],'off');
+                [touch.p_value{rec}(b),~,~] = anova1(nanmat,[],'off');
                 
                 %BARS fitting
                 x = cellfun(@median,sorted_by_touch);
@@ -127,8 +124,8 @@ for rec = 1:numel(uberarray)
                 end
                 yq = interp1(x,y,xq);
                 
-                barsFit = [];
                 try
+                    barsFit = [];
                     barsFit = barsP(yq,[min(xq) max(xq)],round(mean(cellfun(@numel,sorted))));
                     barsFit.x = xq;
                     smooth_response = barsFit.mean(2:end-1);
@@ -158,11 +155,11 @@ for rec = 1:numel(uberarray)
 end
 
 %% plotting p-value
-selected_whisk = cellfun(@(x) x(3),whisk_ol_p)<0.05;
+selected_whisk = cellfun(@(x) x(3),whisk.p_value)<0.05;
 figure(3840);clf
 
 subplot(1,2,1);
-p_mat = cell2mat(whisk_ol_p((selected_whisk))')';
+p_mat = cell2mat(whisk.p_value((selected_whisk))')';
 plot(whisk_num_bins,p_mat,'color',[.8 .8 .8])
 hold on; plot(whisk_num_bins,nanmean(p_mat,2),'r')
 hold on; plot(whisk_num_bins,nanmedian(p_mat,2),'r--')
@@ -172,7 +169,7 @@ ylabel('ANOVA p-value');
 xlabel('whisk data per bin (%)')
 
 subplot(1,2,2);
-t_mat = cell2mat(touch_ol_p')';
+t_mat = cell2mat(touch.p_value')';
 plot(touches_per_bin,t_mat,'color',[.8 .8 .8])
 hold on; plot(touches_per_bin,nanmean(t_mat,2),'r')
 hold on; plot(touches_per_bin,nanmedian(t_mat,2),'r--')

@@ -20,11 +20,10 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 rc = numSubplots(numel(selectedCells));
 
 %function parameters
-numWhiskSamplesPerBin = 7500; %number of whisks to assign in each bin for quantification.
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 10; %minimum number of angle bins to consider quantifying
-binslin_bins = 50; 
+binslin_bins = 50; %chose 50 based on testing a number of different bins (see sampling_justification.mat)
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
@@ -81,20 +80,6 @@ for rec = 1:length(selectedCells)
         
         angle = squeeze(array.S_ctk(1,:,:));
         conversion_feature = polyval(p,angle);
-        
-        % plotting conversion of whisker angle to pole
-        %         figure(48);clf
-        %         scatter(cleaned(:,2)*-1,cleaned(:,1),'.k')
-        %         y = min(angle(:)):1:max(angle(:));
-        %         hold on; plot(polyval(p,min(angle(:)):1:max(angle(:)))*-1,y,'r');
-        %         set(gca,'xlim',[-2 4],'ytick',-20:20:80)
-        %         axis square
-        %         title(['cell num ' num2str(selectedCells(rec))])
-        %         saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-        %         fn = ['angle2pole_' num2str(selectedCells(rec)) '.eps'];
-        %         export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-        %         fix_eps_fonts([saveDir, fn])
-        
 
     end
     
@@ -114,6 +99,15 @@ for rec = 1:length(selectedCells)
     nonzero_bins = sum(cellfun(@mean, sorted)~=0);
     nanmat = cell2nanmat(sorted);
     [quant_ol_p,~,stats] = anova1(nanmat,[],'off');
+    
+    p_shuff_num = 1000;
+    nanmat = cell2nanmat(sorted);
+    p_shuff = zeros(1,p_shuff_num);
+    for i = 1:p_shuff_num
+        shuff = randperm(numel(nanmat));
+        p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+    end
+    sig_by_chance = mean(p_shuff<quant_ol_p);
 
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
@@ -169,12 +163,12 @@ for rec = 1:length(selectedCells)
     [maxResponse,maxidx] = max(smooth_response);
     [minResponse,minidx] = min(smooth_response);
     
-    if numel(sortedBy)>min_bins
+    if sig_by_chance < 0.05
         
         if willdisplay
             figure(23);subplot(rc(1),rc(2),rec)
             %             shadedErrorBar(smooth_stimulus,smooth_response,smooth(CI,smoothing_param),'k')
-            shadedErrorBar( xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
+%             shadedErrorBar( xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
             
         end
         

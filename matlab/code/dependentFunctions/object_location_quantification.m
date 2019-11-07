@@ -119,8 +119,14 @@ for rec = 1:length(selectedCells)
     
     [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
     
-    p_shuff_nums = 1000;
-    randperm(size(cell2nanmat(sorted)));
+    p_shuff_num = 1000;
+    nanmat = cell2nanmat(sorted);
+    p_shuff = zeros(1,p_shuff_num);
+    for i = 1:p_shuff_num
+        shuff = randperm(numel(nanmat));
+        p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+    end
+    sig_by_chance = mean(p_shuff<quant_ol_p); 
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
@@ -147,7 +153,7 @@ for rec = 1:length(selectedCells)
             shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
         end
         
-        if quant_ol_p < alpha_value
+        if sig_by_chance < 0.05
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
 %             if strcmp(array.meta.touchProperties.responseType,'excited')
