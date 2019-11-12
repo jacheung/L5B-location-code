@@ -28,7 +28,7 @@ set(gca,'ylim',[0 1],'ytick',0:.25:1','xtick',[],'xlim',[0 3])
 
 rawPsychometricCurves(U(expert))
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'expert_psycho.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
@@ -69,7 +69,7 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 
-%% Comparison of naive vs expert
+%% Comparison of naive vs expert proportion of touch/OL cells
 naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
 expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
@@ -99,7 +99,7 @@ set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(num_naive_OL)],['expert n=
 title('proportion of touch that is OL')
 
     figure(99)
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
     fn = 'unit_distribution_bar.eps';
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
@@ -138,7 +138,7 @@ for b=1:length(tuned_units)
     
     %plotting all touch object location tuned units
     subplot(1,2,b)
-    unsorted_heat = normalize_var(cell2mat(touch_heat')',0,1);
+    unsorted_heat = norm_new(cell2mat(touch_heat')');
     [~,t_max_idx] = max(unsorted_heat,[],1);
     [~,t_idx] = sort(t_max_idx);
     data = unsorted_heat(:,t_idx)';
@@ -149,10 +149,11 @@ for b=1:length(tuned_units)
     set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
     axis square
 end
+colormap turbo
 
 
     figure(80);
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
     fn = 'naive_expert_heat.eps';
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
@@ -173,7 +174,7 @@ for b=1:length(tuned_units_list)
     for g = 1:length(peak_response)
         sr = pole_tuned{tuned_units_list{b}(g)}.stim_response;
         centered_x = sr.values(:,1) - peak_response(g) ;
-        norm_y = normalize_var(sr.values(:,2),0,1);
+        norm_y = norm_new(sr.values(:,2));
         
         interp_centered_x = -2:.1:2;
         raw_x = round(centered_x,2);

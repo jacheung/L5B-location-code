@@ -89,8 +89,8 @@ real_psycho_mean = fliplr(mean(cell2mat(interp_psycho')));
 real_psycho_sem = fliplr(std(cell2mat(interp_psycho')) ./ sqrt(numel(BV))); 
 
 %% number of neurons for resolution
-numNeurons = [1:2:20 25 30];
-numIterations = 1000;
+numNeurons = [1:25];
+numIterations = 50;
 
 mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
 reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
@@ -173,7 +173,7 @@ colormap turbo
 colorbar
 axis square
 
-numNeurons_toPlot = [1 5 9 15 30]; 
+numNeurons_toPlot = [1 3 5 11 20 25]; 
 [~,idx] = intersect(numNeurons,numNeurons_toPlot);
 
 my_Map = flipud(jet(length(idx)));
@@ -194,9 +194,9 @@ neuro_mean = cellfun(@nanmean ,neurometric_curve,'uniformoutput',0);
 neuro_sem = cellfun(@(x) nanstd(x)./sqrt(sum(~isnan(x))),neurometric_curve,'uniformoutput',0);
 neuro_std = cellfun(@(x) nanstd(x),neurometric_curve,'uniformoutput',0);
 MAE = cellfun(@(x) abs(x-real_psycho_mean),neurometric_curve,'uniformoutput',0);
-mean_MAE = cellfun(@(x) mean(median(x,2)),MAE);
-sem_MAE = cellfun(@(x) std(median(x,2))./sqrt(numIterations),MAE);
-std_MAE = cellfun(@(x) std(median(x,2)),MAE);
+mean_MAE = cellfun(@(x) mean(mean(x,2)),MAE);
+sem_MAE = cellfun(@(x) std(mean(x,2))./sqrt(numIterations),MAE);
+std_MAE = cellfun(@(x) std(mean(x,2)),MAE);
 [minMAE,minidx] = min(mean_MAE);
 
 MAE_for_anova = cellfun(@(x) median(x,2),MAE,'uniformoutput',0);
@@ -214,15 +214,22 @@ if p<alpha_value
 end
 
 subplot(2,2,3)
-errorbar(numNeurons,mean_MAE,std_MAE,'ko-')
-hold on;scatter(numNeurons(minidx),mean_MAE(minidx),'filled','r')
-try
-    hold on;scatter(numNeurons(left_tuning_idx),mean_MAE(left_tuning_idx),'filled','g')
-    hold on;scatter(numNeurons(right_tuning_idx),mean_MAE(right_tuning_idx),'filled','g')
-end
-set(gca,'ylim',[0.05 .5],'xtick',0:5:30)
+% %average neurometric distance from average pyschometric
+MAE = cellfun(@(x) mean(abs((x-real_psycho_mean))),neuro_mean);
+[minMAE,minidx] = min(MAE);
+scatter(numNeurons,MAE,'ko')
+hold on; plot([0 25],[0 0],'--k')
+
+% shadedErrorBar(numNeurons,mean_MAE,sem_MAE,'k-')
+% hold on;scatter(numNeurons(minidx),mean_MAE(minidx),'filled','r')
+% try
+%     hold on;scatter(numNeurons(left_tuning_idx),mean_MAE(left_tuning_idx),'filled','g')
+%     hold on;scatter(numNeurons(right_tuning_idx),mean_MAE(right_tuning_idx),'filled','g')
+% end
+
+set(gca,'ylim',[-.2 .4],'xtick',0:5:30)
 xlabel('number of neurons')
-ylabel('median absolute error')
+ylabel('mean absolute error')
 axis square
 
 subplot(2,2,4)

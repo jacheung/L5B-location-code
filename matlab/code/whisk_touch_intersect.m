@@ -4,7 +4,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %%
-hilbertVar = 'phase';
+hilbertVar = 'angle';
 
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 %     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
@@ -18,7 +18,13 @@ tStruct = object_location_quantification(U,selectedCells,hilbertVar,'off');
 %     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 %     fix_eps_fonts([saveDir, fn])
 
-wStruct = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
+fileName = ['whisk_' hilbertVar '_tune'];
+if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+else
+    wStruct = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
+    
+end
 
 
 if strcmp(hilbertVar,'pole')

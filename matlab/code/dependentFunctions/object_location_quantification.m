@@ -36,8 +36,8 @@ for i = 1:length(uberarray)
     tuneStruct{i}.is_tuned = nan;
 end
 
+rc = numSubplots(numel(selectedCells));
 if willdisplay
-    rc = numSubplots(numel(selectedCells));
     figure(22);clf
     figure(23);clf
 end
@@ -45,7 +45,7 @@ end
 for rec = 1:length(selectedCells)
     %stimulus and response variables definitions
     array = uberarray{selectedCells(rec)};
-%     [tVar] = atTouch_sorter(array,viewWindow,preDecisionTouches{selectedCells(rec)});
+    %     [tVar] = atTouch_sorter(array,viewWindow,preDecisionTouches{selectedCells(rec)});
     [tVar] = atTouch_sorter(array,viewWindow);
     
     if ~isempty(hilbert_feature)
@@ -126,21 +126,56 @@ for rec = 1:length(selectedCells)
         shuff = randperm(numel(nanmat));
         p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
     end
-    sig_by_chance = mean(p_shuff<quant_ol_p); 
+    sig_by_chance = mean(p_shuff<quant_ol_p);
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
     
     
-%     % ONLY FOR MOD IDX CALCULATIONS
+    %BARSP FOR MOD IDX CALCULATIONS
+    try
+        x = cellfun(@median,sortedBy);
+        y = cellfun(@mean, sorted);
+        if strcmp(hilbert_feature,'phase') || strcmp(hilbert_feature,'pole')
+            xq = min(x):.1:max(x);
+        else
+            xq = min(x):1:max(x);
+        end
+        yq = interp1(x,y,xq);
+        
+        barsFit = barsP(yq,[min(xq) max(xq)],round(mean(cellfun(@numel,sorted))));
+        barsFit.x = xq;
+        
+%         figure(9);subplot(rc(1),rc(2),rec)
+%         bar(x,y,'k')
+%         if sig_by_chance < 0.05 && quant_ol_p < 0.05 && numel(sortedBy)>min_bins
+%             hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'g')
+%         else
+%             hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
+%         end
+        
+        smooth_response = barsFit.mean(2:end-1);
+        smooth_stimulus = xq(2:end-1);
+        
+        [maxResponse,maxidx] = max(smooth_response);
+        [minResponse,~] = min(smooth_response);
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
+        tuneStruct{selectedCells(rec)}.calculations.tune_peak = smooth_stimulus(maxidx);
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
+    catch
+        barsFit = [];
+        disp(['skipping ' num2str(rec) ' due to ill fitting of bars'])
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = 0;
+        tuneStruct{selectedCells(rec)}.calculations.tune_peak = nan;
+        tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = 0;
+    end
+    
+
+    %for table 
     smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
-    [maxResponse,maxidx] = max(smooth_response);
-    [minResponse,minidx] = min(smooth_response);
-    tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
-    tuneStruct{selectedCells(rec)}.calculations.mod_depth = (maxResponse - minResponse) ./ mean(smooth_response);
-    tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
-    tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
+    [~,maxidx] = max(smooth_response);
+    [~,minidx] = min(smooth_response);
     tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{maxidx};
     tuneStruct{selectedCells(rec)}.calculations.responses_at_trough = sorted{minidx};
     
@@ -153,68 +188,49 @@ for rec = 1:length(selectedCells)
             shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
         end
         
-        if sig_by_chance < 0.05
+        if sig_by_chance < 0.05 && quant_ol_p < 0.05
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
-%             if strcmp(array.meta.touchProperties.responseType,'excited')
-                [maxResponse,maxidx] = max(smooth_response);
-                [~, minidx] = min(smooth_response);
-                
-                %right and left tuning by idx
-                compare_table = multcompare(stats,'Display','off');
-                max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);
-                sig_max_compares = max_compares(max_compares(:,end) < alpha_value,:);
-                compare_idx = sig_max_compares(:,[1 2]);
-                other_idx = compare_idx(compare_idx ~= maxidx);
-                
-                left_tuning_idx = other_idx(find(other_idx<maxidx,1,'last'));
-                right_tuning_idx = other_idx(find(other_idx>maxidx,1,'first'));
-                
-                tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
-                
-                %finding tuning width before peak
-                if ~isempty(left_tuning_idx)
-                    tuneStruct{selectedCells(rec)}.calculations.tune_left_width = median(sortedBy{maxidx})-median(sortedBy{left_tuning_idx});
-                    if willdisplay
-                        hold on; scatter(median(sortedBy{maxidx}),maxResponse,'g','filled');
-                        hold on; scatter(median(sortedBy{left_tuning_idx}),smooth_response(left_tuning_idx),'r','filled');
-                    end 
-                else
-                    tuneStruct{selectedCells(rec)}.calculations.tune_left_width = nan;
+            %             if strcmp(array.meta.touchProperties.responseType,'excited')
+            [maxResponse,maxidx] = max(smooth_response);
+            [~, minidx] = min(smooth_response);
+            
+            %right and left tuning by idx
+            compare_table = multcompare(stats,'Display','off');
+            max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);
+            sig_max_compares = max_compares(max_compares(:,end) < alpha_value,:);
+            compare_idx = sig_max_compares(:,[1 2]);
+            other_idx = compare_idx(compare_idx ~= maxidx);
+            
+            left_tuning_idx = other_idx(find(other_idx<maxidx,1,'last'));
+            right_tuning_idx = other_idx(find(other_idx>maxidx,1,'first'));
+            
+            tuneStruct{selectedCells(rec)}.calculations.tune_peak = median(sortedBy{maxidx});
+            
+            %finding tuning width before peak
+            if ~isempty(left_tuning_idx)
+                tuneStruct{selectedCells(rec)}.calculations.tune_left_width = median(sortedBy{maxidx})-median(sortedBy{left_tuning_idx});
+                if willdisplay
+                    hold on; scatter(median(sortedBy{maxidx}),maxResponse,'g','filled');
+                    hold on; scatter(median(sortedBy{left_tuning_idx}),smooth_response(left_tuning_idx),'r','filled');
                 end
-                
-                %finding tuning width after peak
-                if ~isempty(right_tuning_idx)
-                    tuneStruct{selectedCells(rec)}.calculations.tune_right_width = median(sortedBy{right_tuning_idx}) - median(sortedBy{maxidx});
-                    if willdisplay
-                        hold on; scatter(median(sortedBy{maxidx}),maxResponse,'g','filled');
-                        hold on; scatter(median(sortedBy{right_tuning_idx}),smooth_response(right_tuning_idx),'r','filled');
-                    end
-                else
-                    tuneStruct{selectedCells(rec)}.calculations.tune_right_width = nan;
+            else
+                tuneStruct{selectedCells(rec)}.calculations.tune_left_width = nan;
+            end
+            
+            %finding tuning width after peak
+            if ~isempty(right_tuning_idx)
+                tuneStruct{selectedCells(rec)}.calculations.tune_right_width = median(sortedBy{right_tuning_idx}) - median(sortedBy{maxidx});
+                if willdisplay
+                    hold on; scatter(median(sortedBy{maxidx}),maxResponse,'g','filled');
+                    hold on; scatter(median(sortedBy{right_tuning_idx}),smooth_response(right_tuning_idx),'r','filled');
                 end
-                
-                tuneStruct{selectedCells(rec)}.is_tuned = 1;
-                
-%             elseif strcmp(array.meta.touchProperties.responseType,'inhibited')
-%                 [minResponse,idx] = min(smooth_response);
-%                 
-%                 %plot scatter of first sig diff from min
-%                 sd_p = nan(length(sorted),1);
-%                 pThresh = .05;
-%                 for g = 1:numel(sorted)
-%                     [~,sd_p(g)] = ttest2(sorted{idx},sorted{g});
-%                 end
-%                 all_idx = find(sd_p < pThresh); %all points sig diff from min
-%                 [~,sd_idx_tmp] = min(abs(idx - all_idx));
-%                 
-%  
-%                 if ~isempty(sd_idx) && ~isempty(idx) && willdisplay
-%                     hold on; scatter(median(sortedBy{idx}),minResponse,'r','filled');
-%                     hold on; scatter(median(sortedBy{sd_idx}),smooth_response(sd_idx),'r','filled');
-%                 end
-%             end
-%             
+            else
+                tuneStruct{selectedCells(rec)}.calculations.tune_right_width = nan;
+            end
+            
+            tuneStruct{selectedCells(rec)}.is_tuned = 1;
+            
         end
         
         if willdisplay

@@ -107,6 +107,7 @@ fix_eps_fonts([saveDir, fn])
 
 %% heatmap
 %building heatmap for object location tuned touch units
+pole_tuned = object_location_quantification(U,selectedCells,'phase','off'); %for old see object_location_v1.0
 tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
 sel_tstructs = pole_tuned(tuned_units);
 touch_heat = cell(1,sum(tuned_units));
@@ -138,8 +139,10 @@ figure(15);clf
 pcolor([data nan(nr,1); nan(1,nc+1)]);
 caxis([0 1])
 shading flat;
+colormap turbo
 set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
 title(['location tuned heat map (n=' num2str(size(data,1)) ')'])
+colorbar
 
 fn = 'heat_map_tuning.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
