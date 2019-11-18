@@ -34,6 +34,8 @@ for g = 1:numel(sel_tstructs)
         touch_x = -1:.1:1;
     elseif strcmp(hilbertVar,'phase')
         touch_x = linspace(-pi,pi,21);
+    elseif strcmp(hilbertVar,'angle')
+        touch_x = -30:80;
     else
         touch_x = round(round(min(curr_t(:,1))):1:round(max(curr_t(:,1))));
     end
@@ -46,12 +48,14 @@ for d = 1:numel(sel_wstructs)
     curr_w = sel_wstructs{d}.stim_response.values;
     
     %clean nan rows
-    curr_w = curr_w(~any(isnan(curr_w),2),:); 
+    curr_w = curr_w(~any(isnan(curr_w),2),:);
     
     if strcmp(hilbertVar,'pole')
         whisk_x = -2:.1:2;
     elseif strcmp(hilbertVar,'phase')
         whisk_x = linspace(-pi,pi,21);
+    elseif strcmp(hilbertVar,'angle')
+        whisk_x = -30:80;
     else
         whisk_x = round(round(min(curr_t(:,1))):1:round(max(curr_t(:,1))));
     end
@@ -72,7 +76,14 @@ data = unsorted_heat(:,t_idx)';
 pcolor([data nan(nr,1); nan(1,nc+1)]);
 caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+colormap turbo
+if strcmp(hilbertVar,'pole')
+    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'phase')
+    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'angle')
+    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
+end
 title('all touch sorted')
 
 %plotting all whisk object location tuned units
@@ -87,7 +98,14 @@ data = unsorted__whisk_heat(:,w_idx)';
 pcolor([data nan(nr,1); nan(1,nc+1)]);
 caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-2:1:2,'ydir','reverse')
+colormap turbo
+if strcmp(hilbertVar,'pole')
+    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'phase')
+    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'angle')
+    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
+end
 title('all whisk sorted')
 
 %plotting all whisk+touch object location tuned units touch responses sorted by touch peak 
@@ -102,7 +120,14 @@ data = unsorted_heat_touch(:,t_idx_ix)';
 pcolor([data nan(nr,1); nan(1,nc+1)]);
 caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+colormap turbo
+if strcmp(hilbertVar,'pole')
+    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'phase')
+    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'angle')
+    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
+end
 title('ix touch sorted')
 
 %plotting all whisk+touch object location tuned units whisk responses sorted by whisk peak 
@@ -117,7 +142,14 @@ data = unsorted_whisk_heat(:,w_idx_ix)';
 pcolor([data nan(nr,1); nan(1,nc+1)]);
 caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-2:1:2,'ydir','reverse')
+colormap turbo
+if strcmp(hilbertVar,'pole')
+    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'phase')
+    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'angle')
+    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
+end
 title('ix whisk sorted')
 
 %plotting all whisk+touch object location tuned units touch responses sorted by whisk peak 
@@ -130,7 +162,14 @@ data = unsorted_heat_touch(:,w_idx_ix)';
 pcolor([data nan(nr,1); nan(1,nc+1)]);
 caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+colormap turbo
+if strcmp(hilbertVar,'pole')
+    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'phase')
+    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'angle')
+    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
+end
 title('ix touch whisk sorted by whisk')
 
 %plotting all whisk+touch object location tuned units whisk responses sorted by touch peak 
@@ -143,7 +182,14 @@ data = unsorted_whisk_heat(:,t_idx_ix)';
 pcolor([data nan(nr,1); nan(1,nc+1)]);
 caxis([0 1])
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(whisk_x),'xlim',[1 length(whisk_x)],'xticklabel',-2:1:2,'ydir','reverse')
+colormap turbo
+if strcmp(hilbertVar,'pole')
+    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'phase')
+    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+elseif strcmp(hilbertVar,'angle')
+    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
+end
 title('ix whisk sorted by touch')
 
 

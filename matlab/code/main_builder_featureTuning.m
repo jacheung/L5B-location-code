@@ -89,6 +89,7 @@ peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,mp_tuned(touchCells));
 % performing some deeper level of computation/merging of other features to reveal angle at touch
 % tuning. 
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+pole_tuned = object_location_quantification(U,touchCells,'pole','off');
 angle_tuned = object_location_quantification(U,touchCells,'angle','off');
 phase_tuned = object_location_quantification(U,touchCells,'phase','off');
 amp_tuned = object_location_quantification(U,touchCells,'amplitude','off');
@@ -96,31 +97,32 @@ mp_tuned = object_location_quantification(U,touchCells,'midpoint','off');
 
 phase_tuned_cells = ismember(touchCells,find(cellfun(@(x) x.is_tuned==1,phase_tuned)));
 
+mod_depth_pole = cellfun(@(x) x.calculations.mod_depth,pole_tuned(touchCells));
 mod_depth_angle = cellfun(@(x) x.calculations.mod_depth,angle_tuned(touchCells));
 mod_depth_phase = cellfun(@(x) x.calculations.mod_depth,phase_tuned(touchCells));
 mod_depth_amp = cellfun(@(x) x.calculations.mod_depth,amp_tuned(touchCells));
 mod_depth_mp = cellfun(@(x) x.calculations.mod_depth,mp_tuned(touchCells));
 
-
+mod_idx_abs_pole = cellfun(@(x) x.calculations.mod_idx_abs,angle_tuned(touchCells));
 mod_idx_abs_angle = cellfun(@(x) x.calculations.mod_idx_abs,angle_tuned(touchCells));
 mod_idx_abs_phase = cellfun(@(x) x.calculations.mod_idx_abs,phase_tuned(touchCells));
 mod_idx_abs_amp = cellfun(@(x) x.calculations.mod_idx_abs,amp_tuned(touchCells));
 mod_idx_abs_mp = cellfun(@(x) x.calculations.mod_idx_abs,mp_tuned(touchCells));
 
-abs_against = {mod_idx_abs_angle,mod_idx_abs_amp,mod_idx_abs_mp};
-depth_against = {mod_depth_angle,mod_depth_amp,mod_depth_mp};
+abs_against = {mod_idx_abs_angle,mod_idx_abs_phase,mod_idx_abs_amp,mod_idx_abs_mp};
+depth_against = {mod_depth_angle,mod_depth_phase,mod_depth_amp,mod_depth_mp};
 labels = {'angle','amp','mp'};
 figure(480);clf
 for g = 1:length(abs_against)
     subplot(2,3,g)
-    scatter(mod_depth_phase,depth_against{g},'k')
-    hold on; scatter(mod_depth_phase(phase_tuned_cells),depth_against{g}(phase_tuned_cells),'filled','k')
+    scatter(mod_depth_pole,depth_against{g},'k')
+    hold on; scatter(mod_depth_pole(phase_tuned_cells),depth_against{g}(phase_tuned_cells),'filled','k')
     hold on; plot([0 10],[0 10],'--k')
     set(gca,'xlim',[0 4],'ylim',[0 4])
     axis square
     xlabel('mod depth phase')
     ylabel(['mod depth ' labels{g}])
-    [~,p_rel] = ttest(mod_depth_phase,depth_against{g});
+    [~,p_rel] = ttest(mod_depth_pole,depth_against{g});
     title(num2str(p_rel))
     
     subplot(2,3,g+3)

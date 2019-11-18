@@ -26,7 +26,6 @@ else
     
 end
 
-
 if strcmp(hilbertVar,'pole')
     population_heatmap_builder(tStruct,wStruct,hilbertVar)
     
@@ -218,6 +217,14 @@ for g = 1:sum(touch_OL)
             axis square
         elseif strcmp(hilbertVar,'phase')
             set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'\pi','0','\pi'})
+        end
+        
+        if any(g == whiskTuned(whisk_nonIX_idx))
+            title('whisk only')
+        elseif any(g == touchTuned(touch_nonIX_idx))
+            title('touch only')
+        elseif any(g ==touch_whisk_tuned)
+            title('T+W')
         end
         
         %normalized responses MAXMIN

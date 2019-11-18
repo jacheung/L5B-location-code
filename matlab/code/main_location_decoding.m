@@ -75,7 +75,6 @@ mdlResults.io.Y.normal = glmModel{1}.io.DmatY;
 mdlResults = multinomialModel(mdlResults,mdlResults.io.Xnorm,mdlResults.io.Y.normal,glmnetOpt);
 %% decoding resolution and probability of guesses
 gof = decoderPerformance(mdlResults);
-usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
 
 suptitle([ 'Per touch location decoding using ' num2str(size(DmatXraw,2)) ' tuned units'])
 
@@ -89,6 +88,8 @@ real_psycho_mean = fliplr(mean(cell2mat(interp_psycho')));
 real_psycho_sem = fliplr(std(cell2mat(interp_psycho')) ./ sqrt(numel(BV))); 
 
 %% number of neurons for resolution
+usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
+
 numNeurons = [1:25];
 numIterations = 50;
 

@@ -66,14 +66,16 @@ blue_dots = intersect(find(p<.05),find(fr_whisk<fr_quiet));
 gray_dots = setdiff(1:numel(masks),[red_dots blue_dots]);
 
 figure(480);clf
-scatter(fr_quiet(red_dots),fr_whisk(red_dots),'filled','r')
-hold on; scatter(fr_quiet(blue_dots),fr_whisk(blue_dots),'filled','b')
-hold on; scatter(fr_quiet(gray_dots),fr_whisk(gray_dots),'filled','markerfacecolor',[.8 .8 .8])
+% scatter(fr_quiet(red_dots),fr_whisk(red_dots),'filled','r')
+% hold on; scatter(fr_quiet(blue_dots),fr_whisk(blue_dots),'filled','b')
+% hold on; scatter(fr_quiet(gray_dots),fr_whisk(gray_dots),'filled','markerfacecolor',[.8 .8 .8])
+scatter(fr_quiet(p<.05),fr_whisk(p<.05),'filled','k')
+hold on; scatter(fr_quiet(gray_dots),fr_whisk(gray_dots),'ko')
 axis square
-hold on; plot([0 max([fr_quiet fr_whisk])],[0 max([fr_quiet fr_whisk])],'--k')
-set(gca,'xlim',[0 max([fr_quiet fr_whisk])],'ylim',[0 max([fr_quiet fr_whisk])])
+hold on; plot([0.01 100],[0.01 100],'--k')
+set(gca,'xlim',[0 100],'ylim',[0 100],'xscale','log','yscale','log')
 xlabel('quiet FR');ylabel('whisking FR')
-title(['red=' num2str(numel(red_dots)) ' blue=' num2str(numel(blue_dots)) ' gray=' num2str(numel(gray_dots))])
+title(['red=' num2str(numel(red_dots)) ' blue=' num2str(numel(blue_dots)) ' n.s.=' num2str(numel(gray_dots))])
 
 fn = 'whisk_quiet_unity.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')

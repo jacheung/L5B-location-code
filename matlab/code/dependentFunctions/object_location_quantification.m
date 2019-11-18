@@ -161,6 +161,7 @@ for rec = 1:length(selectedCells)
         [maxResponse,maxidx] = max(smooth_response);
         [minResponse,~] = min(smooth_response);
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = (maxResponse - minResponse) ./ (maxResponse + minResponse);
+        tuneStruct{selectedCells(rec)}.calculations.mod_depth = (maxResponse - minResponse) ./ mean(barsFit.mean(2:end-1));
         tuneStruct{selectedCells(rec)}.calculations.tune_peak = smooth_stimulus(maxidx);
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
     catch
@@ -169,6 +170,7 @@ for rec = 1:length(selectedCells)
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = 0;
         tuneStruct{selectedCells(rec)}.calculations.tune_peak = nan;
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = 0;
+         tuneStruct{selectedCells(rec)}.calculations.mod_depth = 0;
     end
     
 
