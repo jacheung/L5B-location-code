@@ -21,7 +21,7 @@ layer = 'L5bInt';
 cellNum = [1:6];
 trialCutoffs = repmat([1 500],numel(cellNum),1);
 %% 
-clear 
+clear U
 layer = 'Phil';
 cd(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\Projects\Characterization\' layer '\TArrays'])
 files = dir('*.mat');

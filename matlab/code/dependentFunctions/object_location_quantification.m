@@ -19,7 +19,7 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 
 %function parameters
 viewWindow = [-25:50]; %viewing window around touch
-numTouchesPerBin = 100; %number of touches to assign in each bin for quantification.
+numTouchesPerBin = 75; %number of touches to assign in each bin for quantification.
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
@@ -187,7 +187,11 @@ for rec = 1:length(selectedCells)
         
         if willdisplay
             figure(23);subplot(rc(1),rc(2),rec)
-            shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'k')
+            try
+                shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
+            catch
+                shadedErrorBar(cellfun(@median, sortedBy), smooth(cellfun(@mean,sorted),smoothing_param),smooth(CI,smoothing_param),'r')
+            end
         end
         
         if sig_by_chance < 0.05 && quant_ol_p < 0.05
@@ -251,6 +255,11 @@ for rec = 1:length(selectedCells)
         tuneStruct{selectedCells(rec)}.stim_response.raw_response = sorted;
     else
         tuneStruct{selectedCells(rec)}.is_tuned  = .5;  %not enough samples
+    end
+    
+    if ~isempty(barsFit)
+        tuneStruct{selectedCells(rec)}.stim_response.bars_fit= barsFit;
+        tuneStruct{selectedCells(rec)}.stim_response.bars_stim = xq;
     end
     
     

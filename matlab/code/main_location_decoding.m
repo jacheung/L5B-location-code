@@ -4,11 +4,11 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions
-%U = defTouchResponse(U,.95,'on');
+U = defTouchResponse(U,.95,'on');
 % selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 
-pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
+pole_tuned = object_location_quantification(U,selectedCells,'pole','on'); %for old see object_location_v1.0
 
 tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1);
 untuned_cells = intersect(find(~(cellfun(@(x) x.is_tuned,pole_tuned)==1)),selectedCells);

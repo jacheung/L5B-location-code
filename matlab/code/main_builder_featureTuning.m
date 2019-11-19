@@ -27,12 +27,9 @@ axis square
 colormap gray
 caxis([0 1])
 
-
 fn = 'stimulus_correlation.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
-
-
 %% TOUCH and FIRING RATE
 % U = defTouchResponse(U,.95,'off');
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));

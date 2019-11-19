@@ -35,7 +35,15 @@ for rec=1:length(U)
     CI = SEM.*ts;
     
 %     touchResponse = smooth(nanmean(touchSpks),5);
-    touchResponse = nanmean(touchSpks);
+    touchResponse_raw = sum(touchSpks);
+    touchResponse_plot = nanmean(touchSpks); 
+    try
+        bars_fit = barsP(touchResponse_raw,[min(window) max(window)],numel(touchIdx));
+        touchResponse = bars_fit.mean ./ numel(touchIdx);
+    catch
+        bars_fit = [];
+        touchResponse = touchResponse_raw;
+    end
     excitThreshold = mean(touchSpksShuff(:)) + CI;
     inhibThreshold = mean(touchSpksShuff(:)) - CI;
 
@@ -58,9 +66,20 @@ for rec=1:length(U)
     max_touch = max(touchResponse(find(window==0):end));
     U{rec}.meta.touchProperties.mod_idx_relative = (max_touch - mean(baseline_spikes(:))) ./ (max_touch + mean(baseline_spikes(:)));
     
+    excit_magnitude = nanmedian(abs(touchResponse(excitthreshIdx)-excitThreshold));
+    inhib_magnitude = nanmedian(abs(touchResponse(inhibthreshIdx)-inhibThreshold));
+    if ~any(inhibthreshIdx)
+        inhib_magnitude = 0;
+    end
+    if ~any(excitthreshIdx)
+        excit_magnitude = 0;
+    end
+    
+    
     %Defining touch responses as a period between two points that are less
     %than 5ms apart.
-    if sum(excitthreshIdx)>0 && sum(excitthreshIdx)>sum(inhibthreshIdx) 
+%     if sum(excitthreshIdx)>0 && sum(excitthreshIdx)>sum(inhibthreshIdx) 
+    if excit_magnitude>inhib_magnitude
         tps = window(excitthreshIdx);
         if ~isempty(tps)
             %defining touch response window 
@@ -81,7 +100,7 @@ for rec=1:length(U)
                 %plotting
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
-                    hold on; bar(window,touchResponse*1000,'b','facealpha',.2,'edgealpha',.2);
+                    hold on; bar(window,touchResponse_plot*1000,'b','facealpha',.2,'edgealpha',.2);
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'b','filled')
                     hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50,'xlim',[-25 50])
@@ -91,14 +110,15 @@ for rec=1:length(U)
             else
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
-                    hold on; bar(window,touchResponse*1000,'k','facealpha',.2,'edgealpha',.2);
+                    hold on; bar(window,touchResponse_plot*1000,'k','facealpha',.2,'edgealpha',.2);
                     hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50)
                 end
             end
         end
         
-    elseif sum(excitthreshIdx)<sum(inhibthreshIdx) %deprecated code as of 190728 
+%     elseif sum(excitthreshIdx)<sum(inhibthreshIdx) %deprecated code as of 190728 
+    elseif inhib_magnitude>excit_magnitude
         tps = window(inhibthreshIdx);
         if ~isempty(tps)
             startPoint = tps(1);
@@ -118,7 +138,7 @@ for rec=1:length(U)
                 
                 if willdisplay
                     figure(3000);subplot(rc(1),rc(2),rec)
-                    hold on; bar(window,touchResponse*1000,'r','facealpha',.2,'edgealpha',.2);
+                    hold on; bar(window,touchResponse_plot*1000,'r','facealpha',.2,'edgealpha',.2);
                     hold on; scatter(window(startPoint+find(window==0):endPoint+find(window==0)),touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000,'r','filled')
                     hold on; plot(window,ones(length(window),1).* inhibThreshold .* 1000,'k-.')
                     set(gca,'xtick',-25:25:50)
@@ -133,7 +153,7 @@ for rec=1:length(U)
     else
         if willdisplay
             figure(3000);subplot(rc(1),rc(2),rec)
-            hold on; bar(window,touchResponse*1000,'k','facealpha',.2,'edgealpha',.2);
+            hold on; bar(window,touchResponse_plot*1000,'k','facealpha',.2,'edgealpha',.2);
             hold on; plot(window,ones(length(window),1).* excitThreshold .* 1000,'k-.')
              set(gca,'xtick',-25:25:50)
 

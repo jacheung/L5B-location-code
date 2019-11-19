@@ -290,8 +290,66 @@ end
 %     fix_eps_fonts([saveDir, fn])
 
 
-%%
-find(touch_OL)
-whiskUnits = intersect(find(touch_OL),find(wUnits))
+
+%% WHISK TUNING CURVES
+whisk_units = find(wUnits);
+rc = numSubplots(numel(whisk_units));
+num_bins = 50;
+figure(239);clf
+for g = 1:numel(whisk_units)
+    array = U{whisk_units(g)};
+    
+    spikes = squeeze(array.R_ntk);
+    timePostTouchToTrim = 30;
+    touchOnIdx = [find(array.S_ctk(9,:,:)==1); find(array.S_ctk(12,:,:)==1)];
+    touchOffIdx = [find(array.S_ctk(10,:,:)==1); find(array.S_ctk(13,:,:)==1)];
+    touchOnIdx = touchOnIdx(touchOffIdx<numel(spikes)-timePostTouchToTrim+5);
+    touchOffIdx = touchOffIdx(touchOffIdx<numel(spikes)-timePostTouchToTrim+5);
+    touchEx_mask = ones(size(squeeze(array.S_ctk(1,:,:))));
+    for i = 1:length(touchOnIdx)
+        touchEx_mask(touchOnIdx(i):touchOffIdx(i)+timePostTouchToTrim) = NaN; %added 30 to add time from touch offset
+    end
+    touchEx_mask(1:100,:) = 1; %since bleedover from end of trials before, tihs ensure we keep end
+    
+    amplitude = squeeze(array.S_ctk(3,:,:));
+    whisking = nan(size(squeeze(array.S_ctk(1,:,:))));
+    whisking(amplitude>5)=1;
+    
+    whisking_mask = whisking .* touchEx_mask;
+    
+    
+    if strcmp(hilbertVar,'phase')
+        x_raw = squeeze(array.S_ctk(5,:,:)) .* whisking_mask;
+    elseif strcmp(hilbertVar,'angle')
+        x_raw = squeeze(array.S_ctk(1,:,:)) .* whisking_mask;
+    end
+    y_raw = spikes .* whisking_mask;
+    
+    x = x_raw(~any(isnan([x_raw(:) y_raw(:)]),2));
+    y = y_raw(~any(isnan([x_raw(:) y_raw(:)]),2));
+    
+    if strcmp(hilbertVar,'phase')
+        [sorted, sortedBy] = binslin(x,y,'equalE',num_bins+1,-pi,pi);
+        y_bin = cellfun(@(x) nanmean(x),sorted) .* 1000;
+        x_bin = linspace(-pi,pi,num_bins);
+    elseif strcmp(hilbertVar,'angle')
+        [sorted, sortedBy] = binslin(x,y,'equalE',num_bins+1,min(x),max(x));
+        y_bin = cellfun(@(x) nanmean(x),sorted) .* 1000;
+        x_bin = linspace(min(x),max(x),num_bins);
+    end
+    
+    try
+        f = fit(x_bin',y_bin,'gauss1');
+        
+        %     f = fit(x,y .* 1000,'gauss1');
+        
+        figure(239);subplot(rc(1),rc(2),g)
+        scatter(x_bin,y_bin,'.k')
+        yyaxis right
+        hold on; plot(linspace(min(x),max(x),20),f(linspace(min(x),max(x),20)),'g');
+        hold on; plot(wStruct{whisk_units(g)}.stim_response.values(:,1),wStruct{whisk_units(g)}.stim_response.values(:,2),'r')
+        hold on; plot(wStruct{whisk_units(g)}.stim_response.bars_fit.x,wStruct{whisk_units(g)}.stim_response.bars_fit.mean,'b')
+    end
+end
 
 
