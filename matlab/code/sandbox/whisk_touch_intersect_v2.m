@@ -16,7 +16,28 @@ end
 %% heatmap
 population_heatmap_builder(tStruct,wStruct,hilbertVar)
 
-%% proportion of neurons that intersect bar chart
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+figure(50)
+fn = [hilbertVar '_intersect_heat_raw.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+figure(51)
+fn = [hilbertVar '_intersect_heat_squish.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+figure(52)
+fn = [hilbertVar '_histograms.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+figure(53)
+fn = [hilbertVar '_correlations.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+%% proportion of neurons that intersect pie
 hilbertVar_list = {'angle','phase','amplitude','midpoint'};
 stacked_bar = cell(1,numel(hilbertVar_list));
 for i = 1:numel(hilbertVar_list)
@@ -31,6 +52,9 @@ for i = 1:numel(hilbertVar_list)
     
     tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
     wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
+    
+    [~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
+    [~,whisk_ix_idx] = intersect(find(wUnits),find(tUnits));
     
     both_tuned_num = numel(intersect(find(tUnits),find(wUnits)));
     touch_tuned_num = numel(setdiff(1:sum(tUnits),touch_ix_idx));
@@ -76,11 +100,11 @@ if strcmp(hilbertVar,'pole')
     hold on; errorbar(whisking_pw(whisk_nonIX_idx,1),ones(1,length(whisk_nonIX_idx))*2.5,whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','horizontal')%plot only whisk tuned units
     hold on; errorbar(ones(1,length(touch_nonIX_idx))*2.5,touch_pw(touch_nonIX_idx,1),touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','vertical')%plot only touch tuned units
     hold on; errorbar(whisking_pw(whisk_ix_idx,1),touch_pw(touch_ix_idx,1),touch_pw(touch_ix_idx,2),touch_pw(touch_ix_idx,3),whisking_pw(whisk_ix_idx,2),whisking_pw(whisk_ix_idx,3),'ko')
-
+    
     set(gca,'xlim',[-3 3],'ylim',[-3 3],'xdir','reverse','ydir','reverse',...
         'xtick',-1:1:1,'ytick',-1:1:1)
     hold on; plot([-1 1],[-1 1],'--k')
-
+    
     figure(3851);clf
     subplot(2,1,1)
     histogram(touch_pw(:,1),-3:.20:3,'facecolor','b','facealpha',1)
@@ -94,7 +118,7 @@ elseif strcmp(hilbertVar,'phase')
     hold on; errorbar(whisking_pw(whisk_nonIX_idx,1),ones(1,length(whisk_nonIX_idx))*-4,whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','horizontal','capsize',0)%plot only whisk tuned units
     hold on; errorbar(ones(1,length(touch_nonIX_idx))*-4,touch_pw(touch_nonIX_idx,1),touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','vertical','capsize',0)%plot only touch tuned units
     hold on; errorbar(whisking_pw(whisk_ix_idx,1),touch_pw(touch_ix_idx,1),touch_pw(touch_ix_idx,2),touch_pw(touch_ix_idx,3),whisking_pw(whisk_ix_idx,2),whisking_pw(whisk_ix_idx,3),'ko','capsize',0)
-
+    
     set(gca,'xlim',[-4 4],'ylim',[-4 4],...
         'xtick',-pi:pi:pi,'ytick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'yticklabel',{'-\pi',0,'\pi'})
     hold on; plot([-4 4],[-4 4],'--k')
@@ -110,7 +134,7 @@ elseif strcmp(hilbertVar,'angle')
     hold on; errorbar(whisking_pw(whisk_nonIX_idx,1),ones(1,length(whisk_nonIX_idx))*-30,whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','horizontal','capsize',0)%plot only whisk tuned units
     hold on; errorbar(ones(1,length(touch_nonIX_idx))*-30,touch_pw(touch_nonIX_idx,1),touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','vertical','capsize',0)%plot only touch tuned units
     hold on; errorbar(whisking_pw(whisk_ix_idx,1),touch_pw(touch_ix_idx,1),touch_pw(touch_ix_idx,2),touch_pw(touch_ix_idx,3),whisking_pw(whisk_ix_idx,2),whisking_pw(whisk_ix_idx,3),'ko','capsize',0)
-
+    
     set(gca,'xlim',[-40 80],'ylim',[-40 80],...
         'xtick',-40:20:80,'ytick',-40:20:80)
     hold on; plot([-40 80],[-40 80],'--k')
@@ -210,7 +234,7 @@ pop_sem = nanstd(cell2mat(interp_norm_y')) ./ sqrt(sum(~isnan(cell2mat(interp_no
 hold on; shadedErrorBar(interp_centered_x,pop_mean,pop_sem,'k')
 
 if strcmp(hilbertVar,'angle')
-     set(gca,'xlim',[-60 60],'ytick',0:.5:1,'xtick',-60:20:60)
+    set(gca,'xlim',[-60 60],'ytick',0:.5:1,'xtick',-60:20:60)
 elseif strcmp(hilbertVar,'phase')
     set(gca,'xlim',[-pi pi],'ytick',0:.5:1,'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'})
 elseif strcmp(hilbertVar,'pole')
@@ -224,177 +248,88 @@ fn = [hilbertVar '_distance_from_whisk.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
+%% whisk and touch tuning curves
 
-%% TOUCH TUNING CURVES
-location_units = find(tUnits);
-rc = numSubplots(numel(location_units));
-figure(239);clf
-for g = 1:numel(location_units)
-    array = U{location_units(g)};
-    response_window = array.meta.touchProperties.responseWindow;
-    [tVar] = atTouch_sorter(array,response_window(1):response_window(2));
+figure(8);clf
+figure(9);clf
+figure(10);clf
+
+rc = numSubplots(numel(U));
+
+for rec = 1:length(U)
+    [tVar] = atTouch_sorter(U{rec},-25:50);
+    touch_response = nanmean(tVar.allTouches.R_ntk) * 1000;
     
-    if strcmp(hilbertVar,'phase')
-        x_raw = tVar.allTouches.S_ctk(:,5);
-    elseif strcmp(hilbertVar,'angle')
-        x_raw = tVar.allTouches.S_ctk(:,1);
+    %     figure(8)
+    %     subplot(rc(1),rc(2),rec)
+    %     bar(-25:50,touch_response,'k')
+    %
+    try
+        whisk_xy = [wStruct{rec}.stim_response.bars_fit.x' wStruct{rec}.stim_response.bars_fit.mean...
+            wStruct{rec}.stim_response.bars_fit.confBands - wStruct{rec}.stim_response.bars_fit.mean];
+        norm_whisk =[wStruct{rec}.stim_response.bars_fit.x' normalize_var(whisk_xy(:,2),0,1)];
     end
     
-    y_raw = mean(tVar.allTouches.R_ntk,2) .* 1000;
+    if wStruct{rec}.is_tuned==1
+%         figure(9)
+%         subplot(rc(1),rc(2),rec)
+%         hold on; shadedErrorBar(whisk_xy(:,1),whisk_xy(:,2),whisk_xy(:,3),'c')
+        figure(10);
+        subplot(rc(1),rc(2),rec)
+        hold on; plot(norm_whisk(:,1),norm_whisk(:,2),'c')
+    else
+%         figure(9);
+%         subplot(rc(1),rc(2),rec)
+%         hold on; shadedErrorBar(whisk_xy(:,1),whisk_xy(:,2),whisk_xy(:,3),'c--')
+        figure(10);
+        subplot(rc(1),rc(2),rec)
+        hold on; plot(norm_whisk(:,1),norm_whisk(:,2),'c--')
+    end
     
-    x = x_raw(~any(isnan([x_raw y_raw]),2));
-    y = y_raw(~any(isnan([x_raw y_raw]),2));
-    
-    f = fit(x,y,'gauss1');
-    
-    figure(239);subplot(rc(1),rc(2),g)
-    scatter(x,y,'.k')
-    yyaxis right
-    hold on; plot(linspace(min(x),max(x),20),f(linspace(min(x),max(x),20)),'g');
-    hold on; plot(tStruct{location_units(g)}.stim_response.values(:,1),tStruct{location_units(g)}.stim_response.values(:,2),'r')
-end
-
-%% intersection of whisking and touch
-tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
-wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
-
-[~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
-[~,whisk_ix_idx] = intersect(find(wUnits),find(tUnits));
-
-touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
-whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
-
-whiskTuned = find(wUnits);
-touchTuned = find(tUnits);
-touch_whisk_tuned = intersect(find(tUnits),find(wUnits));
-
-touch_OL = logical(ones(1,length(U)));
-rc = numSubplots(sum(touch_OL));
-
-sel_tstructs = tStruct(touch_OL);
-sel_wstructs = wStruct(touch_OL);
-
-figure(100);clf
-figure(101);clf
-whisk_touch_pair = cell(1,sum(touch_OL));
-touch_diff_pair = cell(1,sum(touch_OL));
-for g = 1:sum(touch_OL)
-    if isfield(sel_wstructs{g},'stim_response') && isfield(sel_tstructs{g},'stim_response')
-        curr_w = sel_wstructs{g}.stim_response.values;
-        curr_t = sel_tstructs{g}.stim_response.values;
+    %if touch cell...
+    if strcmp(U{rec}.meta.touchProperties.responseType,'excited')
+        responseWindow = U{rec}.meta.touchProperties.responseWindow;
+        peak_y = ceil(max(touch_response)/10)*10;
         
-        curr_w = curr_w(~any(isnan(curr_w),2),:); %clean nan rows
-        curr_t = curr_t(~any(isnan(curr_t),2),:);
+        loc_xy = [tStruct{rec}.stim_response.bars_fit.x' tStruct{rec}.stim_response.bars_fit.mean...
+            tStruct{rec}.stim_response.bars_fit.confBands - tStruct{rec}.stim_response.bars_fit.mean];
+        norm_loc = [loc_xy(:,1) normalize_var(loc_xy(:,2),0,1)];
         
-        if strcmp(hilbertVar,'pole')
-            whisk_x = round(round(min(curr_w(:,1)),1):.1:round(max(curr_w(:,1)),1),1);
-            touch_x = round(round(min(curr_t(:,1)),1):.1:round(max(curr_t(:,1)),1),1);
-        elseif strcmp(hilbertVar,'phase')
-            whisk_x = linspace(-pi,pi,21);
-            touch_x = linspace(-pi,pi,21);
+        %         figure(8)
+        %         subplot(rc(1),rc(2),rec)
+        %         hold on; plot(responseWindow,[peak_y peak_y],'r')
+        %         set(gca,'ylim',[0 peak_y * 1.2])
+        
+        
+        if tStruct{rec}.is_tuned==1
+%             figure(9);
+%             subplot(rc(1),rc(2),rec)
+%             shadedErrorBar(loc_xy(:,1),loc_xy(:,2),loc_xy(:,3),'b')
+            figure(10);
+            subplot(rc(1),rc(2),rec)
+            plot(norm_loc(:,1),norm_loc(:,2),'b')
         else
-            whisk_x = round(round(min(curr_w(:,1))):1:round(max(curr_w(:,1))));
-            touch_x = round(round(min(curr_t(:,1))):1:round(max(curr_t(:,1))));
-        end
-        whisk_response = interp1(curr_w(:,1),curr_w(:,2),whisk_x);
-        whisk_std = interp1(curr_w(:,1),curr_w(:,3),whisk_x);
-        whisk_CI = interp1(curr_w(:,1),curr_w(:,4),whisk_x);
-        
-        touch_response = interp1(curr_t(:,1),curr_t(:,2),touch_x);
-        touch_std = interp1(curr_t(:,1),curr_t(:,3),touch_x);
-        touch_CI =  interp1(curr_t(:,1),curr_t(:,4),touch_x);
-        
-        [~,~,whisk_idx] = intersect(touch_x,whisk_x);
-        [overlap_x,~,touch_idx] = intersect(whisk_x,touch_x);
-        
-        %raw responses within touch ranges
-        %     figure(99);subplot(rc(1),rc(2),g)
-        %     shadedErrorBar(overlap_x,whisk_response(whisk_idx),whisk_CI(whisk_idx),'c')
-        %     hold on; shadedErrorBar(overlap_x,touch_response(touch_idx),touch_CI(touch_idx),'b')
-        %     if strcmp(hilbertVar,'pole')
-        %         set(gca,'xlim',[-1 1],'xdir','reverse')
-        %     elseif strcmp(hilbertVar,'phase')
-        %         set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'\pi','0','\pi'})
-        %     end
-        
-        %raw responses
-        figure(100);subplot(rc(1),rc(2),g)
-        shadedErrorBar(whisk_x,whisk_response,whisk_CI,'c')
-        hold on; shadedErrorBar(touch_x,touch_response,touch_CI,'b')
-        if strcmp(hilbertVar,'pole')
-            set(gca,'xlim',[-1 2],'xdir','reverse')
-            axis square
-        elseif strcmp(hilbertVar,'phase')
-            set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'\pi','0','\pi'})
-        end
-        
-        if any(g == whiskTuned(whisk_nonIX_idx))
-            title('whisk only')
-        elseif any(g == touchTuned(touch_nonIX_idx))
-            title('touch only')
-        elseif any(g ==touch_whisk_tuned)
-            title('T+W')
-        end
-        
-        %normalized responses MAXMIN
-%         m = min(whisk_response);
-%         range = max(whisk_response) - m;
-%         norm_whisk= (whisk_response - m) ./ range;
-%         norm_whisk_CI = (whisk_CI - m) ./ range;
-%         
-%         m = min(touch_response);
-%         range = max(touch_response) - m;
-%         norm_touch= (touch_response - m) ./ range;
-%         norm_touch_CI = (touch_CI - m) ./ range;
-%         
-        %zscoring
-        mu = nanmean(whisk_response);
-        sigma = nanstd(whisk_response);
-        norm_whisk= (whisk_response - mu) ./ sigma;
-        norm_whisk_CI = (whisk_CI - mu) ./ sigma;
-        
-        mu = nanmean(touch_response);
-        sigma = nanstd(touch_response);
-        norm_touch= (touch_response - mu) ./ sigma;
-        norm_touch_CI = (touch_CI - mu) ./ sigma;
-        
-
-    
-        figure(101);subplot(rc(1),rc(2),g)
-            shadedErrorBar(whisk_x,norm_whisk,norm_whisk_CI,'c')
-            hold on; shadedErrorBar(touch_x,norm_touch,norm_touch_CI,'b')
-%         plot(whisk_x,norm_whisk,'c')
-%         hold on; plot(touch_x,norm_touch,'b')
-        if strcmp(hilbertVar,'pole')
-            set(gca,'xlim',[-1 2],'xdir','reverse','ylim',[-3 3])
-            axis square
-        elseif strcmp(hilbertVar,'phase')
-            set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'\pi','0','\pi'})
-        end
-        
-        if any(g == whiskTuned(whisk_nonIX_idx))
-            title('whisk only')
-        elseif any(g == touchTuned(touch_nonIX_idx))
-            title('touch only')
-        elseif any(g ==touch_whisk_tuned)
-            title('T+W')
+%             figure(9);
+%             subplot(rc(1),rc(2),rec)
+%             shadedErrorBar(loc_xy(:,1),loc_xy(:,2),loc_xy(:,3),'b--')
+            figure(10);
+            subplot(rc(1),rc(2),rec)
+            plot(norm_loc(:,1),norm_loc(:,2),'b--')
         end
         
     end
     
-    
-    
 end
 
-%     figure(100);
-%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
-%     fn = 'whisk_touch_tuning_curves.eps';
-%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-%     fix_eps_fonts([saveDir, fn])
+% figure(9);
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+% fn = 'whisk_touch_tuning_curves.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
-%     figure(101);
-%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig5\';
-%     fn = 'whisk_touch_tuning_curves_normalized.eps';
-%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-%     fix_eps_fonts([saveDir, fn])
+figure(10);
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+fn = 'whisk_touch_tuning_curves_normalized.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 

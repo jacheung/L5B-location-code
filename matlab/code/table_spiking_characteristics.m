@@ -5,7 +5,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 
 %% Top level parameters and definitions 
 
-U = defTouchResponse(U,.95,'off');
+% U = defTouchResponse(U,.95,'off');
 
 %% Calculations table 
 %VARIABLE DEFINITIONS: 

@@ -1,24 +1,24 @@
 function population_heatmap_builder(tStruct,wStruct,hilbertVar)
-% this function plots heatmaps of whisking and touch tuning 
+% this function plots heatmaps of whisking and touch tuning
 %
 % requires products of object_location_quantification and
-% whisking_location_quantification first before running. 
+% whisking_location_quantification first before running.
 %
 % uses touch tuning struct and whisk tuning struct for POLE position tuning
-% to build population heatmaps 
+% to build population heatmaps
 
 %% Plot heatmap of tuning across all units
 tuned_units = cellfun(@(x) x.is_tuned==1,tStruct);
 whisk_units = cellfun(@(x) x.is_tuned==1,wStruct);
 
 sel_tstructs = tStruct(tuned_units);
-sel_wstructs = wStruct(whisk_units); 
+sel_wstructs = wStruct(whisk_units);
 
 touch_heat = cell(1,sum(tuned_units));
-whisk_heat = cell(1,sum(whisk_units)); 
+whisk_heat = cell(1,sum(whisk_units));
 
-touch_ix_tmp = intersect(find(tuned_units),find(whisk_units)); 
-whisk_ix_tmp = intersect(find(whisk_units),find(tuned_units)); 
+touch_ix_tmp = intersect(find(tuned_units),find(whisk_units));
+whisk_ix_tmp = intersect(find(whisk_units),find(tuned_units));
 
 [~,touch_ix_idx] = intersect(find(tuned_units),touch_ix_tmp);
 [~,whisk_ix_idx] = intersect(find(whisk_units),whisk_ix_tmp);
@@ -28,7 +28,7 @@ for g = 1:numel(sel_tstructs)
     curr_t = sel_tstructs{g}.stim_response.values;
     
     %clean nan rows
-    curr_t = curr_t(~any(isnan(curr_t),2),:); 
+    curr_t = curr_t(~any(isnan(curr_t),2),:);
     
     if strcmp(hilbertVar,'pole')
         touch_x = -1:.1:1;
@@ -61,136 +61,177 @@ for d = 1:numel(sel_wstructs)
     end
     whisk_heat{d} = interp1(curr_w(:,1),curr_w(:,2),whisk_x);
 end
-%%
+%% heatmap of all units
 figure(50);clf
+title_names = {'all touch sorted','all whisk','both touch, touch sorted',...
+    'both whisk, whisk sorted', 'both touch, whisk sorted', 'both whisk, touch sorted'};
 
-%plotting all touch object location tuned units
-subplot(3,2,1)
-% unsorted_heat = normalize_var(cell2mat(touch_heat')',0,1);
 unsorted_heat = norm_new(cell2mat(touch_heat')');
 [~,t_max_idx] = max(unsorted_heat,[],1);
 [~,t_idx] = sort(t_max_idx);
-data = unsorted_heat(:,t_idx)'; 
-%set unsampled heatmap to nan; 
-[nr,nc] = size(data);
-pcolor([data nan(nr,1); nan(1,nc+1)]);
-caxis([0 1])
-shading flat;
-colormap turbo
-if strcmp(hilbertVar,'pole')
-    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'phase')
-    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'angle')
-    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
-end
-title('all touch sorted')
+data{1} = unsorted_heat(:,t_idx)';
 
-%plotting all whisk object location tuned units
-subplot(3,2,2)
-% unsorted__whisk_heat = normalize_var(cell2mat(whisk_heat')',0,1);
 unsorted__whisk_heat = norm_new(cell2mat(whisk_heat')');
 [~,w_max_idx] = max(unsorted__whisk_heat,[],1);
 [~,w_idx] = sort(w_max_idx);
-data = unsorted__whisk_heat(:,w_idx)'; 
-%set unsampled heatmap to nan; 
-[nr,nc] = size(data);
-pcolor([data nan(nr,1); nan(1,nc+1)]);
-caxis([0 1])
-shading flat;
-colormap turbo
-if strcmp(hilbertVar,'pole')
-    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'phase')
-    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'angle')
-    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
-end
-title('all whisk sorted')
+data{2} = unsorted__whisk_heat(:,w_idx)';
 
-%plotting all whisk+touch object location tuned units touch responses sorted by touch peak 
-subplot(3,2,3)
-% unsorted_heat_touch = normalize_var(cell2mat(touch_heat(touch_ix_idx)')',0,1);
 unsorted_heat_touch = norm_new(cell2mat(touch_heat(touch_ix_idx)')');
 [~,t_max_idx] = max(unsorted_heat_touch,[],1);
 [~,t_idx_ix] = sort(t_max_idx);
-data = unsorted_heat_touch(:,t_idx_ix)'; 
-%set unsampled heatmap to nan; 
-[nr,nc] = size(data);
-pcolor([data nan(nr,1); nan(1,nc+1)]);
-caxis([0 1])
-shading flat;
-colormap turbo
-if strcmp(hilbertVar,'pole')
-    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'phase')
-    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'angle')
-    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
-end
-title('ix touch sorted')
+data{3} = unsorted_heat_touch(:,t_idx_ix)';
 
-%plotting all whisk+touch object location tuned units whisk responses sorted by whisk peak 
-subplot(3,2,4)
-% unsorted_whisk_heat = normalize_var(cell2mat(whisk_heat(whisk_ix_idx)')',0,1);
 unsorted_whisk_heat = norm_new(cell2mat(whisk_heat(whisk_ix_idx)')');
 [~,w_max_idx] = max(unsorted_whisk_heat,[],1);
 [~,w_idx_ix] = sort(w_max_idx);
-data = unsorted_whisk_heat(:,w_idx_ix)'; 
-%set unsampled heatmap to nan; 
-[nr,nc] = size(data);
-pcolor([data nan(nr,1); nan(1,nc+1)]);
-caxis([0 1])
-shading flat;
-colormap turbo
-if strcmp(hilbertVar,'pole')
-    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'phase')
-    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'angle')
-    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
-end
-title('ix whisk sorted')
+data{4} = unsorted_whisk_heat(:,w_idx_ix)';
 
-%plotting all whisk+touch object location tuned units touch responses sorted by whisk peak 
-subplot(3,2,5)
-% unsorted_heat_touch = normalize_var(cell2mat(touch_heat(touch_ix_idx)')',0,1);
 unsorted_heat_touch = norm_new(cell2mat(touch_heat(touch_ix_idx)')');
-data = unsorted_heat_touch(:,w_idx_ix)'; 
-%set unsampled heatmap to nan; 
-[nr,nc] = size(data);
-pcolor([data nan(nr,1); nan(1,nc+1)]);
-caxis([0 1])
-shading flat;
-colormap turbo
-if strcmp(hilbertVar,'pole')
-    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'phase')
-    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'angle')
-    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
-end
-title('ix touch whisk sorted by whisk')
+data{5} = unsorted_heat_touch(:,w_idx_ix)';
 
-%plotting all whisk+touch object location tuned units whisk responses sorted by touch peak 
-subplot(3,2,6)
-% unsorted_whisk_heat = normalize_var(cell2mat(whisk_heat(whisk_ix_idx)')',0,1);
 unsorted_whisk_heat = norm_new(cell2mat(whisk_heat(whisk_ix_idx)')');
-data = unsorted_whisk_heat(:,t_idx_ix)'; 
-%set unsampled heatmap to nan; 
-[nr,nc] = size(data);
-pcolor([data nan(nr,1); nan(1,nc+1)]);
-caxis([0 1])
-shading flat;
-colormap turbo
-if strcmp(hilbertVar,'pole')
-    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'phase')
-    set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
-elseif strcmp(hilbertVar,'angle')
-    set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
-end
-title('ix whisk sorted by touch')
+data{6} = unsorted_whisk_heat(:,t_idx_ix)';
 
-
+for p = 1:numel(data)
+    subplot(3,2,p)
+    [nr,nc] = size(data{p});
+    pcolor([data{p} nan(nr,1); nan(1,nc+1)]);
+    caxis([0 1])
+    shading flat;
+    colormap turbo
+    if strcmp(hilbertVar,'pole')
+        set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+    elseif strcmp(hilbertVar,'phase')
+        set(gca,'xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+    elseif strcmp(hilbertVar,'angle')
+        set(gca,'xtick',10:20:length(whisk_x),'xticklabel',-20:20:80,'xlim',[0 length(whisk_x)])
+    end
     
+    title(title_names{p})
+end
+
+%% squished heatmap
+touch_stretch_bins = median(cellfun(@(x) sum(~isnan(x)),touch_heat));
+whisk_stretch_bins = median(cellfun(@(x) sum(~isnan(x)),whisk_heat));
+
+raw_curves = cellfun(@(x) x(~isnan(x)),touch_heat,'uniformoutput',0);
+new_curves = cellfun(@(x) interp1(linspace(1,touch_stretch_bins,numel(x)),x,1:touch_stretch_bins),raw_curves,'uniformoutput',0);
+raw_whisk = cellfun(@(x) x(~isnan(x)),whisk_heat,'uniformoutput',0);
+new_whisk = cellfun(@(x) interp1(linspace(1,whisk_stretch_bins,numel(x)),x,1:whisk_stretch_bins),raw_whisk,'uniformoutput',0);
+
+figure(51);clf
+
+unsorted_heat = norm_new(cell2mat(new_curves')');
+[~,t_max_idx] = max(unsorted_heat,[],1);
+[~,t_idx] = sort(t_max_idx);
+data_squish{1} = unsorted_heat(:,t_idx)';
+
+unsorted__whisk_heat = norm_new(cell2mat(new_whisk')');
+[~,w_max_idx] = max(unsorted__whisk_heat,[],1);
+[~,w_idx] = sort(w_max_idx);
+data_squish{2} = unsorted__whisk_heat(:,w_idx)';
+
+unsorted_heat_touch = norm_new(cell2mat(new_curves(touch_ix_idx)')');
+[~,t_max_idx] = max(unsorted_heat_touch,[],1);
+[~,t_idx_ix] = sort(t_max_idx);
+data_squish{3} = unsorted_heat_touch(:,t_idx_ix)';
+
+unsorted_whisk_heat = norm_new(cell2mat(new_whisk(whisk_ix_idx)')');
+[~,w_max_idx] = max(unsorted_whisk_heat,[],1);
+[~,w_idx_ix] = sort(w_max_idx);
+data_squish{4} = unsorted_whisk_heat(:,w_idx_ix)';
+
+unsorted_heat_touch = norm_new(cell2mat(new_curves(touch_ix_idx)')');
+data_squish{5} = unsorted_heat_touch(:,w_idx_ix)';
+
+unsorted_whisk_heat = norm_new(cell2mat(new_whisk(whisk_ix_idx)')');
+data_squish{6} = unsorted_whisk_heat(:,t_idx_ix)';
+
+for p = 1:numel(data_squish)
+    subplot(3,2,p)
+    [nr,nc] = size(data_squish{p});
+    pcolor([data_squish{p} nan(nr,1); nan(1,nc+1)]);
+    caxis([0 1])
+    shading flat;
+    colormap turbo
+    if mod(p,2)==0
+        set(gca,'xlim',[1 whisk_stretch_bins],'xtick',[])
+    else
+        set(gca,'xlim',[1 touch_stretch_bins],'xtick',[])
+    end
+    title(title_names{p})
+end
+
+%% squished histogram
+[~,touch_peaks] = max(data{3},[],2);
+[~,whisk_peaks] = max(data{4},[],2);
+[~,touch_peaks_squish] = max(data_squish{3},[],2);
+[~,whisk_peaks_squish] = max(data_squish{4},[],2);
+figure(52);clf
+subplot(2,2,1);histogram(touch_x(touch_peaks),linspace(touch_x(1),touch_x(end),8))
+set(gca,'ylim',[0 15])
+title('touch')
+subplot(2,2,3);histogram(whisk_x(whisk_peaks),linspace(whisk_x(1),whisk_x(end),8),'facecolor','c')
+set(gca,'ylim',[0 15])
+title('whisk')
+subplot(2,2,2);histogram(touch_peaks_squish,linspace(1,touch_stretch_bins,8))
+set(gca,'ylim',[0 15])
+title('touch squish')
+subplot(2,2,4);histogram(whisk_peaks_squish,linspace(1,whisk_stretch_bins,8),'facecolor','c')
+set(gca,'ylim',[0 15])
+title('whisk squish')
+
+%% curve matching correlation
+ix_touch = touch_heat(t_idx_ix);
+ix_whisk = whisk_heat(w_idx_ix);
+
+stretch_bins = median(cellfun(@(x) sum(~isnan(x)),[ix_touch ix_whisk]));
+raw_touch = cellfun(@(x) x(~isnan(x)),ix_touch,'uniformoutput',0);
+new_touch = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),raw_touch,'uniformoutput',0);
+raw_whisk = cellfun(@(x) x(~isnan(x)),ix_whisk,'uniformoutput',0);
+new_whisk = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),raw_whisk,'uniformoutput',0);
+stretch_corr = cellfun(@(x,y) corr(x',y'),new_touch,new_whisk);
+
+%corr for matching bits 
+matching_bins = cellfun(@(x,y) intersect(find(~isnan(x)),find(~isnan(y))),ix_touch,ix_whisk,'uniformoutput',0);
+match_corr = cellfun(@(x,y,z) corr(x(z)',y(z)'),ix_touch,ix_whisk,matching_bins);
+
+figure(5100);clf
+rc = numSubplots(numel(new_touch)); 
+for b = 1:numel(new_touch)
+    subplot(rc(1),rc(2),b)
+    plot(1:stretch_bins,new_touch{b},'r')
+    hold on; plot(1:stretch_bins,new_whisk{b},'c')
+    title(num2str(stretch_corr(b)));
+end
+suptitle('shrink to fit')
+
+
+shuff_times = 1000;
+for f = 1:shuff_times
+    shuff_touch = new_touch(randperm(numel(new_touch)));
+    shuff_whisk = new_whisk(randperm(numel(new_whisk)));
+    shuff_corr{f} = cellfun(@(x,y) corr(x',y'),shuff_touch,shuff_whisk);
+end
+[~,p] = kstest2(stretch_corr,cell2mat(shuff_corr));
+
+figure(53);clf
+subplot(1,3,1)
+histogram(stretch_corr,-1:.2:1,'facecolor','k')
+title('shrink to fit')
+axis square
+subplot(1,3,2)
+histogram(match_corr,-1:.2:1,'facecolor','k')
+xlabel('correlation coefficient')
+title('intersecting locations')
+axis square
+subplot(1,3,3)
+histogram(cell2mat(shuff_corr),-1:.2:1,'facecolor','b','normalization','probability')
+hold on; histogram(stretch_corr,-1:.2:1,'facecolor','k','normalization','probability')
+legend('shuff','data')
+title(['KS p = ' num2str(p)])
+axis square
+
+
+
+

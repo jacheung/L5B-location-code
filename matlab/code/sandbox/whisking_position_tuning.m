@@ -83,21 +83,19 @@ fix_eps_fonts([saveDir, fn])
 
 
 %% tuned units
-
-fileName = ['whisk_angle_tune'];
+hilbert_feature = 'angle';
+fileName = ['whisk_' hilbert_feature '_tune'];
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
     angle_whisk = wStruct;
 else
     angle_whisk = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
 end
-
 tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
 % 
 % fn = 'whisker_position_indiv.eps';
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])
-
 
 %% scatter of absolute modulation index x FR
 built = find(cellfun(@(x) isfield(x,'stim_response'),angle_whisk)); 
@@ -189,6 +187,34 @@ fn = 'whisk_sampling.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
+%% phase map
+hilbert_feature = 'phase'
+fileName = ['whisk_' hilbert_feature '_tune'];
+if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+    phase_whisk = wStruct;
+else
+    phase_whisk = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
+end
+
+tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
+
+preferred_phase = cellfun(@(x) x.calculations.tune_peak,phase_whisk(tuned_units));
+phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(tuned_units)); 
+retractions = sign(preferred_phase)<0;
+conversions = zeros(1,numel(preferred_phase));
+conversions(retractions)=180;
+deg_per_pie_unit =  180/pi; 
+
+preferred_degs = (abs(preferred_phase) .* deg_per_pie_unit) + conversions;
+
+figure(380);clf
+polarplot(preferred_phase,phase_mod,'o');
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+fn = 'phase_map.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 %% pop map 
 whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,angle_whisk);
 

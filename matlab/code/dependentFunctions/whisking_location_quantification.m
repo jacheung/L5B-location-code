@@ -120,16 +120,17 @@ for rec = 1:length(selectedCells)
         end
         yq = interp1(x,y,xq);
         
-        barsFit = barsP(yq,[min(xq) max(xq)],round(mean(cellfun(@numel,sorted))));
+        numSamples = round(mean(cellfun(@numel,sorted))); 
+        barsFit = barsP(yq,[min(xq) max(xq)],numSamples);
         barsFit.x = xq;
         
-%         figure(9);subplot(rc(1),rc(2),rec)
-%         bar(x,y,'k')
-%         if sig_by_chance < 0.05 && quant_ol_p < 0.05 && nonzero_bins > 10
-%             hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'g')
-%         else
-%             hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
-%         end
+        figure(9);subplot(rc(1),rc(2),rec)
+        bar(x,y,'k')
+        if sig_by_chance < 0.05 && quant_ol_p < 0.05 && nonzero_bins > 10
+            hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'g')
+        else
+            hold on; shadedErrorBar(xq(2:end-1),barsFit.mean(2:end-1),barsFit.confBands(2:end-1,2)-barsFit.mean(2:end-1),'k')
+        end
         
         smooth_response = barsFit.mean(2:end-1);
         smooth_stimulus = xq(2:end-1);

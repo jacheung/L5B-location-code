@@ -3,14 +3,13 @@ clear
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
-
 %% Top level parameters and definitions
 % U = defTouchResponse(U,.95,'off');
 % selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
-fn = 'touch_responses.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
+% fn = 'touch_responses.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 %%
 for i = 26
     %% raster
@@ -67,12 +66,12 @@ for i = 26
 end
 %% touch psth by quartiles of far, close and near
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
+% pole_tuned = object_location_quantification(U,selectedCells,'pole','on'); %for old see object_location_v1.0
 tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
-
+% object_location_quantification(U,tuned_units,'pole','on')
 touch_window = -25:50;
 chunks = 3;
-units_to_plot = [11 ,30, 6];
+units_to_plot = [13 ,33, 8];
 figure(20);clf
 for g = 1:length(units_to_plot)
     selected_unit = tuned_units(units_to_plot(g));
@@ -110,7 +109,7 @@ fix_eps_fonts([saveDir, fn])
 
 %% heatmap
 %building heatmap for object location tuned touch units
-% pole_tuned = object_location_quantification(U,selectedCells,'phase','off'); %for old see object_location_v1.0
+pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
 sel_tstructs = pole_tuned(tuned_units);
 touch_heat = cell(1,sum(tuned_units));
@@ -160,7 +159,7 @@ interp_norm_y = cell(1,length(peak_response));
 for g = 1:length(peak_response)
     sr = pole_tuned{tuned_units(g)}.stim_response;
     centered_x = sr.values(:,1) - peak_response(g) ;
-    norm_y = norm_new(sr.values(:,2));
+    norm_y = normalize_var(sr.values(:,2),0,1);
     
     interp_centered_x = -2:.1:2;
     raw_x = round(centered_x,2);

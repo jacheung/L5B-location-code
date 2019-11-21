@@ -174,7 +174,7 @@ for b=1:length(tuned_units_list)
     for g = 1:length(peak_response)
         sr = pole_tuned{tuned_units_list{b}(g)}.stim_response;
         centered_x = sr.values(:,1) - peak_response(g) ;
-        norm_y = norm_new(sr.values(:,2));
+        norm_y = normalize_var(sr.values(:,2),0,1);
         
         interp_centered_x = -2:.1:2;
         raw_x = round(centered_x,2);
