@@ -1,25 +1,39 @@
+%% tuned units
+hilbert_feature = 'angle';
+fileName = ['whisk_' hilbert_feature '_tune'];
+if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+    angle_whisk = wStruct;
+else
+    angle_whisk = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
+end
+tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
+%
+% fn = 'whisker_position_indiv.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
+
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 %% example whisker trace
-
-for k = 83
+for k = 33
     currentCell = U{k};
     
-%      trialSample = [datasample(1:currentCell.k,5)];
-     trialSample = [134 136 datasample(1:currentCell.k,1)]; %CELL 83
-%         trialSample = [99 136 datasample(1:currentCell.k,3)]; %% CELL 22
-%         trialSample = [119 98 43 63 datasample(1:currentCell.k,1)]; %% CELL 33 EXAMPLE 119 SO GOOD!CELL TUNED TO ANGLE 10 . Dam, it's also phase tuned. LULz
-%         trialSample = [60 1 datasample(1:currentCell.k,1)]; %% CELL 74 maybe 96 too
+    %      trialSample = [datasample(1:currentCell.k,5)];
+    %      trialSample = [134 136 datasample(1:currentCell.k,1)]; %CELL 83
+    %         trialSample = [99 136 datasample(1:currentCell.k,3)]; %% CELL 22
+    trialSample = [119 98 43 datasample(1:currentCell.k,2)]; %% CELL 33 EXAMPLE 119 SO GOOD!CELL TUNED TO ANGLE 10 . Dam, it's also phase tuned. LULz
+    %         trialSample = [60 1 datasample(1:currentCell.k,1)]; %% CELL 74 maybe 96 too
     figure(2310);clf
     for g = 1:length(trialSample)
         
         whisk = currentCell.S_ctk(1,:,trialSample(g));
-        midpoint = currentCell.S_ctk(4,:,trialSample(g)); 
+        midpoint = currentCell.S_ctk(4,:,trialSample(g));
         amp = currentCell.S_ctk(3,:,trialSample(g));
         amp_whisk = whisk;
         amp_whisk(amp<5) = nan;
         touchesOn = [find(currentCell.S_ctk(9,:,trialSample(g))==1) find(currentCell.S_ctk(12,:,trialSample(g))==1)];
         touchesOff = [find(currentCell.S_ctk(10,:,trialSample(g))==1) find(currentCell.S_ctk(13,:,trialSample(g))==1)];
-
+        
         if ~isempty(touchesOn)
             for p = 1:numel(touchesOn)
                 amp_whisk(touchesOn(p):touchesOff(p)+30) = nan;
@@ -33,8 +47,8 @@ for k = 83
         
         hold on; scatter(spikes,whisk(spikes),'ko','filled','markerfacecolor',[.8 .8 .8])
         hold on; scatter(spikes,amp_whisk(spikes),'ko','filled')
-
-        if ~isempty(touchesOn) && ~isempty(spikes) 
+        
+        if ~isempty(touchesOn) && ~isempty(spikes)
             for f = 1:length(touchesOn)
                 tp = touchesOn(f):touchesOff(f);
                 hold on; plot(tp,whisk(tp),'r');
@@ -42,14 +56,15 @@ for k = 83
         end
         
         title(['cell num ' num2str(k) ' at trial num ' num2str(trialSample(g))])
-        set(gca,'ylim',[-10 50])
+        set(gca,'ylim',[-30 70])
     end
-    
+    %
+    %     figure(3580);clf
+    %     plot(angle_whisk{k}.stim_response.bars_fit.x,angle_whisk{k}.stim_response.bars_fit.mean)
 end
-
-        fn = 'example_traces .eps';
-        export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-        fix_eps_fonts([saveDir, fn])
+fn = 'example_traces .eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 %% whisk x quiet
 masks = cellfun(@(x) maskBuilder(x),U,'uniformoutput',0);
 whisking_spks_mat = cellfun(@(x,y) squeeze(x.R_ntk).*y.whisking .*y.touch,U,masks,'uniformoutput',0);
@@ -82,23 +97,8 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 
-%% tuned units
-hilbert_feature = 'angle';
-fileName = ['whisk_' hilbert_feature '_tune'];
-if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
-    angle_whisk = wStruct;
-else
-    angle_whisk = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
-end
-tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
-% 
-% fn = 'whisker_position_indiv.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
-
 %% scatter of absolute modulation index x FR
-built = find(cellfun(@(x) isfield(x,'stim_response'),angle_whisk)); 
+built = find(cellfun(@(x) isfield(x,'stim_response'),angle_whisk));
 
 masks = cellfun(@(x) maskBuilder(x),U(built),'uniformoutput',0);
 
@@ -123,11 +123,11 @@ ylabel('absolute modulation index')
 axis square
 
 subplot(4,2,[2 4]);
-prop_tuned = sum(tuned_units)./ numel(tuned_units); 
-prop_untuned = sum(non_tuned)./numel(tuned_units); 
+prop_tuned = sum(tuned_units)./ numel(tuned_units);
+prop_untuned = sum(non_tuned)./numel(tuned_units);
 pie([prop_tuned prop_untuned])
 
-subplot(4,2,[5 6]) 
+subplot(4,2,[5 6])
 histogram(mod_idx_all_units,[0.1 .25 .5 1 2.5 5 10 25 50 100],'FaceColor','k','FaceAlpha',1)
 title('mod idx')
 set(gca,'xscale','log','xlim',[.1 100])
@@ -142,7 +142,7 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 %% CDF of sampling
-built = find(cellfun(@(x) isfield(x,'stim_response'),angle_whisk)); 
+built = find(cellfun(@(x) isfield(x,'stim_response'),angle_whisk));
 bars_built = cellfun(@(x) isfield(x.stim_response,'bars_fit'),angle_whisk(built));
 full_build = built(bars_built);
 
@@ -156,7 +156,7 @@ cdf_sums = cell2mat(cellfun(@(x) cumsum(x),hist_thetas','uniformoutput',0))';
 cdf_mat = cdf_sums./(cdf_sums(end,:));
 
 mean_time_per_trial_whisking = cellfun(@(x) nansum(x.whisking(:))./size(x.whisking,2)./1000,masks); % in seconds
-num_bins_per_cell = cellfun(@(x) numel(x.stim_response.raw_stim),angle_whisk(full_build)); 
+num_bins_per_cell = cellfun(@(x) numel(x.stim_response.raw_stim),angle_whisk(full_build));
 
 figure(23);clf
 subplot(2,3,[1 2 4 5])
@@ -188,7 +188,7 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 %% phase map
-hilbert_feature = 'phase'
+hilbert_feature = 'phase';
 fileName = ['whisk_' hilbert_feature '_tune'];
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
@@ -200,11 +200,11 @@ end
 tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
 
 preferred_phase = cellfun(@(x) x.calculations.tune_peak,phase_whisk(tuned_units));
-phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(tuned_units)); 
+phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(tuned_units));
 retractions = sign(preferred_phase)<0;
 conversions = zeros(1,numel(preferred_phase));
 conversions(retractions)=180;
-deg_per_pie_unit =  180/pi; 
+deg_per_pie_unit =  180/pi;
 
 preferred_degs = (abs(preferred_phase) .* deg_per_pie_unit) + conversions;
 
@@ -215,7 +215,35 @@ saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 fn = 'phase_map.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
-%% pop map 
+
+%% TEST PHASE AND ANGLE TUNING CURVES
+load_structs = {'angle_whisk','phase_whisk'};
+for b = 1:numel(load_structs)
+    if ~exist(load_structs{b},'var')
+        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' load_structs{b} '.mat'])
+    end
+end
+
+tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
+
+phase_tc = cellfun(@(x) x.stim_response.bars_fit.mean',phase_whisk(tuned_units),'uniformoutput',0);
+stretch_bins =  mean(cellfun(@numel,phase_tc)); 
+angle_tc = cellfun(@(x) x.stim_response.bars_fit.mean,angle_whisk(tuned_units),'uniformoutput',0);
+d_angle_tc = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),angle_tc,'uniformoutput',0);
+
+figure(58012);clf
+rc = numSubplots(numel(phase_tc)); 
+for b = 1:numel(phase_tc)
+    subplot(rc(1),rc(2),b)
+    plot(normalize_var(phase_tc{b},0,1),'g')
+    hold on; plot(normalize_var(d_angle_tc{b},0,1),'b')
+    hold on; plot([stretch_bins/2 stretch_bins/2],[0 1],'--k')
+    set(gca,'xtick',[],'ytick',[])
+end
+legend('phase','angle')
+
+
+%% pop map
 whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,angle_whisk);
 
 bars_io = cellfun(@(x) [x.stim_response.bars_stim' x.stim_response.bars_fit.mean ],angle_whisk(whisk_angle_tuned),'uniformoutput',0);
@@ -227,9 +255,9 @@ interped_resp = cellfun(@(x) interp1(x(:,1),x(:,2),whisk_sampled),bars_io,'unifo
 norm_resp = cellfun(@(x) norm_new(x),interped_resp,'uniformoutput',0);
 
 [~,maxidx] = cellfun(@(x) max(x),norm_resp);
-[~,sorted_idx] = sort(maxidx); 
+[~,sorted_idx] = sort(maxidx);
 
-sort_whisk_tuning = cell2mat(norm_resp(sorted_idx)'); 
+sort_whisk_tuning = cell2mat(norm_resp(sorted_idx)');
 
 figure(45);clf
 pcolor(flipud(cell2mat(norm_resp(sorted_idx)'))); %flipud because pcolor flips compared to imagesc
@@ -242,24 +270,6 @@ xlabel('whisker position');
 fn = 'whisker_position_pop.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
-
-
-% onoff_heat = nan(2,numel(plot_units));
-% [red_intersect] = ismember(sorted_idx,red_dots);
-% [blue_intersect]=ismember(sorted_idx,blue_dots);
-% [gray_intersect]=ismember(sorted_idx,gray_dots);
-% 
-% onoff_heat(1,red_intersect) = 1;
-% onoff_heat(1,blue_intersect) = -1;
-% onoff_heat(1,gray_intersect) = 0;
-% 
-% figure(46);clf
-% pcolor(flipud([onoff_heat]'));
-% colormap(redbluecmap)
-
-% fn = 'whisker_position_pop_redblue.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
 
 %% modulation depth of other features
 selectedCells = 1:length(U);
@@ -317,14 +327,14 @@ subplot(1,2,1)
 imagesc(abs(corr([tune_map(:,idx(whisktunedidx)) ; fr_map(:,idx(whisktunedidx))]')));
 caxis([0 1])
 set(gca,'xticklabel',{'angle','phase','amp','midpoint','firing rate'},'ytick',[]);xtickangle(45)
-axis square 
+axis square
 subplot(1,2,2)
 imagesc(abs(corr([tune_map(:,idx(nonwhisktunedidx)) ; fr_map(:,idx(nonwhisktunedidx))]')));
 set(gca,'xticklabel',{'angle','phase','amp','midpoint','firing rate'},'ytick',[])
 xtickangle(45)
 colormap gray
 caxis([0 1])
-axis square 
+axis square
 
 fn = 'modulation_correlation.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
@@ -351,13 +361,13 @@ imshow(final_image)
 % fn = 'hsv_whisk.eps';
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])
-% 
-% % HEAT GRAY WHISK TOUCH TUNING SORTING 
+%
+% % HEAT GRAY WHISK TOUCH TUNING SORTING
 % [~,idx] = sort(w_mod_idx_angle);
 % nontouchidx = ismember(idx,nontouchCells);
 % tunedidx = ismember(idx,tunedCells);
 % nontunedidx = ismember(idx,nontunedCells);
-% 
+%
 % tune_map = [w_mod_idx_angle ; w_mod_idx_phase ; w_mod_idx_amp ; w_mod_idx_midpoint];
 % fr_map  =  firing_rate;
 % figure(19);clf
@@ -373,7 +383,7 @@ imshow(final_image)
 % caxis([0 1])
 % colormap(gray)
 % colorbar
-% 
+%
 % subplot(2,3,4)
 % imagesc(fr_map(:,idx(nontouchidx)))
 % set(gca,'ytick',1,'yticklabel',{'log firing rate'})
@@ -386,7 +396,7 @@ imshow(final_image)
 % caxis([-2 2])
 % colormap(gray)
 % colorbar
-% 
+%
 % fn = 'gray_whisk_touch.eps';
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])

@@ -162,23 +162,23 @@ for p = 1:numel(data_squish)
     title(title_names{p})
 end
 
-%% squished histogram
-[~,touch_peaks] = max(data{3},[],2);
-[~,whisk_peaks] = max(data{4},[],2);
-[~,touch_peaks_squish] = max(data_squish{3},[],2);
-[~,whisk_peaks_squish] = max(data_squish{4},[],2);
+%% histograms
+[~,touch_peaks] = max(data{1},[],2);
+[~,whisk_peaks] = max(data{2},[],2);
+[~,touch_peaks_squish] = max(data_squish{1},[],2);
+[~,whisk_peaks_squish] = max(data_squish{2},[],2);
 figure(52);clf
 subplot(2,2,1);histogram(touch_x(touch_peaks),linspace(touch_x(1),touch_x(end),8))
-set(gca,'ylim',[0 15])
+set(gca,'ylim',[0 25])
 title('touch')
 subplot(2,2,3);histogram(whisk_x(whisk_peaks),linspace(whisk_x(1),whisk_x(end),8),'facecolor','c')
-set(gca,'ylim',[0 15])
+set(gca,'ylim',[0 25])
 title('whisk')
 subplot(2,2,2);histogram(touch_peaks_squish,linspace(1,touch_stretch_bins,8))
-set(gca,'ylim',[0 15])
+set(gca,'ylim',[0 25])
 title('touch squish')
 subplot(2,2,4);histogram(whisk_peaks_squish,linspace(1,whisk_stretch_bins,8),'facecolor','c')
-set(gca,'ylim',[0 15])
+set(gca,'ylim',[0 25])
 title('whisk squish')
 
 %% curve matching correlation
@@ -194,23 +194,19 @@ stretch_corr = cellfun(@(x,y) corr(x',y'),new_touch,new_whisk);
 
 %corr for matching bits 
 matching_bins = cellfun(@(x,y) intersect(find(~isnan(x)),find(~isnan(y))),ix_touch,ix_whisk,'uniformoutput',0);
+match_stretch = mean(cellfun(@numel,matching_bins));
+matched_touch = cellfun(@(x,y) x(y),ix_touch,matching_bins,'uniformoutput',0);
+matched_whisk = cellfun(@(x,y) x(y),ix_whisk,matching_bins,'uniformoutput',0);
+
+match_stretch_touch=cellfun(@(x) interp1(linspace(1,match_stretch,numel(x)),x,1:match_stretch),matched_touch,'uniformoutput',0);
+match_stretch_whisk=cellfun(@(x) interp1(linspace(1,match_stretch,numel(x)),x,1:match_stretch),matched_whisk,'uniformoutput',0);
+
 match_corr = cellfun(@(x,y,z) corr(x(z)',y(z)'),ix_touch,ix_whisk,matching_bins);
-
-figure(5100);clf
-rc = numSubplots(numel(new_touch)); 
-for b = 1:numel(new_touch)
-    subplot(rc(1),rc(2),b)
-    plot(1:stretch_bins,new_touch{b},'r')
-    hold on; plot(1:stretch_bins,new_whisk{b},'c')
-    title(num2str(stretch_corr(b)));
-end
-suptitle('shrink to fit')
-
 
 shuff_times = 1000;
 for f = 1:shuff_times
-    shuff_touch = new_touch(randperm(numel(new_touch)));
-    shuff_whisk = new_whisk(randperm(numel(new_whisk)));
+    shuff_touch = new_touch(randperm(numel(match_stretch_touch)));
+    shuff_whisk = new_whisk(randperm(numel(match_stretch_whisk)));
     shuff_corr{f} = cellfun(@(x,y) corr(x',y'),shuff_touch,shuff_whisk);
 end
 [~,p] = kstest2(stretch_corr,cell2mat(shuff_corr));
@@ -227,7 +223,7 @@ title('intersecting locations')
 axis square
 subplot(1,3,3)
 histogram(cell2mat(shuff_corr),-1:.2:1,'facecolor','b','normalization','probability')
-hold on; histogram(stretch_corr,-1:.2:1,'facecolor','k','normalization','probability')
+hold on; histogram(match_corr,-1:.2:1,'facecolor','k','normalization','probability')
 legend('shuff','data')
 title(['KS p = ' num2str(p)])
 axis square
