@@ -1,8 +1,8 @@
 %% Traces of features and examples 
 
 cellNumber = 52; 
-trialNumber = datasample(1:U{cellNumber}.k,1); %57 on cell 52 is good
-% trialNumber = 57;
+trialNumber = datasample(1:U{cellNumber}.k,1); %57/92/52/83/34 on cell 52 is good
+% trialNumber = 92;
 
 
 touchOn = [find(U{cellNumber}.S_ctk(9,:,trialNumber)==1) find(U{cellNumber}.S_ctk(12,:,trialNumber)==1)]; 
@@ -12,6 +12,7 @@ angle = U{cellNumber}.S_ctk(1,:,trialNumber);
 amp = U{cellNumber}.S_ctk(3,:,trialNumber); 
 midpoint = U{cellNumber}.S_ctk(4,:,trialNumber); 
 phase = U{cellNumber}.S_ctk(5,:,trialNumber); 
+% phase(amp<5) = nan;
 sweep_name = ['sweepArray_' U{cellNumber}.meta.mouseName '_' U{cellNumber}.meta.sessionName '_' U{cellNumber}.meta.cellName '_' U{cellNumber}.meta.cellCode ]; 
 load(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SweepArrays\' sweep_name]);
 spikes = s.sweeps{trialNumber}.rawSignal - mean(s.sweeps{trialNumber}.rawSignal);

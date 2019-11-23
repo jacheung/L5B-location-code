@@ -136,10 +136,10 @@ subplot(4,2,[7 8])
 hold on; histogram(whisk_fr,[0.1 .25 .5 1 2.5 5 10 25 50 100],'FaceColor','k','FaceAlpha',1)
 title('whisk fr')
 set(gca,'xscale','log','xlim',[.1 100])
-
-fn = 'fr_x_modulation_index.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% 
+% fn = 'fr_x_modulation_index.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 %% CDF of sampling
 built = find(cellfun(@(x) isfield(x,'stim_response'),angle_whisk));
@@ -234,11 +234,16 @@ d_angle_tc = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_
 figure(58012);clf
 rc = numSubplots(numel(phase_tc)); 
 for b = 1:numel(phase_tc)
+        maxmin = [min([d_angle_tc{b} phase_tc{b}]) max([d_angle_tc{b} phase_tc{b}])];
     subplot(rc(1),rc(2),b)
-    plot(normalize_var(phase_tc{b},0,1),'g')
-    hold on; plot(normalize_var(d_angle_tc{b},0,1),'b')
-    hold on; plot([stretch_bins/2 stretch_bins/2],[0 1],'--k')
-    set(gca,'xtick',[],'ytick',[])
+%     plot(normalize_var(phase_tc{b},0,1),'g')
+    plot(phase_tc{b},'g')
+%     hold on; plot(normalize_var(d_angle_tc{b},0,1),'b')
+    hold on; plot(d_angle_tc{b},'b')
+    hold on; plot([stretch_bins/2 stretch_bins/2],maxmin,'--k')
+    axis tight
+
+    set(gca,'xtick',[],'ytick',maxmin,'ylim',maxmin)
 end
 legend('phase','angle')
 

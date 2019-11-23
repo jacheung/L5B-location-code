@@ -79,7 +79,6 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 
-
 %% scatter of tuning preference of whisk and touch
 
 tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
@@ -198,7 +197,6 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 
-
 %% Distance from intersect
 tUnits = find(cellfun(@(x) x.is_tuned==1,tStruct));
 wUnits = find(cellfun(@(x) x.is_tuned==1,wStruct));
@@ -249,7 +247,6 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 %% whisk and touch tuning curves
-
 figure(8);clf
 figure(9);clf
 figure(10);clf
