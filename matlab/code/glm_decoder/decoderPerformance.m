@@ -18,6 +18,7 @@ caxis([0 .40])
 set(gca,'xtick',[],'ytick',[])
 xlabel('predicted');ylabel('true')
 colorbar
+colormap turbo
 axis square
 
 

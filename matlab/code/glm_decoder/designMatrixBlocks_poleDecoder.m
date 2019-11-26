@@ -1,9 +1,8 @@
 function mdl = designMatrixBlocks_poleDecoder(mdl,tuning_structure,glmnetOpt)
 
-builtUnits = find(cellfun(@(x) isfield(x,'stim_response'),tuning_structure));
-sampledSpace = cellfun(@(x) range(x.stim_response.values(:,1)),tuning_structure(builtUnits)) ./ 2;
-units_2_use = builtUnits(sampledSpace > glmnetOpt.pctSamplingThreshold);
-
+tuned_cells = find(cellfun(@(x) x.is_tuned,tuning_structure)==1);
+sampledSpace = cellfun(@(x) range(x.stim_response.values(:,1)),tuning_structure(tuned_cells)) ./ 2;
+units_2_use = tuned_cells(sampledSpace > glmnetOpt.pctSamplingThreshold);
 
 for g = 1:length(units_2_use)
     current = tuning_structure{units_2_use(g)};

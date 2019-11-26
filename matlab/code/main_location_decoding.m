@@ -4,16 +4,16 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions
-U = defTouchResponse(U,.95,'on');
+% U = defTouchResponse(U,.95,'off');
 % selectedCells = find(cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U)~=0);
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 
-pole_tuned = object_location_quantification(U,selectedCells,'pole','on'); %for old see object_location_v1.0
+pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 
 tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1);
-untuned_cells = intersect(find(~(cellfun(@(x) x.is_tuned,pole_tuned)==1)),selectedCells);
-builtUnits = find(cellfun(@(x) isfield(x,'stim_response'),pole_tuned));
-sampledSpace = cellfun(@(x) range(x.stim_response.values(:,1)),pole_tuned(builtUnits)) ./ 2;
+% untuned_cells = intersect(find(~(cellfun(@(x) x.is_tuned,pole_tuned)==1)),selectedCells);
+% builtUnits = find(cellfun(@(x) isfield(x,'stim_response'),pole_tuned));
+sampledSpace = cellfun(@(x) range(x.stim_response.values(:,1)),pole_tuned(tuned_cells)) ./ 2;
 units_2_use = builtUnits(sampledSpace > .8);
 
 %% Justification for decoder - fano factor check
@@ -219,7 +219,6 @@ subplot(2,2,3)
 MAE = cellfun(@(x) mean(abs((x-real_psycho_mean))),neuro_mean);
 [minMAE,minidx] = min(MAE);
 scatter(numNeurons,MAE,'ko')
-hold on; plot([0 25],[0 0],'--k')
 
 % shadedErrorBar(numNeurons,mean_MAE,sem_MAE,'k-')
 % hold on;scatter(numNeurons(minidx),mean_MAE(minidx),'filled','r')
@@ -228,7 +227,7 @@ hold on; plot([0 25],[0 0],'--k')
 %     hold on;scatter(numNeurons(right_tuning_idx),mean_MAE(right_tuning_idx),'filled','g')
 % end
 
-set(gca,'ylim',[-.2 .4],'xtick',0:5:30)
+set(gca,'ylim',[0 .4],'xtick',0:5:25,'xlim',[0 25])
 xlabel('number of neurons')
 ylabel('mean absolute error')
 axis square

@@ -92,9 +92,9 @@ set(gca,'xlim',[0 100],'ylim',[0 100],'xscale','log','yscale','log')
 xlabel('quiet FR');ylabel('whisking FR')
 title(['red=' num2str(numel(red_dots)) ' blue=' num2str(numel(blue_dots)) ' n.s.=' num2str(numel(gray_dots))])
 
-fn = 'whisk_quiet_unity.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% fn = 'whisk_quiet_unity.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 
 %% scatter of absolute modulation index x FR
@@ -247,6 +247,49 @@ for b = 1:numel(phase_tc)
 end
 legend('phase','angle')
 
+
+%% phase X angle tune
+load_structs = {'angle_whisk','phase_whisk'};
+for b = 1:numel(load_structs)
+    if ~exist(load_structs{b},'var')
+        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' load_structs{b} '.mat'])
+    end
+end
+tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
+
+phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(tuned_units));
+angle_mod = cellfun(@(x) x.calculations.mod_idx_relative,angle_whisk(tuned_units));
+relative_mod = (phase_mod - angle_mod) ./ (phase_mod+angle_mod); %negative value = phase more than angle
+
+%angle preference as close/far and phase as normal
+phase_tc = cellfun(@(x) x.stim_response.bars_fit.mean',phase_whisk(tuned_units),'uniformoutput',0);
+stretch_bins =  mean(cellfun(@numel,phase_tc)); 
+angle_tc = cellfun(@(x) x.stim_response.bars_fit.mean,angle_whisk(tuned_units),'uniformoutput',0);
+d_angle_tc = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),angle_tc,'uniformoutput',0);
+[~,idx] = cellfun(@max,d_angle_tc);
+angle_pref = normalize_var(idx,0,1);
+phase_pref = cellfun(@(x) x.calculations.tune_peak,phase_whisk(tuned_units));
+
+num_brew_elem = 30; 
+sel_map = round(normalize_var([relative_mod -1 1],1,num_brew_elem));
+div_cmap = cbrewer('div','RdBu',num_brew_elem);
+sel_map = sel_map(1:end-2);
+
+figure(88);clf
+scatter(phase_pref',angle_pref',100,div_cmap(sel_map,:),'filled');
+set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'ylim',[-.1 1.1])
+axis square
+xlabel('phase preference')
+ylabel('norm angle preference')
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+fn = 'phase_x_angle.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+fn = 'cbrew.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 %% pop map
 whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,angle_whisk);
