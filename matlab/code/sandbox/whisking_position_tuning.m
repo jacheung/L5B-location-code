@@ -33,10 +33,14 @@ for k = 33
         amp_whisk(amp<5) = nan;
         touchesOn = [find(currentCell.S_ctk(9,:,trialSample(g))==1) find(currentCell.S_ctk(12,:,trialSample(g))==1)];
         touchesOff = [find(currentCell.S_ctk(10,:,trialSample(g))==1) find(currentCell.S_ctk(13,:,trialSample(g))==1)];
+        short_touches = (touchesOff-touchesOn)<=5;
+        fill_values = touchesOff(short_touches)+5;
+        touchesOff(short_touches) = fill_values;
+        
         
         if ~isempty(touchesOn)
             for p = 1:numel(touchesOn)
-                amp_whisk(touchesOn(p):touchesOff(p)+30) = nan;
+                amp_whisk(touchesOn(p)+1:touchesOff(p)+30) = nan;
             end
         end
         
@@ -51,7 +55,7 @@ for k = 33
         if ~isempty(touchesOn) && ~isempty(spikes)
             for f = 1:length(touchesOn)
                 tp = touchesOn(f):touchesOff(f);
-                hold on; plot(tp,whisk(tp),'r');
+                hold on; plot(tp,whisk(tp),'r-');
             end
         end
         
@@ -215,13 +219,68 @@ saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 fn = 'phase_map.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
+%% angle whisk 
+whisk_cells =  find(cellfun(@(x) x.is_tuned,angle_whisk));
 
-%% TEST PHASE AND ANGLE TUNING CURVES
-load_structs = {'angle_whisk','phase_whisk'};
-for b = 1:numel(load_structs)
-    if ~exist(load_structs{b},'var')
-        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' load_structs{b} '.mat'])
-    end
+figure(8);clf
+rc= numSubplots(numel(whisk_cells));
+for b = 1:numel(whisk_cells)
+    curr_cell = angle_whisk{whisk_cells(b)};
+    y = cellfun(@mean,curr_cell.stim_response.raw_response);
+    x = cellfun(@median,curr_cell.stim_response.raw_stim);
+    barsx = curr_cell.stim_response.bars_fit.x;
+    barsy = curr_cell.stim_response.bars_fit.mean;
+    
+    subplot(rc(1),rc(2),b)
+    scatter(x,y,'k.')
+    hold on; plot(barsx,barsy,'g')
+end
+
+
+%% firing rate X depth of recording
+touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+whisk_cells =  cellfun(@(x) x.is_tuned,angle_whisk)==1;
+jc_silent_cell = [766 819 895 631 776 815 910 871 844 902   941   840   888   748   732   940   686   944   950   933]; %Phils  from 902
+
+figure(480);clf
+subplot(3,1,[1 2])
+scatter( cellfun(@(y) y.meta.depth,U),cellfun(@(y) mean(y.R_ntk(:))*1000, U),'k','filled')
+hold on;scatter( cellfun(@(y) y.meta.depth,U(whisk_cells)),cellfun(@(y) mean(y.R_ntk(:))*1000, U(whisk_cells)),'c','filled')
+hold on; scatter(jc_silent_cell,ones(length(jc_silent_cell),1)*-1,[],'filled','markerfacecolor',[.6 .6 .6]);
+hold on; plot([700 700],[0 30],'--k')
+hold on; plot([900 900],[0 30],'--k')
+title(['n = response (' num2str(numel(U)) ') + silent (' num2str(numel(jc_silent_cell)) ')' ])
+set(gca,'ytick',0:10:30,'xtick',600:100:1000,'xlim',[600 1000])
+ylabel('firing rate (hz)');
+xlabel('depth (um)')
+
+
+hold on; subplot(3,1,3)
+histogram(cellfun(@(y) y.meta.depth,U(setdiff(1:length(U),whisk_cells))),600:25:1000,'facecolor','k')
+hold on; histogram(cellfun(@(y) y.meta.depth,U(whisk_cells)),600:25:1000,'facecolor','c')
+hold on;histogram(jc_silent_cell,600:25:1000,'facecolor',[.6 .6 .6])
+set(gca,'xtick',600:100:1000,'xlim',[600 1000])
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+fn = 'scatter_depth_firingrate.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+%% TEST PHASE AND ANGLE TUNING CURVEShilbert_feature = 'phase';
+fileName = ['whisk_' hilbert_feature '_tune'];
+if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+    phase_whisk = wStruct;
+else
+    phase_whisk = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
+end
+
+hilbert_feature = 'angle';
+fileName = ['whisk_' hilbert_feature '_tune'];
+if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+    angle_whisk = wStruct;
+else
+    angle_whisk = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
 end
 
 tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
@@ -246,20 +305,26 @@ for b = 1:numel(phase_tc)
     set(gca,'xtick',[],'ytick',maxmin,'ylim',maxmin)
 end
 legend('phase','angle')
-
+% 
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+% fn = 'phase_x_angle_curves.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 %% phase X angle tune
-load_structs = {'angle_whisk','phase_whisk'};
-for b = 1:numel(load_structs)
-    if ~exist(load_structs{b},'var')
-        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' load_structs{b} '.mat'])
-    end
-end
-tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
+
+% tuned_units = cellfun(@(x) x.is_tuned,angle_whisk)==1;
+tuned_units = (double(cellfun(@(x) x.is_tuned,angle_whisk)==1) + double(cellfun(@(x) x.is_tuned,phase_whisk)==1))>0;
 
 phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,phase_whisk(tuned_units));
 angle_mod = cellfun(@(x) x.calculations.mod_idx_relative,angle_whisk(tuned_units));
-relative_mod = (phase_mod - angle_mod) ./ (phase_mod+angle_mod); %negative value = phase more than angle
+% relative_mod = (angle_mod - phase_mod) ./ (phase_mod+angle_mod); %negative value = phase more than angle
+
+phase_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,phase_whisk(tuned_units));
+angle_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,angle_whisk(tuned_units));
+relative_mod = (angle_mod_abs - phase_mod_abs) ./ (phase_mod_abs+angle_mod_abs); %negative value = phase more than angle
+
+
 
 %angle preference as close/far and phase as normal
 phase_tc = cellfun(@(x) x.stim_response.bars_fit.mean',phase_whisk(tuned_units),'uniformoutput',0);
@@ -283,13 +348,31 @@ xlabel('phase preference')
 ylabel('norm angle preference')
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+fn = 'phase_x_angle_x_preference.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+
+ figure(57);clf
+ scatter(phase_mod_abs,angle_mod_abs,'k')
+ hold on; plot([0 max([phase_mod_abs angle_mod_abs])], [0 max([phase_mod_abs angle_mod_abs])],'k--')
+ hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
+     std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
+     std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
+     ,'ro','capsize',0)
+ set(gca,'xlim',[0 max([phase_mod_abs angle_mod_abs])],'ylim',[0 max([phase_mod_abs angle_mod_abs])])
+ xlabel('phase abs mod (spks/s)')
+ ylabel('angle abs mod (spks/s)')
+ axis square
+ [~,p,~,stats] = ttest(phase_mod_abs,angle_mod_abs);
+ title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
+ 
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 fn = 'phase_x_angle.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
-fn = 'cbrew.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+
 
 %% pop map
 whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,angle_whisk);

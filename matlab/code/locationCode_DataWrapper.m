@@ -200,6 +200,7 @@ for cellStep = 1:length(cellNum)
     U{cellStep}.meta.sessionName       = T.sessionName;
     U{cellStep}.meta.cellName          = T.cellNum;
     U{cellStep}.meta.cellCode          = T.cellCode;
+    U{cellStep}.meta.usedTrialNums        = useTrials;
     U{cellStep}.meta.depth             = T.depth;
     U{cellStep}.meta.layer             = layer;
     

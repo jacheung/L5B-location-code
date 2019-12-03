@@ -1,60 +1,128 @@
-%% Traces of features and examples 
+%% Traces of features and examples
+selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 
-cellNumber = 52; 
-trialNumber = datasample(1:U{cellNumber}.k,1); %57/92/52/83/34 on cell 52 is good
-% trialNumber = 92;
+cellNumber = 32; % good SNR cells 55, 57
 
+[tVar] = atTouch_sorter(U{cellNumber},-25:50);
+touch_response = nanmean(tVar.allTouches.R_ntk) * 1000;
 
-touchOn = [find(U{cellNumber}.S_ctk(9,:,trialNumber)==1) find(U{cellNumber}.S_ctk(12,:,trialNumber)==1)]; 
-touchOff = [find(U{cellNumber}.S_ctk(10,:,trialNumber)==1) find(U{cellNumber}.S_ctk(13,:,trialNumber)==1)]; 
-
-angle = U{cellNumber}.S_ctk(1,:,trialNumber); 
-amp = U{cellNumber}.S_ctk(3,:,trialNumber); 
-midpoint = U{cellNumber}.S_ctk(4,:,trialNumber); 
-phase = U{cellNumber}.S_ctk(5,:,trialNumber); 
-% phase(amp<5) = nan;
-sweep_name = ['sweepArray_' U{cellNumber}.meta.mouseName '_' U{cellNumber}.meta.sessionName '_' U{cellNumber}.meta.cellName '_' U{cellNumber}.meta.cellCode ]; 
-load(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SweepArrays\' sweep_name]);
-spikes = s.sweeps{trialNumber}.rawSignal - mean(s.sweeps{trialNumber}.rawSignal);
-spikeTimes = round(s.sweeps{trialNumber}.spikeTimes./10)-200;
-downsampled_spikes = mean(reshape(spikes,10,[]));
-
-figure(8);clf
-subplot(6,1,1)
-plot(1:U{cellNumber}.t,angle);
-set(gca,'xtick',[])
-subplot(6,1,2)
-plot(1:U{cellNumber}.t,amp);
-set(gca,'xtick',[])
-subplot(6,1,3)
-plot(1:U{cellNumber}.t,midpoint);
-set(gca,'xtick',[])
-subplot(6,1,4)
-scatter(1:U{cellNumber}.t,phase,'.');
-set(gca,'xtick',[])
-subplot(6,1,5)
-if ~isempty(touchOn)
-    for b = 1:length(touchOn)
-        hold on; plot([touchOn(b) touchOff(b)],[1 1],'k')
-    end
-end
-if ~isempty(spikeTimes)
-    hold on; scatter(spikeTimes,ones(1,numel(spikeTimes)).*2,'k.')
-end
-set(gca,'xlim',[0 4000],'ylim',[0 3])
-subplot(6,1,6)
-plot(1:U{cellNumber}.t,downsampled_spikes(201:end));
-set(gca,'xtick',0:1000:4000)
+try
+    figure(480);clf
+    bar(-25:50,touch_response,'k')
+    title('touch response')
+    xlabel('time from touch onset (ms)')
+    ylabel('firing rate (spks/s)')
     
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
-fn = 'example_trial_signals.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+    responseWindow = U{cellNumber}.meta.touchProperties.responseWindow;
+    peak_y = ceil(max(touch_response)/10)*10;
+    hold on; plot(responseWindow,[peak_y peak_y],'r')
+    set(gca,'ylim',[0 peak_y * 1.2])
+catch 
+    bar(-25:50,touch_response,'k')
+    title('NOT TOUCH CELL!')
+end
+
+
+uTrialNumber = datasample(1:U{cellNumber}.k,1); %57/92/52/83/34 on cell 52 is good
+trialNumber = U{cellNumber}.meta.usedTrialNums(uTrialNumber);
+
+for uTrialNumber = 37
+    trialNumber = U{cellNumber}.meta.usedTrialNums(uTrialNumber);
+    
+    
+    touchOn = [find(U{cellNumber}.S_ctk(9,:,trialNumber)==1) find(U{cellNumber}.S_ctk(12,:,trialNumber)==1)];
+    touchOff = [find(U{cellNumber}.S_ctk(10,:,trialNumber)==1) find(U{cellNumber}.S_ctk(13,:,trialNumber)==1)];
+    
+    angle = U{cellNumber}.S_ctk(1,:,trialNumber);
+    amp = U{cellNumber}.S_ctk(3,:,trialNumber);
+    midpoint = U{cellNumber}.S_ctk(4,:,trialNumber);
+    phase = U{cellNumber}.S_ctk(5,:,trialNumber);
+    phase(amp<5) = nan;
+    sweep_name = ['sweepArray_' U{cellNumber}.meta.mouseName '_' U{cellNumber}.meta.sessionName '_' U{cellNumber}.meta.cellName '_' U{cellNumber}.meta.cellCode ];
+    tarray_name = ['trial_array_' U{cellNumber}.meta.mouseName '_' U{cellNumber}.meta.sessionName '_' U{cellNumber}.meta.cellName '_' U{cellNumber}.meta.cellCode ];
+    try
+        load(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SweepArrays\' sweep_name]);
+    catch
+        cd('C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SweepArrays_Phil')
+        file_names = dir('*.mat');
+        for g = 1:length(file_names)
+            matched_idx(g) = ~isempty(strfind(file_names(g).name, sweep_name));
+        end
+        load(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SweepArrays_Phil\' file_names(find(matched_idx,1)).name]);
+    end
+    
+    try
+        load(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\TrialArrayBuilders\' tarray_name]);
+    catch
+        cd('C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\TrialArrayBuilders_Phil')
+        file_names = dir('*.mat');
+        for g = 1:length(file_names)
+            matched_idx(g) = ~isempty(strfind(file_names(g).name, tarray_name));
+        end
+        load(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\TrialArrayBuilders_Phil\' file_names(find(matched_idx,1)).name]);
+    end
+    
+    spikes = s.sweeps{trialNumber}.rawSignal - mean(s.sweeps{trialNumber}.rawSignal);
+    spikeTimes = round(T.trials{trialNumber}.spikesTrial.spikeTimes./10)-150;
+    uTimes = find(U{cellNumber}.R_ntk(:,:,uTrialNumber))';
+    
+
+    figure(8);clf
+    subplot(6,1,1)
+    plot(1:U{cellNumber}.t,angle);
+    ylabel('angle')
+    set(gca,'xtick',[])
+    subplot(6,1,2)
+    plot(1:U{cellNumber}.t,amp);
+    ylabel('amp')
+    set(gca,'xtick',[])
+    subplot(6,1,3)
+    plot(1:U{cellNumber}.t,midpoint);
+    ylabel('midpoint')
+    set(gca,'xtick',[])
+    subplot(6,1,4)
+    scatter(1:U{cellNumber}.t,phase,'.');
+    ylabel('phase')
+    set(gca,'xtick',[])
+    subplot(6,1,5)
+    if ~isempty(touchOn)
+        for b = 1:length(touchOn)
+            hold on; plot([touchOn(b) touchOff(b)],[1 1],'k')
+        end
+    end
+    if ~isempty(spikeTimes)
+        hold on; scatter(spikeTimes,ones(1,numel(spikeTimes)).*2,'k.')
+    end
+    
+    if ~isempty(uTimes)
+        hold on; scatter(uTimes,ones(1,numel(uTimes)).*3,'k.')
+    end
+    
+    set(gca,'xlim',[0 4000],'ylim',[0 4],'ytick',[1 2 3],'yticklabel',{'touch','spike times','Uspikes'})
+    subplot(6,1,6)
+    
+    plot(spikes)
+    if sum(spikeTimes(end)-uTimes(end)) ~= 0
+        spikeTimes = round(T.trials{trialNumber}.spikesTrial.spikeTimes./10)-200;
+        uTimes = find(U{cellNumber}.R_ntk(:,:,uTrialNumber))';
+        set(gca,'xtick',2000:10000:42000,'xticklabel',0:1000:4000,'xlim',[2000 42000])
+    else
+        set(gca,'xtick',1500:10000:41500,'xticklabel',0:1000:4000,'xlim',[1500 41500])
+    end
+
+    suptitle(['cell num:' num2str(cellNumber) ' trialNum:' num2str(uTrialNumber)]);
+    pause
+end
+
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
+% fn = 'example_trial_signals.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 %% firing rate X depth of recording
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-pole_tuned = object_location_quantification(U,touchCells,'pole','off'); 
-location_cells = touchCells(cellfun(@(x) x.is_tuned==1,pole_tuned(touchCells))); 
+pole_tuned = object_location_quantification(U,touchCells,'pole','off');
+location_cells = touchCells(cellfun(@(x) x.is_tuned==1,pole_tuned(touchCells)));
 
 jc_silent_cell = [766 819 895 631 776 815 910 871 844 902   941   840   888   748   732   940   686   944   950   933]; %Phils  from 902
 
@@ -92,37 +160,37 @@ for i = 29
     
     figure(38);clf
     for g = 1:length(motors)
-%         subplot(1,2,1)
-%         spikeIdx = find(spikes(:,g));
-%         hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
-%         set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
-%         axis square
-%         subplot(1,2,2)
-%         spikeIdx = find(spikes(:,sidx(g)));
-%         hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
+        %         subplot(1,2,1)
+        %         spikeIdx = find(spikes(:,g));
+        %         hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
+        %         set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
+        %         axis square
+        %         subplot(1,2,2)
+        %         spikeIdx = find(spikes(:,sidx(g)));
+        %         hold on; scatter(spikeIdx,ones(numel(spikeIdx),1).*g,'k.')
     end
-%     set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
-%     axis square
-
+    %     set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
+    %     axis square
+    
     touchOn = [find(U{i}.S_ctk(9,:,:)==1)  ;find(U{i}.S_ctk(12,:,:)==1)];
     touchOff = [find(U{i}.S_ctk(10,:,:)==1)  ;find(U{i}.S_ctk(13,:,:)==1)];
     whisking = find(U{i}.S_ctk(3,:,:)>5);
     touch_matrix = nan(size(spikes));
-    whisk_matrix = nan(size(spikes)); 
+    whisk_matrix = nan(size(spikes));
     for g = 1:length(touchOn)
         touch_matrix(touchOn(g):touchOff(g)) = 1;
     end
-    whisk_matrix(setdiff(whisking,find(touch_matrix==1))) = 1; 
-
+    whisk_matrix(setdiff(whisking,find(touch_matrix==1))) = 1;
+    
     subplot(1,2,1)
     pcolor(whisk_matrix')
     set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000],'ylim',[48 94])
     axis square
     %SORTED TOUCH OVERLAY
-%     subplot(1,2,2)
-%     pcolor(touch_matrix(:,sidx)')
-%set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
-%     
+    %     subplot(1,2,2)
+    %     pcolor(touch_matrix(:,sidx)')
+    %set(gca,'ylim',[1 numel(motors)],'ytick',[],'xtick',0:1000:4000,'xlim',[0 4000])
+    %
     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
     fn = 'example_raster_whisk_2.eps';
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')

@@ -10,7 +10,7 @@ end
 %%
 figure(8);clf
 % for rec = datasample(1:length(U),1)
-for rec = 1
+for rec = 32
     clearvars -except rec U wStruct hilbert_feature
     
     [tVar] = atTouch_sorter(U{rec},-25:50);

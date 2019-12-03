@@ -13,6 +13,16 @@ if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat']
 else
     wStruct = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
 end
+
+tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
+wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
+
+[~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
+[~,whisk_ix_idx] = intersect(find(wUnits),find(tUnits));
+
+touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
+whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
+
 %% heatmap
 population_heatmap_builder(tStruct,wStruct,hilbertVar)
 
@@ -34,6 +44,38 @@ fix_eps_fonts([saveDir, fn])
 
 figure(53)
 fn = [hilbertVar '_correlations.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+%% scatter of abs modulation depth
+
+tuned_touch = find(tUnits);
+tuned_whisk = find(wUnits); 
+
+use_units = tuned_touch(touch_ix_idx); %same as use_units = tuned_whisk(whisk_ix_idx);
+
+touch_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,tStruct(use_units));
+whisk_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,wStruct(use_units));
+max_val = ceil(max([whisk_mod_abs touch_mod_abs])./10) .* 10;
+
+
+figure(8540);clf
+scatter(whisk_mod_abs,touch_mod_abs,'ko')
+ hold on; errorbar(mean(whisk_mod_abs),mean(touch_mod_abs),...
+     std(touch_mod_abs)./sqrt(sum(tuned_units)),std(touch_mod_abs)./sqrt(sum(tuned_units)),...
+     std(whisk_mod_abs)./sqrt(sum(tuned_units)),std(whisk_mod_abs)./sqrt(sum(tuned_units))...
+     ,'ro','capsize',0)
+hold on; plot([0 max_val],[0 max_val],'--k')
+set(gca,'xlim',[0 max_val],'ylim',[0 max_val],'xtick',0:25:100,'ytick',0:25:100)
+axis square
+
+xlabel('whisk abs mod (spks/s)')
+ylabel('touch abs mod (spks/s)')
+axis square
+[~,p,~,stats] = ttest(whisk_mod_abs,touch_mod_abs);
+title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig5\';
+fn = 'touch_x_whisk_absmod.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
@@ -80,16 +122,6 @@ fix_eps_fonts([saveDir, fn])
 
 
 %% scatter of tuning preference of whisk and touch
-
-tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
-wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
-
-[~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
-[~,whisk_ix_idx] = intersect(find(wUnits),find(tUnits));
-
-touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
-whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
-
 touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],tStruct(tUnits),'uniformoutput',0)') ;
 whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],wStruct(wUnits),'uniformoutput',0)');
 
@@ -130,20 +162,20 @@ elseif strcmp(hilbertVar,'phase')
     set(gca,'xlim',[-pi pi],'ylim',[0 20])
 elseif strcmp(hilbertVar,'angle')
     subplot(4,1,[1:2])
-    hold on; errorbar(whisking_pw(whisk_nonIX_idx,1),ones(1,length(whisk_nonIX_idx))*-30,whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','horizontal','capsize',0)%plot only whisk tuned units
-    hold on; errorbar(ones(1,length(touch_nonIX_idx))*-30,touch_pw(touch_nonIX_idx,1),touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','vertical','capsize',0)%plot only touch tuned units
+%     hold on; errorbar(whisking_pw(whisk_nonIX_idx,1),ones(1,length(whisk_nonIX_idx))*-30,whisking_pw(whisk_nonIX_idx,2),whisking_pw(whisk_nonIX_idx,3),'co','horizontal','capsize',0)%plot only whisk tuned units
+%     hold on; errorbar(ones(1,length(touch_nonIX_idx))*-30,touch_pw(touch_nonIX_idx,1),touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','vertical','capsize',0)%plot only touch tuned units
     hold on; errorbar(whisking_pw(whisk_ix_idx,1),touch_pw(touch_ix_idx,1),touch_pw(touch_ix_idx,2),touch_pw(touch_ix_idx,3),whisking_pw(whisk_ix_idx,2),whisking_pw(whisk_ix_idx,3),'ko','capsize',0)
     
-    set(gca,'xlim',[-40 80],'ylim',[-40 80],...
+    set(gca,'xlim',[-30 80],'ylim',[-30 80],...
         'xtick',-40:20:80,'ytick',-40:20:80)
     hold on; plot([-40 80],[-40 80],'--k')
     
     subplot(4,1,3)
-    histogram(touch_pw(:,1),-40:10:80,'facecolor','b','facealpha',1)
-    set(gca,'xlim',[-40 80],'ylim',[0 20])
+    histogram(touch_pw(touch_nonIX_idx,1),-30:10:80,'facecolor','b','facealpha',1)
+    set(gca,'xlim',[-30 80],'ylim',[0 20])
     subplot(4,1,4);
-    histogram(whisking_pw(:,1),-40:10:80,'facecolor','c','facealpha',1)
-    set(gca,'xlim',[-40 80],'ylim',[0 20])
+    histogram(whisking_pw(whisk_nonIX_idx,1),-430:10:80,'facecolor','c','facealpha',1)
+    set(gca,'xlim',[-30 80],'ylim',[0 20])
     
 elseif strcmp(hilbertVar,'amplitude')
     subplot(4,1,[1:2])
@@ -191,7 +223,7 @@ xlabel('whisk tune peak');ylabel('touch tune peak')
 title(['whisk=' num2str(numel(whisk_nonIX_idx)) ', touch=' num2str(numel(touch_nonIX_idx)) ', both=' num2str(numel(touch_ix_idx))])
 
 figure(3850);
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig5\';
 fn = [hilbertVar '_intersect.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
