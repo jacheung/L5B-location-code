@@ -26,7 +26,7 @@ end
 uTrialNumber = datasample(1:U{cellNumber}.k,1); %57/92/52/83/34 on cell 52 is good
 trialNumber = U{cellNumber}.meta.usedTrialNums(uTrialNumber);
 
-for uTrialNumber = 37
+for uTrialNumber = 59
     trialNumber = U{cellNumber}.meta.usedTrialNums(uTrialNumber);
     
     
@@ -37,7 +37,8 @@ for uTrialNumber = 37
     amp = U{cellNumber}.S_ctk(3,:,trialNumber);
     midpoint = U{cellNumber}.S_ctk(4,:,trialNumber);
     phase = U{cellNumber}.S_ctk(5,:,trialNumber);
-    phase(amp<5) = nan;
+    phase(smooth(amp,50)<5) = nan;
+    licks= find(U{cellNumber}.S_ctk(16,:,trialNumber)==1);
     sweep_name = ['sweepArray_' U{cellNumber}.meta.mouseName '_' U{cellNumber}.meta.sessionName '_' U{cellNumber}.meta.cellName '_' U{cellNumber}.meta.cellCode ];
     tarray_name = ['trial_array_' U{cellNumber}.meta.mouseName '_' U{cellNumber}.meta.sessionName '_' U{cellNumber}.meta.cellName '_' U{cellNumber}.meta.cellCode ];
     try
@@ -98,7 +99,11 @@ for uTrialNumber = 37
         hold on; scatter(uTimes,ones(1,numel(uTimes)).*3,'k.')
     end
     
-    set(gca,'xlim',[0 4000],'ylim',[0 4],'ytick',[1 2 3],'yticklabel',{'touch','spike times','Uspikes'})
+     if ~isempty(uTimes)
+        hold on; scatter(licks,ones(1,numel(licks)).*4,'c.')
+    end
+    
+    set(gca,'xlim',[0 4000],'ylim',[0 4],'ytick',[1 2 3 4 ],'yticklabel',{'touch','spike times','Uspikes','licks'})
     subplot(6,1,6)
     
     plot(spikes)
@@ -114,10 +119,10 @@ for uTrialNumber = 37
     pause
 end
 
-% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
-% fn = 'example_trial_signals.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
+fn = 'example_trial_signals.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 %% firing rate X depth of recording
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
