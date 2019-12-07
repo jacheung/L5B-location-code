@@ -98,11 +98,11 @@ ylabel('proportion of units')
 set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(num_naive_OL)],['expert n=' num2str(num_expert_OL)]},'ytick',0:.25:1,'ylim',[0 1])
 title('proportion of touch that is OL')
 
-figure(99)
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-fn = 'unit_distribution_bar.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% figure(99)
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+% fn = 'unit_distribution_bar.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 %% Heatmap of tuning
 tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);

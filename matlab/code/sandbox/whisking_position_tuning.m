@@ -1,5 +1,5 @@
 %% load whisking structures 
-hilbert_feature = {'angle','phase'};
+hilbert_feature = {'angle','phase','midpoint','amplitude'};
 for b = 1:numel(hilbert_feature)
     fileName = ['whisk_' hilbert_feature{b} '_tune'];
     if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
@@ -25,8 +25,8 @@ for k = 33
         whisk = currentCell.S_ctk(1,:,trialSample(g));
         midpoint = currentCell.S_ctk(4,:,trialSample(g));
         amp = currentCell.S_ctk(3,:,trialSample(g));
-        amp_whisk = whisk;
-        amp_whisk(amp<5) = nan;
+        amplitude = whisk;
+        amplitude(amp<5) = nan;
         touchesOn = [find(currentCell.S_ctk(9,:,trialSample(g))==1) find(currentCell.S_ctk(12,:,trialSample(g))==1)];
         touchesOff = [find(currentCell.S_ctk(10,:,trialSample(g))==1) find(currentCell.S_ctk(13,:,trialSample(g))==1)];
         short_touches = (touchesOff-touchesOn)<=5;
@@ -36,17 +36,17 @@ for k = 33
         
         if ~isempty(touchesOn)
             for p = 1:numel(touchesOn)
-                amp_whisk(touchesOn(p)+1:touchesOff(p)+30) = nan;
+                amplitude(touchesOn(p)+1:touchesOff(p)+30) = nan;
             end
         end
         
         spikes = find(currentCell.R_ntk(1,:,trialSample(g))==1);
         subplot(length(trialSample),1,g)
         plot(1:currentCell.t,whisk,'k')
-        hold on;plot(1:currentCell.t,amp_whisk,'c')
+        hold on;plot(1:currentCell.t,amplitude,'c')
         
         hold on; scatter(spikes,whisk(spikes),'ko','filled','markerfacecolor',[.8 .8 .8])
-        hold on; scatter(spikes,amp_whisk(spikes),'ko','filled')
+        hold on; scatter(spikes,amplitude(spikes),'ko','filled')
         
         if ~isempty(touchesOn) && ~isempty(spikes)
             for f = 1:length(touchesOn)
@@ -136,7 +136,7 @@ for e = 1:numel(whisk_structs)
         if strcmp(hvar_names{e},'pole')
             whisk_x = -2:.1:2;
         elseif strcmp(hvar_names{e},'phase')
-            whisk_x = linspace(-pi,pi,21);
+            whisk_x = linspace(-pi,pi,50);
         elseif strcmp(hvar_names{e},'angle')
             whisk_x = -30:80;
         else
@@ -147,7 +147,8 @@ for e = 1:numel(whisk_structs)
     
     %this is the part for squishing the map for angle; 
     if strcmp(hvar_names{e},'angle')
-        whisk_stretch_bins = median(cellfun(@(x) sum(~isnan(x)),whisk_heat{e}));
+%         whisk_stretch_bins = median(cellfun(@(x) sum(~isnan(x)),whisk_heat{e}));
+        whisk_stretch_bins = 50; 
         raw_whisk = cellfun(@(x) x(~isnan(x)),whisk_heat{e},'uniformoutput',0);
         new_whisk = cellfun(@(x) interp1(linspace(1,whisk_stretch_bins,numel(x)),x,1:whisk_stretch_bins),raw_whisk,'uniformoutput',0);
         whisk_heat{e} = new_whisk;
@@ -172,13 +173,16 @@ fix_eps_fonts([saveDir, fn])
 %% angle and phase tuning curves
 whisk_cells =  find(cellfun(@(x) x.is_tuned,whisk_struct.angle));
 whisk_structs = {whisk_struct.angle,whisk_struct.phase};
-rc= numSubplots(numel(whisk_cells));
+
 hvar_names = {'angle','phase'};
 
-for g = 2:numel(whisk_structs)
+example_units = [25 31 9];
+rc= numSubplots(numel(example_units));
+
+for g = 1:numel(whisk_structs)
     figure(75+g);clf
-    for b = 1:numel(whisk_cells)
-        curr_cell = whisk_structs{g}{whisk_cells(b)};
+    for b = 1:numel(example_units)
+        curr_cell = whisk_structs{g}{whisk_cells(example_units(b))};
         y = cellfun(@mean,curr_cell.stim_response.raw_response);
         x = cellfun(@median,curr_cell.stim_response.raw_stim);
         barsx = curr_cell.stim_response.bars_fit.x;
@@ -186,7 +190,7 @@ for g = 2:numel(whisk_structs)
         barserr = curr_cell.stim_response.bars_fit.confBands(:,2) - barsy;
         
         subplot(rc(1),rc(2),b)
-        scatter(x,y,'k.')
+        bar(x,y,'k')
 
         if strcmp(hvar_names{g},'phase')
             set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,...
@@ -199,6 +203,7 @@ for g = 2:numel(whisk_structs)
         elseif strcmp(hvar_names{g},'angle')
             hold on; shadedErrorBar(barsx,barsy,barserr,'c')
         end   
+        set(gca,'ylim',[0 round(max(barsy)*1.3)])
     end
     suptitle(hvar_names{g})
     
@@ -209,6 +214,8 @@ for g = 2:numel(whisk_structs)
 end
 
 %% angle and phase pie chart
+whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.angle);
+whisk_phase_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.phase);
 co_tuned = intersect(find(whisk_angle_tuned),find(whisk_phase_tuned)); 
 angle_only = setdiff(find(whisk_angle_tuned),co_tuned);
 phase_only = setdiff(find(whisk_phase_tuned),co_tuned);
@@ -341,23 +348,18 @@ fix_eps_fonts([saveDir, fn])
 
 %% modulation depth of other features
 selectedCells = 1:length(U);
-% pole_whisk = whisking_location_quantification(U,selectedCells,'pole','off');
-whisk_struct.angle = whisking_location_quantification(U,selectedCells,'angle','off');
-midpoint_whisk = whisking_location_quantification(U,selectedCells,'midpoint','off');
-amp_whisk = whisking_location_quantification(U,selectedCells,'amplitude','off');
-whisk_struct.phase = whisking_location_quantification(U,selectedCells,'phase','off');
 
 % w_mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(selectedCells));
 w_mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.angle(selectedCells));
 w_mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.phase(selectedCells));
-w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,amp_whisk(selectedCells));
-w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,midpoint_whisk(selectedCells));
+w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.amplitude(selectedCells));
+w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.midpoint(selectedCells));
 
 % w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells)) * -1;
 w_peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,whisk_struct.angle(selectedCells));
 w_peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,whisk_struct.phase(selectedCells));
-w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,amp_whisk(selectedCells));
-w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,midpoint_whisk(selectedCells));
+w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,whisk_struct.amplitude(selectedCells));
+w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,whisk_struct.midpoint(selectedCells));
 
 % HEAT GRAY WHISK SORTING
 [~,idx] = sort(w_mod_idx_angle);
@@ -365,7 +367,7 @@ whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.angle);
 whisktunedidx = ismember(idx,find(whisk_angle_tuned));
 nonwhisktunedidx = ismember(idx,find(~whisk_angle_tuned));
 tune_map = [w_mod_idx_angle ; w_mod_idx_phase ; w_mod_idx_amp ; w_mod_idx_midpoint];
-fr_map  =  firing_rate;
+fr_map  = log10(cellfun(@(x) mean(x.R_ntk(:))*1000,U));
 
 figure(29);clf
 subplot(2,2,1)
@@ -393,7 +395,8 @@ fix_eps_fonts([saveDir, fn])
 figure(3480);clf
 subplot(1,2,1)
 imagesc(abs(corr([tune_map(:,idx(whisktunedidx)) ; fr_map(:,idx(whisktunedidx))]')));
-caxis([0 1])
+caxis([.5 1])
+colorbar
 set(gca,'xticklabel',{'angle','phase','amp','midpoint','firing rate'},'ytick',[]);xtickangle(45)
 axis square
 subplot(1,2,2)
@@ -401,6 +404,7 @@ imagesc(abs(corr([tune_map(:,idx(nonwhisktunedidx)) ; fr_map(:,idx(nonwhisktuned
 set(gca,'xticklabel',{'angle','phase','amp','midpoint','firing rate'},'ytick',[])
 xtickangle(45)
 colormap gray
+colorbar
 caxis([0 1])
 axis square
 

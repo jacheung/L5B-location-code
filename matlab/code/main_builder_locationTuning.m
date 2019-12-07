@@ -66,7 +66,7 @@ for i = 26
 end
 %% touch psth by quartiles of far, close and near
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-% pole_tuned = object_location_quantification(U,selectedCells,'pole','on'); %for old see object_location_v1.0
+pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
 % object_location_quantification(U,tuned_units,'pole','on')
 touch_window = -25:50;
@@ -172,6 +172,30 @@ end
 pop_mean = nanmean(cell2mat(interp_norm_y'));
 pop_sem = nanstd(cell2mat(interp_norm_y')) ./ sqrt(sum(~isnan(cell2mat(interp_norm_y'))));
 hold on; shadedErrorBar(interp_centered_x,pop_mean,pop_sem,'k')
+
+stretch_x = linspace(-2,2,201);
+[~,hm_idx] = sort(interp1(interp_centered_x,pop_mean,stretch_x)-.5);
+
+left_idx = hm_idx(find(hm_idx<numel(stretch_x)/2,1));
+right_idx = hm_idx(find(hm_idx>numel(stretch_x)/2,1));
+avg_hm = abs([stretch_x(left_idx) ; stretch_x(right_idx)]); %in mm
+
+mm_to_angle = nan(1,length(U));
+for rec = 1:length(U)
+    array = U{rec};
+    viewWindow = -25:50;
+    [tVar] = atTouch_sorter(array,viewWindow);
+    pole_at_touch = normalize_var(tVar.allTouches.S_ctk(:,end),0,10);
+    angle_at_touch = tVar.allTouches.S_ctk(:,1);
+    [s,sby] = binslin(pole_at_touch,angle_at_touch,'equalN',12); %bin responses based on pole positions
+    cleaned = cell2mat(cellfun(@(x,y) rmoutliers([x y]),s,sby,'uniformoutput',0)); %remove outliers using median
+    cleaned(sum(isnan(cleaned),2)>0,:) = [];
+    clean_aat = cleaned(:,1);
+    clean_pat = cleaned(:,2);
+    mm_to_angle(rec) = range(clean_aat)./range(clean_pat);
+end
+
+mean(mean(mm_to_angle) .* avg_hm)
 
 set(gca,'xlim',[-2 2],'xdir','reverse','ytick',0:.5:1,'xtick',-2:1:2)
 xlabel('distance from peak (mm)')

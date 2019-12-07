@@ -23,6 +23,15 @@ wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
 touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
 whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
 
+%% correlation 
+tStruct = object_location_quantification(U,1:length(U),hilbertVar,'off');
+intersect_correlation(tStruct,wStruct,hilbertVar)
+
+figure(53)
+fn = [hilbertVar '_correlations.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
 %% heatmap
 population_heatmap_builder(tStruct,wStruct,hilbertVar)
 
@@ -42,10 +51,6 @@ fn = [hilbertVar '_histograms.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
-figure(53)
-fn = [hilbertVar '_correlations.eps'];
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
 %% scatter of abs modulation depth
 
 tuned_touch = find(tUnits);
