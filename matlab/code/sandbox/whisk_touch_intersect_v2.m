@@ -283,7 +283,6 @@ fn = [hilbertVar '_histograms.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 %% correlation (F)
-tStruct = object_location_quantification(U,1:length(U),hilbertVar,'off');
 intersect_correlation(tStruct,wStruct,hilbertVar)
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';

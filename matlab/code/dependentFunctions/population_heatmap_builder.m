@@ -111,8 +111,10 @@ for p = 1:numel(data)
 end
 
 %% squished heatmap
-touch_stretch_bins = median(cellfun(@(x) sum(~isnan(x)),touch_heat));
-whisk_stretch_bins = median(cellfun(@(x) sum(~isnan(x)),whisk_heat));
+% touch_stretch_bins = median(cellfun(@(x) sum(~isnan(x)),touch_heat));
+% whisk_stretch_bins = median(cellfun(@(x) sum(~isnan(x)),whisk_heat));
+touch_stretch_bins = 50;
+whisk_stretch_bins = 50;
 
 raw_curves = cellfun(@(x) x(~isnan(x)),touch_heat,'uniformoutput',0);
 new_curves = cellfun(@(x) interp1(linspace(1,touch_stretch_bins,numel(x)),x,1:touch_stretch_bins),raw_curves,'uniformoutput',0);
