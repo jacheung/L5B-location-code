@@ -287,7 +287,7 @@ legend('phase','angle')
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])
 
-%% phase X angle tune
+%% phase X angle modulation comparison
 
 % tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.angle)==1;
 tuned_units = (double(cellfun(@(x) x.is_tuned,whisk_struct.angle)==1) + double(cellfun(@(x) x.is_tuned,whisk_struct.phase)==1))>0;
@@ -315,11 +315,24 @@ div_cmap = cbrewer('div','RdBu',num_brew_elem);
 sel_map = sel_map(1:end-2);
 
 figure(88);clf
+subplot(2,4,[1 2 5 6])
 scatter(phase_pref',angle_pref',100,div_cmap(sel_map,:),'filled');
 set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'ylim',[-.1 1.1])
 axis square
 xlabel('phase preference')
 ylabel('norm angle preference')
+
+sorted_angle = binslin(angle_pref',relative_mod','equalE',5,0,1);
+sorted_phase = binslin(phase_pref',relative_mod','equalE',5,-pi,pi);
+
+subplot(2,4,[3 4])
+bar(linspace(0,1,4),cellfun(@mean,sorted_angle),'k')
+hold on;errorbar(linspace(0,1,4),cellfun(@mean,sorted_angle),cellfun(@(x) std(x)./sqrt(numel(x)),sorted_angle),'k.')
+set(gca,'ylim',[-.25 .75],'ytick',-.25:.25:.75)
+subplot(2,4,[7 8])
+bar(linspace(-pi,pi,4),cellfun(@mean,sorted_phase),'k')
+hold on;errorbar(linspace(-pi,pi,4),cellfun(@mean,sorted_phase),cellfun(@(x) std(x)./sqrt(numel(x)),sorted_phase),'k.')
+set(gca,'ylim',[-.25 .75],'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'ytick',-.25:.25:.75)
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 fn = 'phase_x_angle_x_preference.eps';
@@ -341,10 +354,10 @@ fix_eps_fonts([saveDir, fn])
  [~,p,~,stats] = ttest(phase_mod_abs,angle_mod_abs);
  title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
  
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-fn = 'phase_x_angle.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+% fn = 'phase_x_angle.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 %% modulation depth of other features
 selectedCells = 1:length(U);

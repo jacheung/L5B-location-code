@@ -85,7 +85,7 @@ for b = 1:numel(which_tuned)
     histogram(cell2mat(shuff_corr),-1:.2:1,'facecolor','b','normalization','probability')
     hold on; histogram(match_corr,-1:.2:1,'facecolor','k','normalization','probability')
     legend('shuff','data')
-    title(['KS p = ' num2str(p)])
+    suptitle(['KS p = ' num2str(p)])
     axis square
     
     title(titles{b});

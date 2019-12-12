@@ -14,7 +14,7 @@ tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1);
 % untuned_cells = intersect(find(~(cellfun(@(x) x.is_tuned,pole_tuned)==1)),selectedCells);
 % builtUnits = find(cellfun(@(x) isfield(x,'stim_response'),pole_tuned));
 sampledSpace = cellfun(@(x) range(x.stim_response.values(:,1)),pole_tuned(tuned_cells)) ./ 2;
-units_2_use = builtUnits(sampledSpace > .8);
+units_2_use = tuned_cells(sampledSpace > .8);
 
 %% Justification for decoder - fano factor check
 tuned_cells = find(cellfun(@(x) x.is_tuned,pole_tuned)==1);
@@ -91,7 +91,7 @@ real_psycho_sem = fliplr(std(cell2mat(interp_psycho')) ./ sqrt(numel(BV)));
 usedUnits = cellfun(@(x) x.params.cellNum,glmModel);
 
 numNeurons = [1:25];
-numIterations = 50;
+numIterations = 500;
 
 mdl_mean = median(cell2mat(cellfun(@(x) x(:),mdlResults.fitCoeffs,'uniformoutput',0)),2);
 reshaped_coeffs = reshape(mdl_mean,size(mdlResults.fitCoeffs{1}));
@@ -174,7 +174,7 @@ colormap turbo
 colorbar
 axis square
 
-numNeurons_toPlot = [1 3 5 11 20 25]; 
+numNeurons_toPlot = [1 5 7 15 20 25]; 
 [~,idx] = intersect(numNeurons,numNeurons_toPlot);
 
 my_Map = flipud(jet(length(idx)));
@@ -216,10 +216,26 @@ end
 
 subplot(2,2,3)
 % %average neurometric distance from average pyschometric
-MAE = cellfun(@(x) mean(abs((x-real_psycho_mean))),neuro_mean);
-[minMAE,minidx] = min(MAE);
-scatter(numNeurons,MAE,'ko')
+% MAE = cellfun(@(x) mean(abs((x-real_psycho_mean))),neuro_mean);
+% [minMAE,minidx] = min(MAE);
+% scatter(numNeurons,MAE,'ko')
 
+
+raw_accuracy = cellfun(@(x) mean(x.meta.trialCorrect),BV);
+mean_accuracy = mean(raw_accuracy);
+sem_accuracy = std(raw_accuracy)./sqrt(numel(raw_accuracy));
+std_accuracy = std(raw_accuracy); 
+lix_neuro = cellfun(@(x) x(:,1:20)>.5,neurometric_curve,'uniformoutput',0);
+nolix_neuro = cellfun(@(x) x(:,21:40)<=.5,neurometric_curve,'uniformoutput',0);
+pcorrect_neuro = cellfun(@(x,y) (sum(x,2) + sum(y,2)) ./ (size(x,2) + size(y,2)),lix_neuro,nolix_neuro,'uniformoutput',0);
+[~,p] = cellfun(@(x) ttest2(x,raw_accuracy),pcorrect_neuro);
+numNeurons(strfind(p<0.05,[0 1]) + 1)
+
+% shadedErrorBar(numNeurons_toPlot,cellfun(@mean, pcorrect_neuro),cellfun(@(x) std(x)./sqrt(numel(x)),pcorrect_neuro))
+errorbar(numNeurons,cellfun(@mean, pcorrect_neuro),cellfun(@(x) std(x),pcorrect_neuro),'ko-')
+hold on; errorbar(30,mean_accuracy,std_accuracy,'ko')
+set(gca,'xlim',[1 31],'ylim',[0.5 1],'ytick',0:.25:1)
+axis square
 % shadedErrorBar(numNeurons,mean_MAE,sem_MAE,'k-')
 % hold on;scatter(numNeurons(minidx),mean_MAE(minidx),'filled','r')
 % try
@@ -227,10 +243,10 @@ scatter(numNeurons,MAE,'ko')
 %     hold on;scatter(numNeurons(right_tuning_idx),mean_MAE(right_tuning_idx),'filled','g')
 % end
 
-set(gca,'ylim',[0 .4],'xtick',0:5:25,'xlim',[0 25])
-xlabel('number of neurons')
-ylabel('mean absolute error')
-axis square
+% set(gca,'ylim',[0 .4],'xtick',0:5:25,'xlim',[0 25])
+% xlabel('number of neurons')
+% ylabel('mean absolute error')
+% axis square
 
 subplot(2,2,4)
 for d = 1:length(idx)
@@ -245,7 +261,7 @@ for d = 1:length(idx)
 end
 
 hold on; shadedErrorBar(linspace(-1,1,numel(neuro_mean{d})),real_psycho_mean,real_psycho_sem,'k')
-title(['neurometric curve (opt = ' num2str(numNeurons(minidx)) ')'])
+title(['neurometric curve (opt = ' num2str(numNeurons(strfind(p<0.05,[0 1]) + 1)) ')'])
 ylabel('lick probability')
 xlabel('normalized pole location')
 axis square

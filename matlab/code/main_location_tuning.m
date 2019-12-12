@@ -182,7 +182,7 @@ fix_eps_fonts([saveDir, fn])
 
 %% firing rate X depth of recording
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-location_cells = touchCells(cellfun(@(x) x.is_tuned==1,pole_tuned(touchCells))); 
+location_cells = touchCells(cellfun(@(x) x.is_tuned==1,pole_tuned(touchCells)));
 
 jc_silent_cell = [766 819 895 631 776 815 910 871 844 902   941   840   888   748   732   940   686   944   950   933]; %Phils  from 902
 
@@ -208,5 +208,70 @@ set(gca,'xtick',600:100:1000,'xlim',[600 1000])
 fn = 'scatter_depth_firingrate.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
+
+
+%% Follicle at first touch vs later (SF)
+pxpermm = 33;
+clear fdist_map
+for i = 1:numel(U)
+    for b = 1:U{i}.k
+        touchOn = [find(U{i}.S_ctk(9,:,b)==1) find(U{i}.S_ctk(12,:,b)==1)];
+        if numel(touchOn)>1
+            fx = U{i}.whisker.follicleX{b};
+            fy = U{i}.whisker.follicleY{b};
+            touchOn = touchOn(touchOn < numel(fx));
+            fxy = [fx(touchOn)' fy(touchOn)'];
+            fdist_map_x{i}{b} = fxy(2:end,1) - fxy(1,1);
+            fdist_map_y{i}{b} = fxy(2:end,2) - fxy(1,2);
+%             fdist = pdist2(fxy,fxy);
+%             fdist_map{i}{b} = diag(fdist,1)';
+        end
+    end
+end
+
+num_touches_per_trial = cellfun(@(x) cellfun(@(y) numel(y),x), fdist_map_x,'uniformoutput',0); 
+touch_num_cdf = cellfun(@(x) cumsum(histc(x,0:50)./numel(x)),num_touches_per_trial,'uniformoutput',0);
+indiv = cell2mat(touch_num_cdf');
+pop = mean(indiv);
+pop_num_sd = std(indiv);
+pop__num_sem = std(indiv)./sqrt(numel(U)); 
+
+figure(80);clf
+subplot(1,3,1)
+plot(0:50,indiv,'color',[.8 .8 .8])
+hold on;shadedErrorBar(0:50,pop,pop_num_sd,'r');
+set(gca,'ylim',[0 1],'ytick',0:.25:1)
+xlabel('number of touches per trial')
+ylabel('proportion of all trials')
+
+all_mean_fd = cellfun(@(x) nanmean(cell2nanmat(x),2), fdist_map_x,'uniformoutput',0);
+pop_mean = nanmean(cell2nanmat(all_mean_fd),2) * -1;
+pop_sd = nanstd(cell2nanmat(all_mean_fd),[],2);
+pop_sem = nanstd(cell2nanmat(all_mean_fd),[],2) ./ sqrt(sum(~isnan(cell2nanmat(all_mean_fd)),2));
+subplot(1,3,2)
+errorbar(2:numel(pop_mean)+1,pop_mean./pxpermm,pop_sd./pxpermm,'-ko')
+set(gca,'xlim',[0 20],'ylim',[-.5 .5],'ytick',-.5:.25:.5)
+ylabel('anterior --- posterior')
+xlabel('touch number')
+
+all_mean_fd = cellfun(@(x) nanmean(cell2nanmat(x),2), fdist_map_y,'uniformoutput',0);
+pop_mean = nanmean(cell2nanmat(all_mean_fd),2);
+pop_sd = nanstd(cell2nanmat(all_mean_fd),[],2);
+pop_sem = nanstd(cell2nanmat(all_mean_fd),[],2) ./ sqrt(sum(~isnan(cell2nanmat(all_mean_fd)),2));
+subplot(1,3,3)
+errorbar(2:numel(pop_mean)+1,pop_mean./pxpermm,pop_sd./pxpermm,'-ko')
+set(gca,'xlim',[0 20],'ylim',[-.5 .5],'ytick',-.5:.25:.5)
+ylabel('medial --- lateral')
+xlabel('touch number')
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+fn = 'scatter_depth_firingrate.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+
+
+
+
 
 
