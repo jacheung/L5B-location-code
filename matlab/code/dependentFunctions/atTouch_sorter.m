@@ -105,6 +105,7 @@ tVar.allTouches.S_ctk = varDesign{1};
 tVar.allTouches.R_ntk = spikesAligned{1};
 tVar.allTouches.dtS_ctk = dtDesign{1};
 tVar.allTouches.dtR_ntk = dtDesign_R_ntk{1}; %these are all the spikes that occur DURING the whole touch window
+tVar.allTouches.touchOnIdx = touchOnIdx;
 
 if ~isempty(preDecisionMat)
     tVar.preDecisionTouches.itNames = {'theta','pre-touch velocity','amp','midpoint','phase','K','motorPosition'};

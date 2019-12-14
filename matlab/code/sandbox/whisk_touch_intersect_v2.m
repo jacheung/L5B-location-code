@@ -4,7 +4,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 %%
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-hilbertVar = 'phase';
+hilbertVar = 'angle';
 tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
 tStruct_angle = object_location_quantification(U,touchCells,'angle','off');
 
@@ -132,6 +132,9 @@ for rec = 1:length(U)
         set(gca,'xlim',[-pi pi],'xtick',[])
         figure(10);subplot(rc(1),rc(2),rec)
         set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'ytick',[])
+    elseif strcmp(hilbertVar,'angle')
+        figure(10);subplot(rc(1),rc(2),rec)
+        set(gca,'ytick',[])   
     end
     
 end
