@@ -182,9 +182,10 @@ fix_eps_fonts([saveDir, fn])
 
 %% firing rate X depth of recording
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-location_cells = touchCells(cellfun(@(x) x.is_tuned==1,pole_tuned(touchCells)));
+location_cells = cellfun(@(x) x.is_tuned==1,pole_tuned);
+location_cells = cellfun(@(x) x.is_tuned==1,angle_tuned);
 
-jc_silent_cell = [766 819 895 631 776 815 910 871 844 902   941   840   888   748   732   940   686   944   950   933]; %Phils  from 902
+jc_silent_cell = [766 819 895 631 776 815 910 871 844 902  941   840   888   748   732   940   686   944   950   933]; %Phils  from 902
 
 figure(480);clf
 subplot(3,1,[1 2])
@@ -205,10 +206,16 @@ hold on; histogram(cellfun(@(y) y.meta.depth,U(location_cells)),600:25:1000,'fac
 hold on;histogram(jc_silent_cell,600:25:1000,'facecolor','c')
 set(gca,'xtick',600:100:1000,'xlim',[600 1000])
 
-fn = 'scatter_depth_firingrate.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% fn = 'scatter_depth_firingrate.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
+
+figure(48);clf
+subplot(1,2,1);
+plot(angle_tuned{51}.stim_response.bars_fit.x,angle_tuned{51}.stim_response.bars_fit.mean)
+subplot(1,2,2);
+plot(angle_tuned{115}.stim_response.bars_fit.x,angle_tuned{115}.stim_response.bars_fit.mean)
 
 %% Follicle at first touch vs later (SF)
 pxpermm = 33;
