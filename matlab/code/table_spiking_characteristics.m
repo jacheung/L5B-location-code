@@ -45,12 +45,17 @@ touch_response_spks = cellfun(@(x,y) mean(x.io.DmatY),glmModel); %average number
 pResponse_touch = cellfun(@(x,y) mean((x.io.DmatY*1000)>y),glmModel,excitThresh); %probability of generating spiking response > baseline + 95%CI
 pResponse_peak = cellfun(@(x,y) mean((x.calculations.responses_at_peak)>y),pole_tuned(touchUnits),excitThresh);%probability of generating spiking response > baseline + 95%CI @ peak 
 pResponse_trough = cellfun(@(x,y) mean((x.calculations.responses_at_trough)>y),pole_tuned(touchUnits),excitThresh);%probability of generating spiking response > baseline + 95%CI @ trough
-Response_peak = cellfun(@(x,y) nanmean(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y)),pole_tuned(touchUnits),excitThresh);%spiking response > baseline + 95%CI @ peak 
-Response_trough = cellfun(@(x,y) nanmean(x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(touchUnits),excitThresh);%spiking response > baseline + 95%CI @ trough
+Response_peak = cellfun(@(x) nanmean(x.calculations.responses_at_peak),pole_tuned(touchUnits));%spiking response
+Response_trough = cellfun(@(x) nanmean(x.calculations.responses_at_trough),pole_tuned(touchUnits));%spiking response 
+% Response_peak = cellfun(@(x,y) nanmean(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y)),pole_tuned(touchUnits),excitThresh);%spiking response > baseline + 95%CI @ peak 
+% Response_trough = cellfun(@(x,y) nanmean(x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(touchUnits),excitThresh);%spiking response > baseline + 95%CI @ trough
 
 %ol unit sig
 [~,pResponse_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak>y,x.calculations.responses_at_trough>y),pole_tuned(tuned_units),excitThresh_ol_units); %
-[~,response_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y),x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(tuned_units),excitThresh_ol_units); %at alpha .05
+% [~,response_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y),x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(tuned_units),excitThresh_ol_units); %at alpha .05
+[~,response_sigs] = cellfun(@(x) ttest2(x.calculations.responses_at_peak,x.calculations.responses_at_trough),pole_tuned(tuned_units)); %at alpha .05
+
+
 %non ol unit sig 
 [~,pNResponse_Nsigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak>y,x.calculations.responses_at_trough>y),pole_tuned(non_tuned_units),excitThresh_non_ol_units); %at alpha .05
 [~,Nresponse_sigs] = cellfun(@(x,y) ttest2(x.calculations.responses_at_peak(x.calculations.responses_at_peak>y),x.calculations.responses_at_trough(x.calculations.responses_at_trough>y)),pole_tuned(non_tuned_units),excitThresh_non_ol_units); %at alpha .05
@@ -177,6 +182,12 @@ hold on; histogram(pResponse_touch,0:.05:1,'facecolor','r')
 hold on; histogram(pResponse_touch(touch_tuned_idx),0:.05:1,'facecolor','g')
 title('probability of touch response')
 
+
+pResponse_ol_trough = pResponse_trough(ix_idx);
+pResponse_ol_peak = pResponse_peak(ix_idx);
+response_ol_peak = Response_peak(ix_idx);
+response_ol_trough = Response_trough(ix_idx);
+[~,p,~,stat] = ttest(response_ol_peak,response_ol_trough)
 subplot(2,6,[9 10])
 
 scatter(pResponse_ol_trough(pResponse_sigs<=.01),pResponse_ol_peak(pResponse_sigs<=.01),'filled','markerfacecolor','g')
@@ -195,8 +206,6 @@ xlabel('p(response) trough');ylabel('p(response) peak')
 
 
 subplot(2,6,[11 12])
-ratio = response_ol_peak ./ response_ol_trough; 
-ratio(isinf(ratio)) = []; 
 scatter(response_ol_trough(response_sigs<=.01),response_ol_peak(response_sigs<=.01),'filled','markerfacecolor','g')
 hold on; scatter(response_ol_trough(response_sigs>.01),response_ol_peak(response_sigs>.01),'go')
 x = nanmean(response_ol_trough) ;

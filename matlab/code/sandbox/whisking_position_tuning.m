@@ -1,5 +1,5 @@
 %% load whisking structures 
-hilbert_feature = {'angle','phase','midpoint','amplitude'};
+hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
 for b = 1:numel(hilbert_feature)
     fileName = ['whisk_' hilbert_feature{b} '_tune'];
     if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
@@ -11,6 +11,14 @@ tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.angle)==1;
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 
+
+
+%% build whisking structures 
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
+
+wStruct= whisking_location_quantification(U,1:length(U),'velocity','off');
+
+
 %% whisk x quiet (A) 
 masks = cellfun(@(x) maskBuilder(x),U,'uniformoutput',0);
 whisking_spks_mat = cellfun(@(x,y) squeeze(x.R_ntk).*y.whisking .*y.touch,U,masks,'uniformoutput',0);
@@ -18,7 +26,23 @@ quiet_spks_mat = cellfun(@(x,y) squeeze(x.R_ntk).*y.quiet .*y.touch,U,masks,'uni
 whisking_tp = cellfun(@(x,y) nansum(nansum(y.whisking .*y.touch)),U,masks);
 quiet_tp = cellfun(@(x,y) nansum(nansum(y.quiet .*y.touch)),U,masks);
 
-[~,p] = cellfun(@(x,y) ttest2(x(:),y(:)),whisking_spks_mat,quiet_spks_mat);
+
+for b = 1:numel(whisking_spks_mat)
+    w = whisking_spks_mat{b}(:);
+    q = quiet_spks_mat{b}(:);
+    n1 = nansum(w==1); N1 = nansum(w==0);
+    n2 = nansum(q==1); N2 = nansum(q==0);
+
+    %generate sample data using proportions in data since matlab chi square
+    %requires vectors to be equal lengths.
+    x1 = [repmat('a',N1,1); repmat('b',N2,1)];
+    x2 = [repmat(1,n1,1); repmat(2,N1-n1,1); repmat(1,n2,1); repmat(2,N2-n2,1)];
+    %chi squared calcluation
+    [tbl,chi2stat,p(b)] = crosstab(x1,x2); %
+
+end
+    
+% [~,p] = cellfun(@(x,y) ttest2(x(:),y(:)),whisking_spks_mat,quiet_spks_mat);
 fr_whisk = (cellfun(@(x) nansum(x(:)),whisking_spks_mat)./whisking_tp)*1000;
 fr_quiet = (cellfun(@(x) nansum(x(:)),quiet_spks_mat)./quiet_tp)*1000;
 
@@ -38,9 +62,11 @@ set(gca,'xlim',[0 100],'ylim',[0 100],'xscale','log','yscale','log')
 xlabel('quiet FR');ylabel('whisking FR')
 title(['red=' num2str(numel(red_dots)) ' blue=' num2str(numel(blue_dots)) ' n.s.=' num2str(numel(gray_dots))])
 
-% fn = 'whisk_quiet_unity.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+fn = 'whisk_quiet_unity.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 %% angle and phase tuning curves (B)
 whisk_cells =  find(cellfun(@(x) x.is_tuned,whisk_struct.angle));
@@ -206,8 +232,6 @@ legend('phase','angle')
 % fix_eps_fonts([saveDir, fn])
 
 %% phase X angle modulation comparison (F/G)
-
-% tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.angle)==1;
 tuned_units = (double(cellfun(@(x) x.is_tuned,whisk_struct.angle)==1) + double(cellfun(@(x) x.is_tuned,whisk_struct.phase)==1))>0;
 
 phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.phase(tuned_units));
@@ -261,7 +285,11 @@ set(gca,'ylim',[-.25 .75],'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'ytick
  figure(57);clf
  scatter(phase_mod_abs,angle_mod_abs,'k')
  hold on; plot([0 max([phase_mod_abs angle_mod_abs])], [0 max([phase_mod_abs angle_mod_abs])],'k--')
- hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
+%  hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
+%      std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
+%      std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
+%      ,'ro','capsize',0)
+  hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
      std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
      std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
      ,'ro','capsize',0)
@@ -424,29 +452,41 @@ w_mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.angl
 w_mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.phase(selectedCells));
 w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.amplitude(selectedCells));
 w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.midpoint(selectedCells));
+w_mod_idx_velocity = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.velocity(selectedCells));
+
+mod_idx_collated = [w_mod_idx_angle;w_mod_idx_phase;w_mod_idx_amp;w_mod_idx_midpoint;w_mod_idx_velocity];
+
+[~,p,~,stats] = ttest(mod_idx_collated(1,:),mod_idx_collated(4,:)); 
+
+angle_abs= cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.angle(selectedCells));
+phase_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.phase(selectedCells));
+amp_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.amplitude(selectedCells));
+midpoint_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.midpoint(selectedCells));
+velocity_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.velocity(selectedCells));
 
 % w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells)) * -1;
 w_peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,whisk_struct.angle(selectedCells));
 w_peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,whisk_struct.phase(selectedCells));
 w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,whisk_struct.amplitude(selectedCells));
 w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,whisk_struct.midpoint(selectedCells));
+w_peak_idx_velocity = cellfun(@(x) x.calculations.tune_peak,whisk_struct.velocity(selectedCells));
 
 % HEAT GRAY WHISK SORTING
 [~,idx] = sort(w_mod_idx_angle);
 whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.angle);
 whisktunedidx = ismember(idx,find(whisk_angle_tuned));
 nonwhisktunedidx = ismember(idx,find(~whisk_angle_tuned));
-tune_map = [w_mod_idx_angle ; w_mod_idx_phase ; w_mod_idx_amp ; w_mod_idx_midpoint];
+tune_map = [w_mod_idx_angle ; w_mod_idx_phase ; w_mod_idx_amp ; w_mod_idx_midpoint ; w_mod_idx_velocity];
 fr_map  = log10(cellfun(@(x) mean(x.R_ntk(:))*1000,U));
 
 figure(29);clf
 subplot(2,2,1)
 imagesc(tune_map(:,idx(whisktunedidx)))
-set(gca,'ytick',1:6,'yticklabel',{'angle','phase','amp','midpoint'})
+set(gca,'ytick',1:6,'yticklabel',fields(whisk_struct))
 caxis([0 1])
 subplot(2,2,2)
 imagesc(tune_map(:,idx(nonwhisktunedidx)))
-set(gca,'ytick',1:6,'yticklabel',{'angle','phase','amp','midpoint'})
+set(gca,'ytick',1:6,'yticklabel',fields(whisk_struct))
 caxis([0 1])
 subplot(2,2,3)
 imagesc(fr_map(:,idx(whisktunedidx)))
@@ -467,11 +507,11 @@ subplot(1,2,1)
 imagesc(abs(corr([tune_map(:,idx(whisktunedidx)) ; fr_map(:,idx(whisktunedidx))]')));
 caxis([.5 1])
 colorbar
-set(gca,'xticklabel',{'angle','phase','amp','midpoint','firing rate'},'ytick',[]);xtickangle(45)
+set(gca,'xtick',1:10,'xticklabel',{'angle','phase','amp','midpoint','velocity','firing rate'},'ytick',[]);xtickangle(45)
 axis square
 subplot(1,2,2)
 imagesc(abs(corr([tune_map(:,idx(nonwhisktunedidx)) ; fr_map(:,idx(nonwhisktunedidx))]')));
-set(gca,'xticklabel',{'angle','phase','amp','midpoint','firing rate'},'ytick',[])
+set(gca,'xtick',1:10,'xticklabel',{'angle','phase','amp','midpoint','velocity','firing rate'},'ytick',[]);xtickangle(45)
 xtickangle(45)
 colormap gray
 colorbar
@@ -485,8 +525,8 @@ fix_eps_fonts([saveDir, fn])
 % HSV PLOTTING WHISK
 [~,sort_idx] = sort(w_peak_idx_angle);
 
-peaks = {w_peak_idx_angle,w_peak_idx_phase,w_peak_idx_amp,w_peak_idx_midpoint};
-mod_idx = {w_mod_idx_angle,w_mod_idx_phase,w_mod_idx_amp,w_mod_idx_midpoint};
+peaks = {w_peak_idx_angle,w_peak_idx_phase,w_peak_idx_amp,w_peak_idx_midpoint,w_peak_idx_velocity};
+mod_idx = {w_mod_idx_angle,w_mod_idx_phase,w_mod_idx_amp,w_mod_idx_midpoint,w_mod_idx_velocity};
 final_image = nan(numel(peaks),numel(selectedCells),3);
 for b = 1:numel(peaks)
     hues = normalize_var(peaks{b}(sort_idx),.7,1);

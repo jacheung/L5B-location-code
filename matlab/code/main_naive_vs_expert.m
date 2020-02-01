@@ -52,7 +52,7 @@ xlabel('touch counts')
 ylabel('proportion of units')
 % [~,p_counts] = ttest2(expert_mean,naive_mean);
 [~,ksp_counts] = kstest2(expert_mean,naive_mean);
-title(num2str(p_counts));
+title(num2str(ksp_counts));
 
 
 figure(48);subplot(1,2,2)
@@ -85,6 +85,9 @@ expert_proportion_touch = num_expert_touch ./ sum(expert);
 naive_proportion_OL  = num_naive_OL ./ sum(naive);
 expert_proportion_OL  = num_expert_OL ./ sum(expert);
 
+x = table([num_naive_touch - num_naive_OL; num_naive_OL],[ num_expert_touch - num_expert_OL ;num_expert_OL]);
+[h,p,stats] = fishertest(x);
+
 figure(99);clf
 subplot(1,2,1)
 hold on; bar(1:2,[naive_proportion_touch expert_proportion_touch],'facecolor',[.8 .8 .8])
@@ -101,10 +104,10 @@ set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(num_naive_OL)],['expert n=
 title('proportion of touch that is OL')
 
 figure(99)
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-fn = 'unit_distribution_bar.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+% fn = 'unit_distribution_bar.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 %% Heatmap of tuning
 tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
@@ -147,26 +150,28 @@ for b=1:length(tuned_units)
     data = unsorted_heat(:,t_idx)';
     %set unsampled heatmap to nan;
     [nr,nc] = size(data);
-    pcolor([data nan(nr,1); nan(1,nc+1)]);
+    pcolor([nan(nr,1) data nan(nr,1); nan(1,nc+2)]);
     shading flat;
-    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+    set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)+4],'xticklabel',-1:1:1,'ydir','reverse')
     axis square
     
     subplot(2,2,4)
     [~,idx] = max(data,[],2);
-    x_conv = linspace(-1,1,21); 
-    hold on; histogram(x_conv(idx),-1:.5:1,'normalization','probability')
+    x_conv = linspace(1,-1,21); 
+    hold on; histogram(x_conv(idx),-1.1:.5:1.1,'normalization','probability')
     set(gca,'ylim',[0 .4],'ytick',0:.2:.4)
     legend('naive','expert')
+    
+    pref{b} = x_conv(idx); 
     
     touch_map_all = [touch_map_all ; data];
 end
 colormap turbo
 subplot(2,2,3)
 [nr,nc] = size(touch_map_all);
-pcolor([touch_map_all nan(nr,1); nan(1,nc+1)]);
+pcolor([nan(nr,1) touch_map_all nan(nr,1); nan(1,nc+2)]);
 shading flat;
-set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)],'xticklabel',-1:1:1,'ydir','reverse')
+set(gca,'xdir','reverse','xtick',1:10:length(touch_x),'xlim',[1 length(touch_x)+2],'xticklabel',-1:1:1,'ydir','reverse')
 axis square
     figure(80);
     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';

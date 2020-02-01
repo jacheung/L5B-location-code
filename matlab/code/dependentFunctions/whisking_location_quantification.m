@@ -53,6 +53,8 @@ for rec = 1:length(selectedCells)
     
     if strcmp(hilbert_feature,'angle')
         conversion_feature = squeeze(array.S_ctk(1,:,:));
+    elseif strcmp(hilbert_feature,'velocity')
+        conversion_feature = squeeze(array.S_ctk(2,:,:));
     elseif strcmp(hilbert_feature,'amplitude')
         conversion_feature = squeeze(array.S_ctk(3,:,:));
     elseif strcmp(hilbert_feature,'midpoint')
@@ -115,6 +117,8 @@ for rec = 1:length(selectedCells)
         y = cellfun(@mean, sorted);
         if strcmp(hilbert_feature,'phase') || strcmp(hilbert_feature,'pole')
             xq = min(x):.1:max(x);
+        elseif strcmp(hilbert_feature,'velocity')
+            xq = min(x): 200 : max(x);
         else
             xq = min(x):1:max(x);
         end
