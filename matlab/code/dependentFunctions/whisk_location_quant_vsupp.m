@@ -1,4 +1,4 @@
-function [tuneStruct] = whisking_location_quantification(uberarray,selectedCells,hilbert_feature,displayOpt)
+function [tuneStruct] = whisk_location_quant_vsupp(uberarray,selectedCells,hilbert_feature,displayOpt)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % this function is used to plot a heat map of whisking
@@ -82,8 +82,28 @@ for rec = 1:length(selectedCells)
     end
     
     current_feature = conversion_feature(whisking_mask==1);
-    filtered_spikes =spikes(whisking_mask==1);
     
+    
+    try 
+        touch_wind = array.meta.touchProperties.responseWindow;
+    catch
+        touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
+        all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
+        touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
+    end
+    whiskIdx = find(whisking_mask==1); 
+    response_idx = repmat(whiskIdx,1,length(touch_wind(1):touch_wind(2))) + repmat(touch_wind(1):touch_wind(2),numel(whiskIdx),1);
+    filt_spikes = spikes .* whisking_mask;
+    filt_spikes = [filt_spikes nan(size(filt_spikes,1),1)]; %padding w/ nans at end for indexing
+    
+    whisks_with_touch = find(any(isnan(touchEx_mask(response_idx)),2));
+    keep_whisks = 1:length(response_idx);
+    keep_whisks(whisks_with_touch) = [];
+    filtered_spikes = nanmean(filt_spikes(response_idx),2);
+    
+    disp([num2str(numel(keep_whisks) ./ length(response_idx).*100) '% of whisking timepoints that sampled full response window'])
+    current_feature = current_feature(keep_whisks); %only keep whisk examples that does not have any touch contamination.
+    filtered_spikes = filtered_spikes(keep_whisks);
     
     %% Tuning in whisk windows
     %     equalN_numBins = round(sum(~isnan(current_feature(:)))./numWhiskSamplesPerBin);
@@ -167,7 +187,7 @@ for rec = 1:length(selectedCells)
         
     end
     
-    if sig_by_chance < 0.05 && quant_ol_p < 0.05 && ~isempty(barsFit) && nonzero_bins > 10 %maybe add quant_ol_p~=0?
+    if sig_by_chance < 0.05 && quant_ol_p < 0.05 && quant_ol_p ~=0 && ~isempty(barsFit) && nonzero_bins > 10 
         %right and left tuning by idx
         compare_table = multcompare(stats,'Display','off');
         max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);
