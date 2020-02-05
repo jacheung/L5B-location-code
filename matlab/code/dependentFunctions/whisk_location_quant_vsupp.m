@@ -82,8 +82,7 @@ for rec = 1:length(selectedCells)
     end
     
     current_feature = conversion_feature(whisking_mask==1);
-    
-    
+
     try 
         touch_wind = array.meta.touchProperties.responseWindow;
     catch
@@ -91,6 +90,7 @@ for rec = 1:length(selectedCells)
         all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
         touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
     end
+    
     whiskIdx = find(whisking_mask==1); 
     response_idx = repmat(whiskIdx,1,length(touch_wind(1):touch_wind(2))) + repmat(touch_wind(1):touch_wind(2),numel(whiskIdx),1);
     filt_spikes = spikes .* whisking_mask;
@@ -98,11 +98,11 @@ for rec = 1:length(selectedCells)
     
     whisks_with_touch = find(any(isnan(touchEx_mask(response_idx)),2));
     keep_whisks = 1:length(response_idx);
-    keep_whisks(whisks_with_touch) = [];
     filtered_spikes = nanmean(filt_spikes(response_idx),2);
+    keep_whisks(unique([whisks_with_touch;find(isnan(filtered_spikes))])) = [];%only keep whisk examples that does not have any touch contamination or with at least 1 timepoint of spiking.
     
-    disp([num2str(numel(keep_whisks) ./ length(response_idx).*100) '% of whisking timepoints that sampled full response window'])
-    current_feature = current_feature(keep_whisks); %only keep whisk examples that does not have any touch contamination.
+    disp([num2str(numel(keep_whisks) ./ length(response_idx).*100) '% of whisking timepoints w/ no touch contamination and 1 timepoint of spiking'])
+    current_feature = current_feature(keep_whisks); 
     filtered_spikes = filtered_spikes(keep_whisks);
     
     %% Tuning in whisk windows
