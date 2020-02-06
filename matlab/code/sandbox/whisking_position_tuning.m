@@ -1,7 +1,9 @@
 %% load whisking structures 
+clear whisk_struct
 hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
-for b = 1:numel(hilbert_feature)
-    fileName = ['whisk_' hilbert_feature{b} '_tune'];
+% for b = 1:numel(hilbert_feature)
+for b = 1:2
+    fileName = ['whisk_' hilbert_feature{b} '_instant'];
     if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
         load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
         whisk_struct.(hilbert_feature{b}) = wStruct;
@@ -11,13 +13,10 @@ tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.angle)==1;
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 
-
-
 %% build whisking structures 
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
 
 wStruct= whisking_location_quantification(U,1:length(U),'velocity','off');
-
 
 %% whisk x quiet (A) 
 masks = cellfun(@(x) maskBuilder(x),U,'uniformoutput',0);
