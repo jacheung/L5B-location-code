@@ -96,7 +96,8 @@ for rec = 1:length(selectedCells)
     filt_spikes = spikes .* whisking_mask;
     filt_spikes = [filt_spikes nan(size(filt_spikes,1),1)]; %padding w/ nans at end for indexing
     
-    whisks_with_touch = find(any(isnan(touchEx_mask(response_idx)),2));
+    stretch_touch_mask = [touchEx_mask nan(size(touchEx_mask,1),1)];
+    whisks_with_touch = find(any(isnan(stretch_touch_mask(response_idx)),2));
     keep_whisks = 1:length(response_idx);
     filtered_spikes = nanmean(filt_spikes(response_idx),2);
     keep_whisks(unique([whisks_with_touch;find(isnan(filtered_spikes))])) = [];%only keep whisk examples that does not have any touch contamination or with at least 1 timepoint of spiking.

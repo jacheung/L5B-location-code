@@ -3,18 +3,19 @@ hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
 
 for g = 1:2
     wStruct= whisk_location_quant_vsupp(U,1:length(U),hilbert_feature{g},'off');
-    cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\tmp_structs')
+    cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs')
         save(['whisk_' hilbert_feature{g} '_window_v2'],'wStruct')
 end
 %% OR LOAD
-hilbert_feature = 'angle';
-mdl_versions = {'instant','window'};
+hilbert_feature = 'phase';
+mdl_versions = {'instant','window_v2'};
+mdl_labels = {'instant','window'};
 
 for b = 1:numel(mdl_versions)
     fileName = ['whisk_' hilbert_feature '_' mdl_versions{b}];
     if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
         load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
-        whisk_struct.(mdl_versions{b}) = wStruct;
+        whisk_struct.(mdl_labels{b}) = wStruct;
     end
 end
 
@@ -22,7 +23,7 @@ itune = find(cellfun(@(x) x.is_tuned==1,whisk_struct.instant));
 wtune = find(cellfun(@(x) x.is_tuned==1,whisk_struct.window));
 both_tuned = intersect(itune,wtune);
 
-%% PLOT RANDOM TRIAL
+%% PLOT TRIALS
 % cellNum = datasample(intersect(itune,wtune),1);
 [r] = numSubplots(numel(both_tuned));
 figure(5480);clf
@@ -42,10 +43,10 @@ for g =1:numel(both_tuned)
     y = whisk_struct.window{cellNum}.stim_response.bars_fit.mean;
     
     subplot(r(1),r(2),g)
-    hold on; plot(ix,iy,'g')
+    hold on; plot(ix,iy,'c')
     hold on; plot(x,y,'r')
     
-        hold on; scatter(iraw_x,iraw_y,'g.');alpha(.25)
+        hold on; scatter(iraw_x,iraw_y,'c.');alpha(.25)
         hold on; scatter(raw_x,raw_y,'r.'); alpha(.25)
     
     if g == numel(both_tuned)
@@ -53,7 +54,25 @@ for g =1:numel(both_tuned)
     end
     %     xlabel('whisker angle')
     %     ylabel('firing rate')
+    
+    if strcmp(hilbert_feature,'phase')
+        set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'xlim',[-4 4])
+    end
 end
+
+
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+fn = ['instant_vs_windowed_curves.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+
+%%
+whisk_struct.instant{2}.stim_response
+itune = find(cellfun(@(x) isfield(x.stim_response,'bars_fit'),whisk_struct.instant));
+wtune = find(cellfun(@(x)isfield(x.stim_response,'bars_fit'),whisk_struct.window));
+both_tuned = intersect(itune,wtune);
+
 
 %% INTERSECTION OF PEAKS
 i_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],whisk_struct.instant(both_tuned),'uniformoutput',0)') ;
@@ -73,3 +92,8 @@ xlabel('instantaneous preference')
 ylabel('lagged window preference')
 axis square
 
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+fn = ['instant_vs_windowed_ix.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+%% OL TUNING VS WINDOW 
