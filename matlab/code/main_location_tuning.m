@@ -5,8 +5,8 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 
 
 %% Top level parameters and definitions
-% U = defTouchResponse(U,.95,'off');
-% selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
+U = defTouchResponse(U,.95,'off');
+selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
 
 for i = 29

@@ -3,15 +3,15 @@ clear whisk_struct
 hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
 % for b = 1:numel(hilbert_feature)
 for b = 1:2
-    fileName = ['whisk_' hilbert_feature{b} '_instant'];
-    if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+    fileName = ['whisk_' hilbert_feature{b} '_window'];
+    if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'],'file')
+        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'])
         whisk_struct.(hilbert_feature{b}) = wStruct;
    end
 end
 tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.angle)==1;
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 
 %% build whisking structures 
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
@@ -73,7 +73,8 @@ whisk_structs = {whisk_struct.angle,whisk_struct.phase};
 
 hvar_names = {'angle','phase'};
 
-example_units = [25 31 9];
+% example_units = [25 31 9];
+example_units = [39 46 44]; 
 rc= numSubplots(numel(example_units));
 
 for g = 1:numel(whisk_structs)
@@ -104,7 +105,7 @@ for g = 1:numel(whisk_structs)
     end
     suptitle(hvar_names{g})
     
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
     fn = [hvar_names{g} '_tuning_curves.eps'];
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
@@ -196,7 +197,7 @@ figure(580620);clf
 pie([numel(untuned) numel(co_tuned) numel(angle_only) numel(phase_only)],...
     {'not tuned','co-tuned','angle only','phase only'})
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'proportion_angle_phase_pie.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
@@ -225,10 +226,10 @@ for b = 1:numel(phase_tc)
 end
 legend('phase','angle')
 % 
-% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-% fn = 'phase_x_angle_curves.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+fn = 'phase_x_angle_curves.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 %% phase X angle modulation comparison (F/G)
 tuned_units = (double(cellfun(@(x) x.is_tuned,whisk_struct.angle)==1) + double(cellfun(@(x) x.is_tuned,whisk_struct.phase)==1))>0;
@@ -281,24 +282,20 @@ set(gca,'ylim',[-.25 .75],'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'ytick
 % fix_eps_fonts([saveDir, fn])
 
 
- figure(57);clf
- scatter(phase_mod_abs,angle_mod_abs,'k')
- hold on; plot([0 max([phase_mod_abs angle_mod_abs])], [0 max([phase_mod_abs angle_mod_abs])],'k--')
-%  hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
-%      std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
-%      std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
-%      ,'ro','capsize',0)
-  hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
-     std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
-     std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
-     ,'ro','capsize',0)
- set(gca,'xlim',[0 max([phase_mod_abs angle_mod_abs])],'ylim',[0 max([phase_mod_abs angle_mod_abs])])
- xlabel('phase abs mod (spks/s)')
- ylabel('angle abs mod (spks/s)')
- axis square
- [~,p,~,stats] = ttest(phase_mod_abs,angle_mod_abs);
- title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
- 
+figure(57);clf
+scatter(phase_mod_abs,angle_mod_abs,'k')
+hold on; plot([0 max([phase_mod_abs angle_mod_abs])], [0 max([phase_mod_abs angle_mod_abs])],'k--')
+hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
+    std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
+    std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
+    ,'ro','capsize',0)
+set(gca,'xlim',[0 max([phase_mod_abs angle_mod_abs])],'ylim',[0 max([phase_mod_abs angle_mod_abs])])
+xlabel('phase abs mod (spks/s)')
+ylabel('angle abs mod (spks/s)')
+axis square
+[~,p,~,stats] = ttest(phase_mod,angle_mod);
+title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
+
 % saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 % fn = 'phase_x_angle.eps';
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')

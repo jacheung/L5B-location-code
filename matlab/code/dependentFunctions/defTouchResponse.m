@@ -88,14 +88,17 @@ for rec=1:length(U)
             if isempty(endPoint)
                 endPoint = tps(end);
             end
+            tResponseWindow = find(window==0)+tps;
+            [~,idx] = max(touchResponse(tResponseWindow));
             
             %hard coded two restrictions to define touch excitation 
             % 1) firing rate has to be above 2Hz
             % 2) response window has to be greater than or equal to 4ms 
-            if mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) > 2 && endPoint - startPoint >= 4
+            if mean(touchResponse(tResponseWindow).*1000) > 2 && endPoint - startPoint >= 4
                 U{rec}.meta.touchProperties.responseType = 'excited';
                 U{rec}.meta.touchProperties.responseWindow=[startPoint endPoint];
-                U{rec}.meta.touchProperties.SNR(rec) = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
+                U{rec}.meta.touchProperties.SNR = log(mean(touchResponse(startPoint+find(window==0):endPoint+find(window==0))*1000) ./ (excitThreshold*1000));
+                U{rec}.meta.touchProperties.peakResponse = tps(idx);
                 
                 %plotting
                 if willdisplay

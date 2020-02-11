@@ -1,4 +1,4 @@
-function [tuneStruct] = whisk_location_quant_vsupp(uberarray,selectedCells,hilbert_feature,displayOpt)
+function [tuneStruct] = whisk_location_quant_vsupp(uberarray,selectedCells,hilbert_feature,displayOpt,capture_window)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % this function is used to plot a heat map of whisking
@@ -82,17 +82,29 @@ for rec = 1:length(selectedCells)
     end
     
     current_feature = conversion_feature(whisking_mask==1);
-
-    try 
-        touch_wind = array.meta.touchProperties.responseWindow;
-    catch
-        touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
-        all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
-        touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
+    whiskIdx = find(whisking_mask==1); 
+    if strcmp(capture_window,'lag_window')
+        try
+            touch_wind = array.meta.touchProperties.responseWindow;
+        catch
+            touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
+            all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
+            touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
+        end
+        response_idx = repmat(whiskIdx,1,length(touch_wind(1):touch_wind(2))) + repmat(touch_wind(1):touch_wind(2),numel(whiskIdx),1);
+    elseif strcmp(capture_window,'lag')
+        try
+            touch_wind = array.meta.touchProperties.peakResponse;
+        catch
+            touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'peakResponse'),uberarray);
+            all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.peakResponse,uberarray(touch_cells),'uniformoutput',0)');
+            touch_wind = round(median(all_windows)); %filling empty touch windows w/ median touch windows
+        end
+        response_idx = whiskIdx+touch_wind;
+    elseif strcmp(capture_window,'instant')
+        response_idx = whiskIdx;
     end
     
-    whiskIdx = find(whisking_mask==1); 
-    response_idx = repmat(whiskIdx,1,length(touch_wind(1):touch_wind(2))) + repmat(touch_wind(1):touch_wind(2),numel(whiskIdx),1);
     filt_spikes = spikes .* whisking_mask;
     filt_spikes = [filt_spikes nan(size(filt_spikes,1),1)]; %padding w/ nans at end for indexing
     
@@ -102,7 +114,7 @@ for rec = 1:length(selectedCells)
     filtered_spikes = nanmean(filt_spikes(response_idx),2);
     keep_whisks(unique([whisks_with_touch;find(isnan(filtered_spikes))])) = [];%only keep whisk examples that does not have any touch contamination or with at least 1 timepoint of spiking.
     
-    disp([num2str(numel(keep_whisks) ./ length(response_idx).*100) '% of whisking timepoints w/ no touch contamination and 1 timepoint of spiking'])
+    disp([capture_window ' : ' num2str(numel(keep_whisks) ./ length(response_idx).*100) '% of whisking timepoints w/ no touch contamination and 1 timepoint of spiking'])
     current_feature = current_feature(keep_whisks); 
     filtered_spikes = filtered_spikes(keep_whisks);
     
