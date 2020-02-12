@@ -6,12 +6,12 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 hilbertVar = 'angle';
 tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
-tStruct_angle = object_location_quantification(U,touchCells,'angle','off');
 
-fileName = ['whisk_' hilbertVar '_tune'];
-if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+fileName = ['whisk_' hilbertVar '_window'];
+if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'],'file')
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'])
 else
+    disp('no wStruct loaded, building from scratch')
     wStruct = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
 end
 
@@ -24,19 +24,19 @@ wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
 touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
 whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
 %% proportion of neurons that intersect pie (B)
-hilbertVar_list = {'angle','phase','amplitude','midpoint'};
+hilbertVar_list = {'angle','phase'};
 stacked_bar = cell(1,numel(hilbertVar_list));
 for i = 1:numel(hilbertVar_list)
-    tStruct = object_location_quantification(U,touchCells,hilbertVar_list{i},'off');
+    tStruct_tmp = object_location_quantification(U,touchCells,hilbertVar_list{i},'off');
     
-    fileName = ['whisk_' hilbertVar_list{i} '_tune'];
-    if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
+    fileName = ['whisk_' hilbertVar_list{i} '_window'];
+    if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'],'file')
+        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'])
     else
         wStruct = whisking_location_quantification(U,1:numel(U),hilbertVar_list{i},'off');
     end
     
-    tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
+    tUnits = cellfun(@(x) x.is_tuned==1,tStruct_tmp);
     wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
     
     [~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
@@ -60,7 +60,7 @@ end
 legend({'both','touch','whisk','none'})
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
-fn = ['phase_proportions.eps'];
+fn = ['B_intersect_proportions.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
@@ -154,6 +154,7 @@ fix_eps_fonts([saveDir, fn])
 touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],tStruct(tUnits),'uniformoutput',0)') ;
 whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],wStruct(wUnits),'uniformoutput',0)');
 
+
 %scatter of whisking (Y) vs touch (X)
 figure(3850);clf
 if strcmp(hilbertVar,'pole')
@@ -200,11 +201,11 @@ elseif strcmp(hilbertVar,'angle')
     hold on; plot([-40 80],[-40 80],'--k')
     
     subplot(4,1,3)
-    histogram(touch_pw(touch_nonIX_idx,1),-30:10:80,'facecolor','b','facealpha',1)
-    set(gca,'xlim',[-30 80],'ylim',[0 20])
+    histogram(touch_pw(touch_nonIX_idx,1),-30:10:80,'facecolor','b','facealpha',1,'normalization','probability')
+    set(gca,'xlim',[-30 80],'ylim',[0 .6])
     subplot(4,1,4);
-    histogram(whisking_pw(whisk_nonIX_idx,1),-430:10:80,'facecolor','c','facealpha',1)
-    set(gca,'xlim',[-30 80],'ylim',[0 20])
+    histogram(whisking_pw(whisk_nonIX_idx,1),-430:10:80,'facecolor','c','facealpha',1,'normalization','probability')
+    set(gca,'xlim',[-30 80],'ylim',[0 .4])
     
 elseif strcmp(hilbertVar,'amplitude')
     subplot(4,1,[1:2])
@@ -217,10 +218,10 @@ elseif strcmp(hilbertVar,'amplitude')
     hold on; plot([0 40],[0 40],'--k')
     
     subplot(4,1,3)
-    histogram(touch_pw(:,1),0:5:40,'facecolor','b','facealpha',1)
+    histogram(touch_pw(:,1),0:5:40,'facecolor','b','facealpha',1,'normalization','probability')
     set(gca,'xlim',[0 40],'ylim',[0 20])
     subplot(4,1,4);
-    histogram(whisking_pw(:,1),-40:10:80,'facecolor','c','facealpha',1)
+    histogram(whisking_pw(:,1),-40:10:80,'facecolor','c','facealpha',1,'normalization','probability')
     set(gca,'xlim',[0 40],'ylim',[0 20])
 elseif strcmp(hilbertVar,'midpoint')
     subplot(4,1,[1:2])
@@ -233,10 +234,10 @@ elseif strcmp(hilbertVar,'midpoint')
     hold on; plot([-20 60],[-20 60],'--k')
     
     subplot(4,1,3)
-    histogram(touch_pw(:,1),-20:10:60,'facecolor','b','facealpha',1)
+    histogram(touch_pw(:,1),-20:10:60,'facecolor','b','facealpha',1,'normalization','probability')
     set(gca,'xlim',[-20 60],'ylim',[0 20])
     subplot(4,1,4);
-    histogram(whisking_pw(:,1),-40:10:80,'facecolor','c','facealpha',1)
+    histogram(whisking_pw(:,1),-40:10:80,'facecolor','c','facealpha',1,'normalization','probability')
     set(gca,'xlim',[-20 60],'ylim',[0 20])
 end
 

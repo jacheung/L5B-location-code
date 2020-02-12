@@ -2,7 +2,7 @@
 clear whisk_struct
 hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
 % for b = 1:numel(hilbert_feature)
-for b = 1:2
+for b = 1:5
     fileName = ['whisk_' hilbert_feature{b} '_window'];
     if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'],'file')
         load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'])
@@ -68,48 +68,43 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 %% angle and phase tuning curves (B)
-whisk_cells =  find(cellfun(@(x) x.is_tuned,whisk_struct.angle));
-whisk_structs = {whisk_struct.angle,whisk_struct.phase};
+angle_tuned = find(cellfun(@(x) x.is_tuned==1,whisk_struct.angle));
+rc = numSubplots(numel(angle_tuned));
+tmp = cellfun(@(x) range(x.stim_response.bars_fit.mean),whisk_struct.phase(angle_tuned));
+[~,idx] = sort(tmp);
 
-hvar_names = {'angle','phase'};
+figure(480);clf
+check_cells = idx(end-7:end);
 
-% example_units = [25 31 9];
-example_units = [39 46 44]; 
-rc= numSubplots(numel(example_units));
-
-for g = 1:numel(whisk_structs)
-    figure(75+g);clf
-    for b = 1:numel(example_units)
-        curr_cell = whisk_structs{g}{whisk_cells(example_units(b))};
-        y = cellfun(@mean,curr_cell.stim_response.raw_response);
-        x = cellfun(@median,curr_cell.stim_response.raw_stim);
-        barsx = curr_cell.stim_response.bars_fit.x;
-        barsy = curr_cell.stim_response.bars_fit.mean;
-        barserr = curr_cell.stim_response.bars_fit.confBands(:,2) - barsy;
-        
-        subplot(rc(1),rc(2),b)
-        bar(x,y,'k')
-
-        if strcmp(hvar_names{g},'phase')
-            set(gca,'xlim',[-pi pi],'xtick',-pi:pi:pi,...
-                'xticklabel',{'-\pi',0,'\pi'})
-            if curr_cell.is_tuned==1
-                hold on; shadedErrorBar(barsx,barsy,barserr,'c')
-            else
-                hold on; shadedErrorBar(barsx,barsy,barserr,'k')
-            end
-        elseif strcmp(hvar_names{g},'angle')
-            hold on; shadedErrorBar(barsx,barsy,barserr,'c')
-        end   
-        set(gca,'ylim',[0 round(max(barsy)*1.3)])
-    end
-    suptitle(hvar_names{g})
+for b = 1:numel(check_cells)
+    cellNum = angle_tuned(check_cells(b));
+    ix = whisk_struct.angle{cellNum}.stim_response.bars_stim;
+    iy = whisk_struct.angle{cellNum}.stim_response.bars_fit.mean;
+    i_err = whisk_struct.angle{cellNum}.stim_response.bars_fit.confBands(:,2) - iy;
+    x = cellfun(@median,(whisk_struct.angle{cellNum}.stim_response.raw_stim));
+    y = cellfun(@mean,(whisk_struct.angle{cellNum}.stim_response.raw_response));
     
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-    fn = [hvar_names{g} '_tuning_curves.eps'];
-    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-    fix_eps_fonts([saveDir, fn])
+    ix_p = whisk_struct.phase{cellNum}.stim_response.bars_stim;
+    iy_p = whisk_struct.phase{cellNum}.stim_response.bars_fit.mean;
+    i_err_p = whisk_struct.phase{cellNum}.stim_response.bars_fit.confBands(:,2) - iy_p;
+    x_p = cellfun(@median,(whisk_struct.phase{cellNum}.stim_response.raw_stim));
+    y_p = cellfun(@mean,(whisk_struct.phase{cellNum}.stim_response.raw_response));
+    
+    
+    subplot(2,numel(check_cells),b)
+    hold on; bar(x,y)
+    shadedErrorBar(ix,iy,i_err,'c')
+
+    subplot(2,numel(check_cells),numel(check_cells)+b)
+    hold on;bar(x_p,y_p,'k')
+    shadedErrorBar(ix_p,iy_p,i_err_p,'r')
+    set(gca,'xlim',[-pi pi],'xtick',[])
 end
+
+fn = ['matched_tuning_curves.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
 
 %% Angle and phase heat map (C/D)
 whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.angle);
@@ -203,29 +198,40 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 %% Normalized phase and angle tuning curves (F examples)
-tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.angle)==1;
+tuned_units = (double(cellfun(@(x) x.is_tuned,whisk_struct.angle)==1) + double(cellfun(@(x) x.is_tuned,whisk_struct.phase)==1))>0;
+
+% phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.phase(tuned_units));
+% angle_mod = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.angle(tuned_units));
+% relative_mod = (angle_mod - phase_mod) ./ (phase_mod+angle_mod); %negative value = phase more than angle
+phase_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.phase(tuned_units));
+angle_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.angle(tuned_units));
+relative_mod = (angle_mod_abs - phase_mod_abs) ./ (phase_mod_abs+angle_mod_abs); %negative value = phase more than angle
+
+[s_rel_mod,idx]=sort(relative_mod);
 
 phase_tc = cellfun(@(x) x.stim_response.bars_fit.mean',whisk_struct.phase(tuned_units),'uniformoutput',0);
 stretch_bins =  mean(cellfun(@numel,phase_tc)); 
 angle_tc = cellfun(@(x) x.stim_response.bars_fit.mean,whisk_struct.angle(tuned_units),'uniformoutput',0);
 d_angle_tc = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),angle_tc,'uniformoutput',0);
 
+phase_tc = phase_tc(idx);
+d_angle_tc = d_angle_tc(idx);
+
 figure(58012);clf
-rc = numSubplots(numel(phase_tc)); 
+rc = numSubplots(numel(phase_tc));
 for b = 1:numel(phase_tc)
-        maxmin = [min([d_angle_tc{b} phase_tc{b}]) max([d_angle_tc{b} phase_tc{b}])];
+    maxmin = [min([d_angle_tc{b} phase_tc{b}]) max([d_angle_tc{b} phase_tc{b}])];
     subplot(rc(1),rc(2),b)
-%     plot(normalize_var(phase_tc{b},0,1),'g')
     plot(phase_tc{b},'r')
-%     hold on; plot(normalize_var(d_angle_tc{b},0,1),'b')
     hold on; plot(d_angle_tc{b},'b')
     hold on; plot([stretch_bins/2 stretch_bins/2],maxmin,'--k')
     axis tight
-
-    set(gca,'xtick',[],'ytick',maxmin,'ylim',maxmin)
+    
+    title(num2str(s_rel_mod(b)))
+    set(gca,'xtick',[],'ytick',maxmin,'ylim',maxmin,'yticklabel',round(maxmin))
 end
 legend('phase','angle')
-% 
+
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'phase_x_angle_curves.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
@@ -236,11 +242,11 @@ tuned_units = (double(cellfun(@(x) x.is_tuned,whisk_struct.angle)==1) + double(c
 
 phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.phase(tuned_units));
 angle_mod = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.angle(tuned_units));
-% relative_mod = (angle_mod - phase_mod) ./ (phase_mod+angle_mod); %negative value = phase more than angle
+relative_mod = (angle_mod - phase_mod) ./ (phase_mod+angle_mod); %negative value = phase more than angle
 
 phase_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.phase(tuned_units));
 angle_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.angle(tuned_units));
-relative_mod = (angle_mod_abs - phase_mod_abs) ./ (phase_mod_abs+angle_mod_abs); %negative value = phase more than angle
+% relative_mod_2 = (angle_mod_abs - phase_mod_abs) ./ (phase_mod_abs+angle_mod_abs); %negative value = phase more than angle
 
 %angle preference as close/far and phase as normal
 phase_tc = cellfun(@(x) x.stim_response.bars_fit.mean',whisk_struct.phase(tuned_units),'uniformoutput',0);
@@ -276,30 +282,38 @@ bar(linspace(-pi,pi,4),cellfun(@mean,sorted_phase),'k')
 hold on;errorbar(linspace(-pi,pi,4),cellfun(@mean,sorted_phase),cellfun(@(x) std(x)./sqrt(numel(x)),sorted_phase),'k.')
 set(gca,'ylim',[-.25 .75],'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'},'ytick',-.25:.25:.75)
 
-% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-% fn = 'phase_x_angle_x_preference.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
+fn = 'phase_x_angle_x_preference.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 
 figure(57);clf
-scatter(phase_mod_abs,angle_mod_abs,'k')
-hold on; plot([0 max([phase_mod_abs angle_mod_abs])], [0 max([phase_mod_abs angle_mod_abs])],'k--')
-hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
-    std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
-    std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
+% ABSOLUTE MODULATION 
+% scatter(phase_mod_abs,angle_mod_abs,'k')
+% hold on; plot([0 max([phase_mod_abs angle_mod_abs])], [0 max([phase_mod_abs angle_mod_abs])],'k--')
+% hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
+%     std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
+%     std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
+%     ,'ro','capsize',0)
+% set(gca,'xlim',[0 max([phase_mod_abs angle_mod_abs])],'ylim',[0 max([phase_mod_abs angle_mod_abs])])
+
+% MODULATION DEPTH
+scatter(phase_mod,angle_mod,'k')
+hold on; plot([0 1], [0 1],'k--')
+hold on; errorbar(mean(phase_mod),mean(angle_mod),...
+    std(angle_mod)./sqrt(sum(tuned_units)),std(angle_mod)./sqrt(sum(tuned_units)),...
+    std(phase_mod)./sqrt(sum(tuned_units)),std(phase_mod)./sqrt(sum(tuned_units))...
     ,'ro','capsize',0)
-set(gca,'xlim',[0 max([phase_mod_abs angle_mod_abs])],'ylim',[0 max([phase_mod_abs angle_mod_abs])])
-xlabel('phase abs mod (spks/s)')
-ylabel('angle abs mod (spks/s)')
+set(gca,'xlim',[0 1],'ylim',[0 1])
+xlabel('phase mod depth')
+ylabel('angle mod depth')
 axis square
 [~,p,~,stats] = ttest(phase_mod,angle_mod);
 title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
 
-% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-% fn = 'phase_x_angle.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
+fn = 'phase_x_angle.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 
 %% ASIDE: phase x angle heat 
