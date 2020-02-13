@@ -688,12 +688,11 @@ fix_eps_fonts([saveDir, fn])
 
 %% phase map
 hilbert_feature = 'phase';
-fileName = ['whisk_' hilbert_feature '_tune'];
-if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'],'file')
-    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\' fileName '.mat'])
-    whisk_struct.phase = wStruct;
-else
-    whisk_struct.phase = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
+
+fileName = ['whisk_' hilbert_feature{b} '_window'];
+if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'],'file')
+    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'])
+    whisk_struct.(hilbert_feature{b}) = wStruct;
 end
 
 tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.angle)==1;
@@ -710,7 +709,7 @@ preferred_degs = (abs(preferred_phase) .* deg_per_pie_unit) + conversions;
 figure(380);clf
 polarplot(preferred_phase,phase_mod,'o');
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'phase_map.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])

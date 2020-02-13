@@ -300,7 +300,7 @@ fix_eps_fonts([saveDir, fn])
 tuned_touch = find(tUnits);
 tuned_whisk = find(wUnits);
 
-use_units = tuned_touch(touch_ix_idx); %same as use_units = tuned_whisk(whisk_ix_idx);
+use_units = intersect(tuned_touch,tuned_whisk);
 
 touch_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,tStruct(use_units));
 whisk_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,wStruct(use_units));
@@ -310,11 +310,12 @@ max_val = ceil(max([whisk_mod_abs touch_mod_abs])./10) .* 10;
 figure(8540);clf
 scatter(whisk_mod_abs,touch_mod_abs,'ko')
 hold on; errorbar(mean(whisk_mod_abs),mean(touch_mod_abs),...
-    std(touch_mod_abs)./sqrt(sum(tuned_units)),std(touch_mod_abs)./sqrt(sum(tuned_units)),...
-    std(whisk_mod_abs)./sqrt(sum(tuned_units)),std(whisk_mod_abs)./sqrt(sum(tuned_units))...
+    std(touch_mod_abs)./sqrt(numel(use_units)),std(touch_mod_abs)./sqrt(numel(use_units)),...
+    std(whisk_mod_abs)./sqrt(numel(use_units)),std(whisk_mod_abs)./sqrt(numel(use_units))...
     ,'ro','capsize',0)
-hold on; plot([0 max_val],[0 max_val],'--k')
-set(gca,'xlim',[0 max_val],'ylim',[0 max_val],'xtick',0:25:100,'ytick',0:25:100)
+hold on; plot([1 max_val],[1 max_val],'--k')
+set(gca,'xlim',[1 max_val],'ylim',[1 max_val],...
+'yscale','log','xscale','log')
 axis square
 
 xlabel('whisk abs mod (spks/s)')
@@ -323,7 +324,7 @@ axis square
 [~,p,~,stats] = ttest(whisk_mod_abs,touch_mod_abs);
 title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig5\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
 fn = 'touch_x_whisk_absmod.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
