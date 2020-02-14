@@ -50,9 +50,6 @@ blue_dots = intersect(find(p<.05),find(fr_whisk<fr_quiet));
 gray_dots = setdiff(1:numel(masks),[red_dots blue_dots]);
 
 figure(480);clf
-% scatter(fr_quiet(red_dots),fr_whisk(red_dots),'filled','r')
-% hold on; scatter(fr_quiet(blue_dots),fr_whisk(blue_dots),'filled','b')
-% hold on; scatter(fr_quiet(gray_dots),fr_whisk(gray_dots),'filled','markerfacecolor',[.8 .8 .8])
 scatter(fr_quiet(p<.05),fr_whisk(p<.05),'filled','k')
 hold on; scatter(fr_quiet(gray_dots),fr_whisk(gray_dots),'ko')
 axis square
@@ -450,7 +447,6 @@ hold on; histogram(cellfun(@(y) y.meta.depth,U(whisk_cells)),600:25:1000,'faceco
 hold on;histogram(jc_silent_cell,600:25:1000,'facecolor',[.6 .6 .6])
 set(gca,'xtick',600:100:1000,'xlim',[600 1000])
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 fn = 'scatter_depth_firingrate.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
@@ -709,7 +705,6 @@ preferred_degs = (abs(preferred_phase) .* deg_per_pie_unit) + conversions;
 figure(380);clf
 polarplot(preferred_phase,phase_mod,'o');
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'phase_map.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
