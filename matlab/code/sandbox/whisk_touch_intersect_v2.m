@@ -4,7 +4,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 %%
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-hilbertVar = 'angle';
+hilbertVar = 'phase';
 tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
 
 fileName = ['whisk_' hilbertVar '_window'];
@@ -153,7 +153,6 @@ fix_eps_fonts([saveDir, fn])
 %% scatter of tuning preference of whisk and touch (D)
 touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],tStruct(tUnits),'uniformoutput',0)') ;
 whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],wStruct(wUnits),'uniformoutput',0)');
-
 
 %scatter of whisking (Y) vs touch (X)
 figure(3850);clf
