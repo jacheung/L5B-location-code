@@ -131,14 +131,14 @@ for rec = 1:length(selectedCells)
     nanmat = cell2nanmat(sorted);
     [quant_ol_p,~,stats] = anova1(nanmat,[],'off');
     
-    p_shuff_num = 1000;
+    p_shuff_num = 100;
     nanmat = cell2nanmat(sorted);
     p_shuff = zeros(1,p_shuff_num);
     for i = 1:p_shuff_num
         shuff = randperm(numel(nanmat));
         p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
     end
-    sig_by_chance = mean(p_shuff<quant_ol_p);
+    sig_by_chance = mean(p_shuff<alpha_value);
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
