@@ -1,11 +1,9 @@
-# L5bLocationCode
+# Active touch remaps barrel cortex output from a representation of self-motion to object location 
 
 ## Premise: 
-How are touch features represented in the brain? Specifically we seek in this project to understand how the cortex represents object location. Object location representation is a sensorimotor transformation that integrates information of WHEN an object was touched with WHERE the sensor was at touch. 
+During active tactile exploration, the dynamic patterns of touch are transduced to electrical signals and transformed by the brain into a mental representation not of the self, but of the object under investigation. This transformation from sensation to perception is thought to be a major function of the mammalian cortex. In primary somatosensory cortex (S1) of mice, Layer 5B pyramidal neurons are the main outputs to downstream areas that govern perceptual decision making and motor control. We find that during rhythmic whisker movement, L5B pyramidal neuron activity represents self-motion, encoding whisker azimuthal angle, which is only partially explained by tuning to phase of whisking. Upon active whisker touch, a distinct pattern of activity is evoked that represents the location of the touched object. Object location is decodable to submillimeter precision from the touch-evoked spike counts of a handful of randomly sampled location tuned neurons. This representation does not require specialized training. Surprisingly, the cellular identity and positional preferences of the touch-evoked object location representation were uncorrelated with the self-motion representation during free-whisking. Thus, active touch remaps the output of S1 from a sensory representation of self-motion into a perceptual representation of the explored object. We propose circuit mechanisms for how these two modes of representation are generated in L5B pyramids of S1 and how touch triggers a switch between modes. 
 
-Leveraging the anatomical, behavioral, and technological tools available in the mouse whisker system we recorded single neurons in L5b of mouse S1 while tracking high speed video of whisker motion.  
-
-Below are scripts used to characterize encoding and test touch location decoding using single neurons. For summary of all results and findings using this script see Cheung et al., 2019b. For a complete description of the behavioral paradigm during neural recordings refer to Cheung et al., 2019a. 
+Below are scripts used to characterize encoding and test touch location decoding using single neurons. For summary of all results and findings using this script see Cheung et al., 2020. For a complete description of the behavioral paradigm during neural recordings refer to Cheung et al., 2019. 
 
 ## Requirements: 
 All code is built and tested on MATLAB 2018b. <br />
