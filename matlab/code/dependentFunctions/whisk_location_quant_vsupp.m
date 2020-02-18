@@ -131,7 +131,7 @@ for rec = 1:length(selectedCells)
     nanmat = cell2nanmat(sorted);
     [quant_ol_p,~,stats] = anova1(nanmat,[],'off');
     
-    p_shuff_num = 100;
+    p_shuff_num = 1000;
     nanmat = cell2nanmat(sorted);
     p_shuff = zeros(1,p_shuff_num);
     for i = 1:p_shuff_num

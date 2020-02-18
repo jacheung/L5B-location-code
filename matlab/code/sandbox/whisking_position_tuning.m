@@ -2,10 +2,10 @@
 clear whisk_struct
 hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
 % for b = 1:numel(hilbert_feature)
-for b = 1:5
+for b = 1:2
     fileName = ['whisk_' hilbert_feature{b} '_window'];
-    if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'],'file')
-        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'])
+    if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo\' fileName '.mat'],'file')
+        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo\' fileName '.mat'])
         whisk_struct.(hilbert_feature{b}) = wStruct;
    end
 end
@@ -71,7 +71,7 @@ tmp = cellfun(@(x) range(x.stim_response.bars_fit.mean),whisk_struct.phase(angle
 [~,idx] = sort(tmp);
 
 figure(480);clf
-check_cells = idx(end-7:end);
+check_cells = idx(end-10:end);
 
 for b = 1:numel(check_cells)
     cellNum = angle_tuned(check_cells(b));
@@ -189,7 +189,6 @@ figure(580620);clf
 pie([numel(untuned) numel(co_tuned) numel(angle_only) numel(phase_only)],...
     {'not tuned','co-tuned','angle only','phase only'})
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 fn = 'proportion_angle_phase_pie.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
@@ -368,6 +367,105 @@ for b = 1:numel(tuned_units)
    caxis([0 prctile(countsX(:)./numSamplesX(:).*1000,99)])
 end
 
+%% Heat of modulation depth comparison (H/I)
+selectedCells = 1:length(U);
+
+% w_mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(selectedCells));
+w_mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.angle(selectedCells));
+w_mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.phase(selectedCells));
+w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.amplitude(selectedCells));
+w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.midpoint(selectedCells));
+w_mod_idx_velocity = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.velocity(selectedCells));
+
+mod_idx_collated = [w_mod_idx_angle;w_mod_idx_phase;w_mod_idx_amp;w_mod_idx_midpoint;w_mod_idx_velocity];
+
+[~,p,~,stats] = ttest(mod_idx_collated(1,:),mod_idx_collated(4,:)); 
+
+angle_abs= cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.angle(selectedCells));
+phase_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.phase(selectedCells));
+amp_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.amplitude(selectedCells));
+midpoint_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.midpoint(selectedCells));
+velocity_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.velocity(selectedCells));
+
+% w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells)) * -1;
+w_peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,whisk_struct.angle(selectedCells));
+w_peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,whisk_struct.phase(selectedCells));
+w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,whisk_struct.amplitude(selectedCells));
+w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,whisk_struct.midpoint(selectedCells));
+w_peak_idx_velocity = cellfun(@(x) x.calculations.tune_peak,whisk_struct.velocity(selectedCells));
+
+% HEAT GRAY WHISK SORTING
+[~,idx] = sort(w_mod_idx_angle);
+whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.angle);
+whisktunedidx = ismember(idx,find(whisk_angle_tuned));
+nonwhisktunedidx = ismember(idx,find(~whisk_angle_tuned));
+tune_map = [w_mod_idx_angle ; w_mod_idx_phase ; w_mod_idx_amp ; w_mod_idx_midpoint ; w_mod_idx_velocity];
+fr_map  = log10(cellfun(@(x) mean(x.R_ntk(:))*1000,U));
+
+figure(29);clf
+subplot(2,2,1)
+imagesc(tune_map(:,idx(whisktunedidx)))
+set(gca,'ytick',1:6,'yticklabel',fields(whisk_struct))
+caxis([0 1])
+subplot(2,2,2)
+imagesc(tune_map(:,idx(nonwhisktunedidx)))
+set(gca,'ytick',1:6,'yticklabel',fields(whisk_struct))
+caxis([0 1])
+subplot(2,2,3)
+imagesc(fr_map(:,idx(whisktunedidx)))
+set(gca,'ytick',1,'yticklabel',{'log firing rate'})
+caxis([-2 2])
+subplot(2,2,4)
+imagesc(fr_map(:,idx(nonwhisktunedidx)))
+set(gca,'ytick',1:2,'yticklabel',{'log firing rate'})
+caxis([-2 2])
+colormap(gray)
+
+fn = 'gray_whisk_sort.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+figure(3480);clf
+subplot(1,2,1)
+imagesc(abs(corr([tune_map(:,idx(whisktunedidx)) ; fr_map(:,idx(whisktunedidx))]')));
+caxis([.5 1])
+colorbar
+set(gca,'xtick',1:10,'xticklabel',{'angle','phase','amp','midpoint','velocity','firing rate'},'ytick',[]);xtickangle(45)
+axis square
+subplot(1,2,2)
+imagesc(abs(corr([tune_map(:,idx(nonwhisktunedidx)) ; fr_map(:,idx(nonwhisktunedidx))]')));
+set(gca,'xtick',1:10,'xticklabel',{'angle','phase','amp','midpoint','velocity','firing rate'},'ytick',[]);xtickangle(45)
+xtickangle(45)
+colormap gray
+colorbar
+caxis([0 1])
+axis square
+
+fn = 'modulation_correlation.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
+% HSV PLOTTING WHISK
+% [~,sort_idx] = sort(w_peak_idx_angle);
+% 
+% peaks = {w_peak_idx_angle,w_peak_idx_phase,w_peak_idx_amp,w_peak_idx_midpoint,w_peak_idx_velocity};
+% mod_idx = {w_mod_idx_angle,w_mod_idx_phase,w_mod_idx_amp,w_mod_idx_midpoint,w_mod_idx_velocity};
+% final_image = nan(numel(peaks),numel(selectedCells),3);
+% for b = 1:numel(peaks)
+%     hues = normalize_var(peaks{b}(sort_idx),.7,1);
+%     hsv = [hues' mod_idx{b}(sort_idx)' ones(numel(hues),1)];
+%     rgb_values = hsv2rgb(hsv);
+%     final_image(b,:,1) = rgb_values(:,1);
+%     final_image(b,:,2) = rgb_values(:,2);
+%     final_image(b,:,3) = rgb_values(:,3);
+% end
+% %
+% figure(580);clf
+% imshow(final_image)
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+% fn = 'hsv_whisk.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 %% example whisker trace (SF)
 for k = 33
@@ -450,147 +548,6 @@ set(gca,'xtick',600:100:1000,'xlim',[600 1000])
 fn = 'scatter_depth_firingrate.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
-%% modulation depth of other features
-selectedCells = 1:length(U);
-
-% w_mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(selectedCells));
-w_mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.angle(selectedCells));
-w_mod_idx_phase = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.phase(selectedCells));
-w_mod_idx_amp = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.amplitude(selectedCells));
-w_mod_idx_midpoint = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.midpoint(selectedCells));
-w_mod_idx_velocity = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.velocity(selectedCells));
-
-mod_idx_collated = [w_mod_idx_angle;w_mod_idx_phase;w_mod_idx_amp;w_mod_idx_midpoint;w_mod_idx_velocity];
-
-[~,p,~,stats] = ttest(mod_idx_collated(1,:),mod_idx_collated(4,:)); 
-
-angle_abs= cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.angle(selectedCells));
-phase_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.phase(selectedCells));
-amp_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.amplitude(selectedCells));
-midpoint_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.midpoint(selectedCells));
-velocity_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.velocity(selectedCells));
-
-% w_peak_idx_pole = cellfun(@(x) x.calculations.tune_peak,pole_whisk(selectedCells)) * -1;
-w_peak_idx_angle = cellfun(@(x) x.calculations.tune_peak,whisk_struct.angle(selectedCells));
-w_peak_idx_phase = cellfun(@(x) x.calculations.tune_peak,whisk_struct.phase(selectedCells));
-w_peak_idx_amp = cellfun(@(x) x.calculations.tune_peak,whisk_struct.amplitude(selectedCells));
-w_peak_idx_midpoint = cellfun(@(x) x.calculations.tune_peak,whisk_struct.midpoint(selectedCells));
-w_peak_idx_velocity = cellfun(@(x) x.calculations.tune_peak,whisk_struct.velocity(selectedCells));
-
-% HEAT GRAY WHISK SORTING
-[~,idx] = sort(w_mod_idx_angle);
-whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.angle);
-whisktunedidx = ismember(idx,find(whisk_angle_tuned));
-nonwhisktunedidx = ismember(idx,find(~whisk_angle_tuned));
-tune_map = [w_mod_idx_angle ; w_mod_idx_phase ; w_mod_idx_amp ; w_mod_idx_midpoint ; w_mod_idx_velocity];
-fr_map  = log10(cellfun(@(x) mean(x.R_ntk(:))*1000,U));
-
-figure(29);clf
-subplot(2,2,1)
-imagesc(tune_map(:,idx(whisktunedidx)))
-set(gca,'ytick',1:6,'yticklabel',fields(whisk_struct))
-caxis([0 1])
-subplot(2,2,2)
-imagesc(tune_map(:,idx(nonwhisktunedidx)))
-set(gca,'ytick',1:6,'yticklabel',fields(whisk_struct))
-caxis([0 1])
-subplot(2,2,3)
-imagesc(fr_map(:,idx(whisktunedidx)))
-set(gca,'ytick',1,'yticklabel',{'log firing rate'})
-caxis([-2 2])
-subplot(2,2,4)
-imagesc(fr_map(:,idx(nonwhisktunedidx)))
-set(gca,'ytick',1:2,'yticklabel',{'log firing rate'})
-caxis([-2 2])
-colormap(gray)
-
-fn = 'gray_whisk_sort.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
-
-figure(3480);clf
-subplot(1,2,1)
-imagesc(abs(corr([tune_map(:,idx(whisktunedidx)) ; fr_map(:,idx(whisktunedidx))]')));
-caxis([.5 1])
-colorbar
-set(gca,'xtick',1:10,'xticklabel',{'angle','phase','amp','midpoint','velocity','firing rate'},'ytick',[]);xtickangle(45)
-axis square
-subplot(1,2,2)
-imagesc(abs(corr([tune_map(:,idx(nonwhisktunedidx)) ; fr_map(:,idx(nonwhisktunedidx))]')));
-set(gca,'xtick',1:10,'xticklabel',{'angle','phase','amp','midpoint','velocity','firing rate'},'ytick',[]);xtickangle(45)
-xtickangle(45)
-colormap gray
-colorbar
-caxis([0 1])
-axis square
-
-fn = 'modulation_correlation.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
-
-% HSV PLOTTING WHISK
-[~,sort_idx] = sort(w_peak_idx_angle);
-
-peaks = {w_peak_idx_angle,w_peak_idx_phase,w_peak_idx_amp,w_peak_idx_midpoint,w_peak_idx_velocity};
-mod_idx = {w_mod_idx_angle,w_mod_idx_phase,w_mod_idx_amp,w_mod_idx_midpoint,w_mod_idx_velocity};
-final_image = nan(numel(peaks),numel(selectedCells),3);
-for b = 1:numel(peaks)
-    hues = normalize_var(peaks{b}(sort_idx),.7,1);
-    hsv = [hues' mod_idx{b}(sort_idx)' ones(numel(hues),1)];
-    rgb_values = hsv2rgb(hsv);
-    final_image(b,:,1) = rgb_values(:,1);
-    final_image(b,:,2) = rgb_values(:,2);
-    final_image(b,:,3) = rgb_values(:,3);
-end
-%
-figure(580);clf
-imshow(final_image)
-% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-% fn = 'hsv_whisk.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
-%
-% % HEAT GRAY WHISK TOUCH TUNING SORTING
-% [~,idx] = sort(w_mod_idx_angle);
-% nontouchidx = ismember(idx,nontouchCells);
-% tunedidx = ismember(idx,tunedCells);
-% nontunedidx = ismember(idx,nontunedCells);
-%
-% tune_map = [w_mod_idx_angle ; w_mod_idx_phase ; w_mod_idx_amp ; w_mod_idx_midpoint];
-% fr_map  =  firing_rate;
-% figure(19);clf
-% subplot(2,3,1)
-% imagesc(tune_map(:,idx(nontouchidx)))
-% set(gca,'ytick',1:6,'yticklabel',{'angle','phase','amp','midpoint'})
-% caxis([0 1])
-% subplot(2,3,2)
-% imagesc(tune_map(:,idx(tunedidx)))
-% caxis([0 1])
-% subplot(2,3,3)
-% imagesc(tune_map(:,idx(nontunedidx)))
-% caxis([0 1])
-% colormap(gray)
-% colorbar
-%
-% subplot(2,3,4)
-% imagesc(fr_map(:,idx(nontouchidx)))
-% set(gca,'ytick',1,'yticklabel',{'log firing rate'})
-% caxis([0 1])
-% subplot(2,3,5)
-% imagesc(fr_map(:,idx(tunedidx)))
-% caxis([0 1])
-% subplot(2,3,6)
-% imagesc(fr_map(:,idx(nontunedidx)))
-% caxis([-2 2])
-% colormap(gray)
-% colorbar
-%
-% fn = 'gray_whisk_touch.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
-
-
-
 
 %% scatter of absolute modulation index x FR
 built = find(cellfun(@(x) isfield(x,'stim_response'),whisk_struct.angle));
@@ -635,7 +592,7 @@ set(gca,'xscale','log','xlim',[.1 100])
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])
 
-%% CDF of sampling
+%% CDF of sampling (SF)
 built = find(cellfun(@(x) isfield(x,'stim_response'),whisk_struct.angle));
 bars_built = cellfun(@(x) isfield(x.stim_response,'bars_fit'),whisk_struct.angle(built));
 full_build = built(bars_built);
@@ -682,7 +639,7 @@ export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 
-%% phase map
+%% phase map (SF)
 hilbert_feature = 'phase';
 
 fileName = ['whisk_' hilbert_feature{b} '_window'];
