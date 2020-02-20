@@ -4,7 +4,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 %%
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-hilbertVar = 'angle';
+hilbertVar = 'phase';
 tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
 
 fileName = ['whisk_' hilbertVar '_window'];
@@ -75,12 +75,15 @@ t_tick = {'','','--'}; %tick labels for touch cells co-tune, touch only, and whi
 w_tick = {'','--',''};
 save_labels = {'co_tune','touch_only','whisk_only'};
 
-for g = 2:numel(tuned_mat)
+for g = 1:numel(tuned_mat)
     %find units that are built
     built_tx = find(cellfun(@(x) isfield(x,'stim_response'),tStruct));
     built_wx = find(cellfun(@(x) isfield(x,'stim_response'),wStruct));
-    tx_ix = intersect(built_tx,tuned_mat{g});
-    wx_ix = intersect(built_wx,tuned_mat{g});
+    tx_filt2 = find(cellfun(@(x) isfield(x.stim_response,'bars_fit'),tStruct(built_tx)));
+    wx_filt2 = find(cellfun(@(x) isfield(x.stim_response,'bars_fit'),wStruct(built_wx)));
+
+    tx_ix = intersect(built_tx(tx_filt2),tuned_mat{g});
+    wx_ix = intersect(built_wx(wx_filt2),tuned_mat{g});
     
     %build xyerr values based on bars fit for touch
     tx = cellfun(@(x) x.stim_response.bars_fit.x,tStruct(tx_ix),'uniformoutput',0);
@@ -116,33 +119,48 @@ for g = 2:numel(tuned_mat)
                     hold on; plot(wx{b},wy_vals{k}{b},['c' w_tick{g}])
                 end
             end
+            if strcmp(hilbertVar,'phase')
+                set(gca,'xlim',[-pi pi],'xtick',[])
+                if k == 2
+                    set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'})
+                end
+            end
         end
     end
-    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-    fn = [save_labels{g} '_curves.eps'];
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+    fn = [hilbertVar save_labels{g} '_curves.eps'];
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
 end
 %% Whisk x touch modulation depth (D)
 
-tuned_touch = find(tUnits);
-tuned_whisk = find(wUnits);
+t_built = cellfun(@(x) isfield(x,'stim_response'),tStruct);
+w_built = cellfun(@(x) isfield(x,'stim_response'),wStruct);
 
-use_units = intersect(tuned_touch,tuned_whisk);
+co_tuned = find(tUnits.*wUnits);
+co_built = find(t_built.*w_built);
+touch_only = setdiff(find(tUnits),co_tuned);
+whisk_only = setdiff(find(wUnits),co_tuned);
 
-touch_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,tStruct(use_units));
-whisk_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,wStruct(use_units));
-max_val = ceil(max([whisk_mod_abs touch_mod_abs])./10) .* 10;
+touch_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,tStruct(co_built));
+whisk_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,wStruct(co_built));
 
+touch_mod_abs_tune = cellfun(@(x) x.calculations.mod_idx_abs,tStruct(co_tuned));
+whisk_mod_abs_tune = cellfun(@(x) x.calculations.mod_idx_abs,wStruct(co_tuned));
 
 figure(8540);clf
-scatter(whisk_mod_abs,touch_mod_abs,'ko')
-hold on; errorbar(mean(whisk_mod_abs),mean(touch_mod_abs),...
-    std(touch_mod_abs)./sqrt(numel(use_units)),std(touch_mod_abs)./sqrt(numel(use_units)),...
-    std(whisk_mod_abs)./sqrt(numel(use_units)),std(whisk_mod_abs)./sqrt(numel(use_units))...
+hold on;scatter(whisk_mod_abs,touch_mod_abs,'ko')
+hold on;scatter(whisk_mod_abs_tune,touch_mod_abs_tune,'filled','ko')
+hold on; errorbar(mean(whisk_mod_abs_tune),mean(touch_mod_abs_tune),...
+    std(touch_mod_abs_tune)./sqrt(numel(use_units)),std(touch_mod_abs_tune)./sqrt(numel(co_tuned)),...
+    std(whisk_mod_abs_tune)./sqrt(numel(use_units)),std(whisk_mod_abs_tune)./sqrt(numel(co_tuned))...
     ,'ro','capsize',0)
-hold on; plot([1 max_val],[1 max_val],'--k')
-set(gca,'xlim',[1 max_val],'ylim',[1 max_val],...
+hold on; errorbar(mean(whisk_mod_abs),mean(touch_mod_abs),...
+    std(touch_mod_abs)./sqrt(numel(use_units)),std(touch_mod_abs)./sqrt(numel(co_built)),...
+    std(whisk_mod_abs)./sqrt(numel(use_units)),std(whisk_mod_abs)./sqrt(numel(co_built))...
+    ,'ko','capsize',0)
+hold on; plot([1 100],[1 100],'--k')
+set(gca,'xlim',[1 100],'ylim',[1 100],...
 'yscale','log','xscale','log')
 axis square
 
@@ -150,10 +168,13 @@ xlabel('whisk abs mod (spks/s)')
 ylabel('touch abs mod (spks/s)')
 axis square
 [~,p,~,stats] = ttest(whisk_mod_abs,touch_mod_abs);
-title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
+text(10, 6,['all built : ' 'p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
+
+[~,p,~,stats] = ttest(whisk_mod_abs_tune,touch_mod_abs_tune);
+text(10, 5,['co tuned : ' 'p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
-fn = 'touch_x_whisk_absmod.eps';
+fn = [hilbertVar '_touch_x_whisk_absmod.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 %% Shape correlation of tuning curves (E)

@@ -20,7 +20,10 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 
 %function parameters
 viewWindow = [-25:50]; %viewing window around touch
-numTouchesPerBin = 75; %number of touches to assign in each bin for quantification.
+numTouchesPerBin = 20; %number of touches to assign in each bin for quantification.
+% OR IF SET BELOW 
+proportionDataPerBin = .02; %AKA 20 BINS
+
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
@@ -74,7 +77,9 @@ for rec = 1:length(selectedCells)
         rw = 8:20;
     end
     response = mean(tVar.allTouches.R_ntk(:,rw),2) * 1000;
+    numTouchesPerBin = round(numel(selected_feature).* proportionDataPerBin);   
     numBins = round(numel(selected_feature)./numTouchesPerBin);
+
     
     %% Heatmap of responses around touch. Window around touch defined as view_window
     if strcmp(hilbert_feature,'phase')
@@ -111,12 +116,12 @@ for rec = 1:length(selectedCells)
         end
     end
     %% Tuning in touch response window
-    %     if strcmp(hilbert_feature,'phase') %commenting out for modulation
-    %     index calculation. Need all variables to have same amount of bins
-    %         [sorted, sortedBy] = binslin(selected_feature,response,'equalE',13,-pi,pi);
-    %     else
-    [sorted, sortedBy] = binslin(selected_feature,response,'equalN',numBins);
-    %     end
+%     if strcmp(hilbert_feature,'phase') %commenting out for modulation
+%         %index calculation. Need all variables to have same amount of bins
+%         [sorted, sortedBy] = binslin(selected_feature,response,'equalE',13,-pi,pi);
+%     else
+        [sorted, sortedBy] = binslin(selected_feature,response,'equalN',numBins);
+%     end
     
     [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
     
