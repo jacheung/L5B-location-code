@@ -168,10 +168,10 @@ xlabel('whisk abs mod (spks/s)')
 ylabel('touch abs mod (spks/s)')
 axis square
 [~,p,~,stats] = ttest(whisk_mod_abs,touch_mod_abs);
-text(10, 6,['all built : ' 'p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
+text(5, 5,['all built : ' 'p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
 
 [~,p,~,stats] = ttest(whisk_mod_abs_tune,touch_mod_abs_tune);
-text(10, 5,['co tuned : ' 'p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
+text(5, 4,['co tuned : ' 'p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
 fn = [hilbertVar '_touch_x_whisk_absmod.eps'];
@@ -236,10 +236,10 @@ elseif strcmp(hilbertVar,'angle')
     
     subplot(4,1,3)
     histogram(touch_pw(touch_nonIX_idx,1),-30:10:80,'facecolor','b','facealpha',1,'normalization','probability')
-    set(gca,'xlim',[-30 80],'ylim',[0 .6])
+    set(gca,'xlim',[-30 80],'ylim',[0 .5])
     subplot(4,1,4);
     histogram(whisking_pw(whisk_nonIX_idx,1),-430:10:80,'facecolor','c','facealpha',1,'normalization','probability')
-    set(gca,'xlim',[-30 80],'ylim',[0 .4])
+    set(gca,'xlim',[-30 80],'ylim',[0 .5])
     
 elseif strcmp(hilbertVar,'amplitude')
     subplot(4,1,[1:2])
