@@ -20,10 +20,7 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 
 %function parameters
 viewWindow = [-25:50]; %viewing window around touch
-numTouchesPerBin = 20; %number of touches to assign in each bin for quantification.
-% OR IF SET BELOW 
-proportionDataPerBin = .02; %AKA 20 BINS
-
+proportionDataPerBin = .05; %AKA 20 BINS
 alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
