@@ -71,8 +71,12 @@ for rec = 1:length(selectedCells)
     try
         rw = find(viewWindow == array.meta.touchProperties.responseWindow(1)) : find(viewWindow == array.meta.touchProperties.responseWindow(2));
     catch
-        rw = 8:20;
+        touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
+        all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
+        touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
+        rw = find(viewWindow == touch_wind(1)) : find(viewWindow == touch_wind(2));
     end
+    
     response = mean(tVar.allTouches.R_ntk(:,rw),2) * 1000;
     numTouchesPerBin = round(numel(selected_feature).* proportionDataPerBin);   
     numBins = round(numel(selected_feature)./numTouchesPerBin);
@@ -129,7 +133,7 @@ for rec = 1:length(selectedCells)
         shuff = randperm(numel(nanmat));
         p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
     end
-    sig_by_chance = mean(p_shuff<quant_ol_p);
+    sig_by_chance = mean(p_shuff<alpha_value);
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);

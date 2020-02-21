@@ -4,8 +4,9 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 %%
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-hilbertVar = 'phase';
-tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
+hilbertVar = 'angle';
+% tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
+tStruct = object_location_quantification(U,1:length(U),hilbertVar,'off');
 
 fileName = ['whisk_' hilbertVar '_window'];
 if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo\' fileName '.mat'],'file')

@@ -7,7 +7,7 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 %% Top level parameters and definitions
 % U = defTouchResponse(U,.95,'off');
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig1\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 
 %% Raster + PSTH one cell (A) 
 for i = 29
@@ -65,7 +65,7 @@ end
 %% firing rate X depth of recording (B)
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 location_cells = cellfun(@(x) x.is_tuned==1,pole_tuned);
-location_cells = cellfun(@(x) x.is_tuned==1,angle_tuned);
+% location_cells = cellfun(@(x) x.is_tuned==1,angle_tuned);
 
 jc_silent_cell = [766 819 895 631 776 815 910 871 844 902  941   840   888   748   732   940   686   944   950   933]; %Phils  from 902
 
@@ -88,16 +88,16 @@ hold on; histogram(cellfun(@(y) y.meta.depth,U(location_cells)),600:25:1000,'fac
 hold on;histogram(jc_silent_cell,600:25:1000,'facecolor','c')
 set(gca,'xtick',600:100:1000,'xlim',[600 1000])
 
-% fn = 'scatter_depth_firingrate.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
+fn = 'scatter_depth_firingrate.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
-
-figure(48);clf
-subplot(1,2,1);
-plot(angle_tuned{51}.stim_response.bars_fit.x,angle_tuned{51}.stim_response.bars_fit.mean)
-subplot(1,2,2);
-plot(angle_tuned{115}.stim_response.bars_fit.x,angle_tuned{115}.stim_response.bars_fit.mean)
+% 
+% figure(48);clf
+% subplot(1,2,1);
+% plot(angle_tuned{51}.stim_response.bars_fit.x,angle_tuned{51}.stim_response.bars_fit.mean)
+% subplot(1,2,2);
+% plot(angle_tuned{115}.stim_response.bars_fit.x,angle_tuned{115}.stim_response.bars_fit.mean)
 
 %% touch psth by quartiles of far, close and near (C)
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
@@ -142,7 +142,7 @@ fn = 'touch_psth_by_location.eps';
 export_fig([saveDir, fn], '-depsc ', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
-%% heatmap for object location tuned touch units(D)
+%% heatmap for object location tuned touch units (D)
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
 sel_tstructs = pole_tuned(tuned_units);
@@ -151,6 +151,8 @@ touch_heat = cell(1,sum(tuned_units));
 for g = 1:numel(sel_tstructs)
     curr_t = sel_tstructs{g}.stim_response.values;
     curr_t = curr_t(~any(isnan(curr_t),2),:);%clean nan rows
+    [~,u_idx] = unique(curr_t(:,1)); %catch non-unique x-values
+    curr_t = curr_t(u_idx,:);
     
     if strcmp(hilbertVar,'pole')
         touch_x = -1:.1:1;
