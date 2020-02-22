@@ -21,7 +21,7 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 %function parameters
 viewWindow = [-25:50]; %viewing window around touch
 proportionDataPerBin = .05; %AKA 20 BINS
-alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
+alpha_value = .01; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
 min_bins = 5; %minimum number of angle bins to consider quantifying
 gauss_filt = .5; %2D smoothing filter for heatmap
@@ -88,13 +88,10 @@ for rec = 1:length(selectedCells)
     else
         [sorted_heat, sortedBy_heat] = binslin(selected_feature,tVar.allTouches.R_ntk,'equalN',numBins);
     end
-    
     if willdisplay
-        
         if numel(sortedBy_heat)>min_bins
             heat_resp = cell2mat(cellfun(@(x) mean(x,1),sorted_heat,'uniformoutput',0));
             smoothed_heat_resp = imgaussfilt(heat_resp,gauss_filt,'padding','replicate');
-            
             figure(22);subplot(rc(1),rc(2),rec)
             imagesc(smoothed_heat_resp)
             hold on; plot([find(viewWindow==0) find(viewWindow==0)],[1 length(sortedBy_heat)],'-.w')
@@ -110,8 +107,6 @@ for rec = 1:length(selectedCells)
                 set(gca,'ydir','normal','ytick',1:length(sortedBy_heat),'yticklabel',round(cellfun(@median,sortedBy_heat)),...
                     'xtick',1:25:length(viewWindow),'xticklabel',-25:25:50)
             end
-            
-            
         else
             disp(['Not plotting cell ' num2str(selectedCells(rec)) ' b/c less than 5 sampled bins'])
         end
@@ -123,23 +118,24 @@ for rec = 1:length(selectedCells)
 %     else
         [sorted, sortedBy] = binslin(selected_feature,response,'equalN',numBins);
 %     end
-    
+    disp(['num touches per bin is ' num2str(round(mean(cellfun(@numel,sorted)))) ' touches'])
     [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
     
-    p_shuff_num = 1000;
-    nanmat = cell2nanmat(sorted);
-    p_shuff = zeros(1,p_shuff_num);
-    for i = 1:p_shuff_num
-        shuff = randperm(numel(nanmat));
-        p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
-    end
-    sig_by_chance = mean(p_shuff<alpha_value);
+%     %shuffle method     
+%     p_shuff_num = 1000;
+%     nanmat = cell2nanmat(sorted);
+%     p_shuff = zeros(1,p_shuff_num);
+%     for i = 1:p_shuff_num
+%         shuff = randperm(numel(nanmat));
+%         p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+%     end
+%     sig_by_chance = mean(p_shuff<=alpha_value);
+%     
+%     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
+%     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
+%     CI = SEM.*tscore;
     
-    SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
-    tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
-    CI = SEM.*tscore;
-    
-    
+    clear barsFit
     %BARSP FOR MOD IDX CALCULATIONS
     try
         x = cellfun(@median,sortedBy);
@@ -177,7 +173,7 @@ for rec = 1:length(selectedCells)
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_relative = 0;
         tuneStruct{selectedCells(rec)}.calculations.tune_peak = nan;
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = 0;
-         tuneStruct{selectedCells(rec)}.calculations.mod_depth = 0;
+        tuneStruct{selectedCells(rec)}.calculations.mod_depth = 0;
     end
     
 
@@ -201,7 +197,9 @@ for rec = 1:length(selectedCells)
             end
         end
         
-        if sig_by_chance < 0.05 && quant_ol_p < 0.05
+%         if sig_by_chance < 0.05 && quant_ol_p < 0.05
+         if quant_ol_p<alpha_value && mean(cellfun(@mean,sorted))>2
+%          if sig_by_chance<=alpha_value 
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
             %             if strcmp(array.meta.touchProperties.responseType,'excited')

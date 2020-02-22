@@ -20,7 +20,7 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 rc = numSubplots(numel(selectedCells));
 
 %function parameters
-alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
+alpha_value = .01; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
 binslin_bins = 50; %chose 50 based on testing a number of different bins (see sampling_justification.mat)
 
@@ -131,14 +131,15 @@ for rec = 1:length(selectedCells)
     nanmat = cell2nanmat(sorted);
     [quant_ol_p,~,stats] = anova1(nanmat,[],'off');
     
-    p_shuff_num = 1000;
-    nanmat = cell2nanmat(sorted);
-    p_shuff = zeros(1,p_shuff_num);
-    for i = 1:p_shuff_num
-        shuff = randperm(numel(nanmat));
-        p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
-    end
-    sig_by_chance = mean(p_shuff<alpha_value);
+%     %shuffle method
+%     p_shuff_num = 1000;
+%     nanmat = cell2nanmat(sorted);
+%     p_shuff = zeros(1,p_shuff_num);
+%     for i = 1:p_shuff_num
+%         shuff = randperm(numel(nanmat));
+%         p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+%     end
+%     sig_by_chance = mean(p_shuff<alpha_value);
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
@@ -200,7 +201,9 @@ for rec = 1:length(selectedCells)
         
     end
     
-    if sig_by_chance < 0.05 && quant_ol_p < 0.05 && quant_ol_p ~=0 && ~isempty(barsFit) && nonzero_bins > 10 
+%     if sig_by_chance < 0.05 && quant_ol_p < 0.05 && quant_ol_p ~=0 && ~isempty(barsFit) && nonzero_bins > 10 
+    if  quant_ol_p < alpha_value && ~isempty(barsFit) && mean(cellfun(@mean,sorted))>2
+
         %right and left tuning by idx
         compare_table = multcompare(stats,'Display','off');
         max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);

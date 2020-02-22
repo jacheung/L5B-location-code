@@ -27,7 +27,7 @@ whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
 %% proportion of neurons that intersect pie (B)
 hilbertVar_list = {'angle','phase'};
 stacked_bar = cell(1,numel(hilbertVar_list));
-for i = 1:numel(hilbertVar_list)
+for i = 1
     tStruct_tmp = object_location_quantification(U,touchCells,hilbertVar_list{i},'off');
     
     fileName = ['whisk_' hilbertVar_list{i} '_window'];
@@ -53,7 +53,7 @@ for i = 1:numel(hilbertVar_list)
 end
 
 figure(340);clf
-for b = 1:numel(stacked_bar)
+for b = 1:i
     subplot(2,2,b)
     pie(stacked_bar{b})
     title(hilbertVar_list{b})
@@ -153,12 +153,12 @@ figure(8540);clf
 hold on;scatter(whisk_mod_abs,touch_mod_abs,'ko')
 hold on;scatter(whisk_mod_abs_tune,touch_mod_abs_tune,'filled','ko')
 hold on; errorbar(mean(whisk_mod_abs_tune),mean(touch_mod_abs_tune),...
-    std(touch_mod_abs_tune)./sqrt(numel(use_units)),std(touch_mod_abs_tune)./sqrt(numel(co_tuned)),...
-    std(whisk_mod_abs_tune)./sqrt(numel(use_units)),std(whisk_mod_abs_tune)./sqrt(numel(co_tuned))...
+    std(touch_mod_abs_tune)./sqrt(numel(co_tuned)),std(touch_mod_abs_tune)./sqrt(numel(co_tuned)),...
+    std(whisk_mod_abs_tune)./sqrt(numel(co_tuned)),std(whisk_mod_abs_tune)./sqrt(numel(co_tuned))...
     ,'ro','capsize',0)
 hold on; errorbar(mean(whisk_mod_abs),mean(touch_mod_abs),...
-    std(touch_mod_abs)./sqrt(numel(use_units)),std(touch_mod_abs)./sqrt(numel(co_built)),...
-    std(whisk_mod_abs)./sqrt(numel(use_units)),std(whisk_mod_abs)./sqrt(numel(co_built))...
+    std(touch_mod_abs)./sqrt(numel(co_built)),std(touch_mod_abs)./sqrt(numel(co_built)),...
+    std(whisk_mod_abs)./sqrt(numel(co_built)),std(whisk_mod_abs)./sqrt(numel(co_built))...
     ,'ko','capsize',0)
 hold on; plot([1 100],[1 100],'--k')
 set(gca,'xlim',[1 100],'ylim',[1 100],...
@@ -277,7 +277,6 @@ elseif strcmp(hilbertVar,'midpoint')
 end
 
 figure(3850);subplot(4,1,[1 2])
-legend('whisk tuned only','touch tuned only','both tuned')
 axis square
 xlabel('whisk tune peak');ylabel('touch tune peak')
 title(['whisk=' num2str(numel(whisk_nonIX_idx)) ', touch=' num2str(numel(touch_nonIX_idx)) ', both=' num2str(numel(touch_ix_idx))])
@@ -322,7 +321,7 @@ fn = [hilbertVar '_histograms.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
-%% Distance from intersect (shape)
+%% Distance from intersect (for phase SF)
 tUnits = find(cellfun(@(x) x.is_tuned==1,tStruct));
 wUnits = find(cellfun(@(x) x.is_tuned==1,wStruct));
 
