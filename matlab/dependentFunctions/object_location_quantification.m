@@ -46,8 +46,15 @@ end
 for rec = 1:length(selectedCells)
     %stimulus and response variables definitions
     array = uberarray{selectedCells(rec)};
-    %     [tVar] = atTouch_sorter(array,viewWindow,preDecisionTouches{selectedCells(rec)});
-    [tVar] = atTouch_sorter(array,viewWindow);
+    try
+        rw = array.meta.touchProperties.responseWindow(1) : array.meta.touchProperties.responseWindow(2);
+    catch
+        touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
+        all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
+        touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
+        rw = touch_wind(1):touch_wind(2);
+    end
+    [tVar] = atTouch_sorter(array,rw);
     
     if ~isempty(hilbert_feature)
         if strcmp(hilbert_feature,'angle')
@@ -68,16 +75,8 @@ for rec = 1:length(selectedCells)
     else
         error('select features of "angle", "amplitude", "midpoint", "phase", "curvature", or "pole"')
     end
-    try
-        rw = find(viewWindow == array.meta.touchProperties.responseWindow(1)) : find(viewWindow == array.meta.touchProperties.responseWindow(2));
-    catch
-        touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
-        all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
-        touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
-        rw = find(viewWindow == touch_wind(1)) : find(viewWindow == touch_wind(2));
-    end
-    
-    response = mean(tVar.allTouches.R_ntk(:,rw),2) * 1000;
+
+    response = mean(tVar.allTouches.R_ntk,2) * 1000;
     numTouchesPerBin = round(numel(selected_feature).* proportionDataPerBin);   
     numBins = round(numel(selected_feature)./numTouchesPerBin);
 
@@ -131,9 +130,9 @@ for rec = 1:length(selectedCells)
 %     end
 %     sig_by_chance = mean(p_shuff<=alpha_value);
 %     
-%     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
-%     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
-%     CI = SEM.*tscore;
+    SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
+    tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
+    CI = SEM.*tscore;
     
     clear barsFit
     %BARSP FOR MOD IDX CALCULATIONS
@@ -167,6 +166,7 @@ for rec = 1:length(selectedCells)
         tuneStruct{selectedCells(rec)}.calculations.mod_depth = (maxResponse - minResponse) ./ mean(barsFit.mean(2:end-1));
         tuneStruct{selectedCells(rec)}.calculations.tune_peak = smooth_stimulus(maxidx);
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = (maxResponse - minResponse);
+        tuneStruct{selectedCells(rec)}.calculations.anova_p = quant_ol_p;
     catch
         barsFit = [];
         disp(['skipping ' num2str(rec) ' due to ill fitting of bars'])
@@ -174,6 +174,7 @@ for rec = 1:length(selectedCells)
         tuneStruct{selectedCells(rec)}.calculations.tune_peak = nan;
         tuneStruct{selectedCells(rec)}.calculations.mod_idx_abs = 0;
         tuneStruct{selectedCells(rec)}.calculations.mod_depth = 0;
+        tuneStruct{selectedCells(rec)}.calculations.anova_p = quant_ol_p;
     end
     
 
@@ -264,7 +265,8 @@ for rec = 1:length(selectedCells)
     
     if ~isempty(barsFit)
         tuneStruct{selectedCells(rec)}.stim_response.bars_fit= barsFit;
-        tuneStruct{selectedCells(rec)}.stim_response.bars_stim = xq;
+        tuneStruct{selectedCells(rec)}.stim_response.raw_stim = sortedBy;
+        tuneStruct{selectedCells(rec)}.stim_response.raw_response = sorted;
     end
     
     
