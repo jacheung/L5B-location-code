@@ -22,8 +22,8 @@ for b = 1:numel(mdl_versions)
     end
 end
 
-itune = find(cellfun(@(x) x.is_tuned==1,whisk_struct.instant));
-ltune = find(cellfun(@(x) x.is_tuned==1,whisk_struct.lag));
+% itune = find(cellfun(@(x) x.is_tuned==1,whisk_struct.instant));
+% ltune = find(cellfun(@(x) x.is_tuned==1,whisk_struct.lag));
 wtune = find(cellfun(@(x) x.is_tuned==1,whisk_struct.window));
 both_tuned=intersect(intersect(itune,wtune,'stable'),ltune,'stable');
 %% intersect venn diagram

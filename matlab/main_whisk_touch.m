@@ -7,7 +7,7 @@ hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
 capture_window = {'instant','lag','lag_window'};
 naming = {'instant','lag','window'};
 for k = 3
-    for g = 1:5
+    for g = 1
         wStruct= whisk_location_quant_vsupp(U,1:length(U),hilbert_feature{g},'off',capture_window{k});
         cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo')
         save(['whisk_' hilbert_feature{g} '_' naming{k}],'wStruct')
@@ -20,11 +20,10 @@ hilbertVar = 'angle';
 tStruct = object_location_quantification(U,1:length(U),hilbertVar,'off');
 
 fileName = ['whisk_' hilbertVar '_window'];
-if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo\' fileName '.mat'],'file')
+try 
     load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo\' fileName '.mat'])
-else
-    disp('no wStruct loaded, building from scratch')
-    wStruct = whisking_location_quantification(U,1:numel(U),hilbertVar,'off');
+catch
+    disp('no wStruct loaded')
 end
 
 tUnits = cellfun(@(x) x.is_tuned==1,tStruct);
@@ -37,12 +36,12 @@ touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
 whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
 %% proportion of neurons that intersect pie (B)
 co_tuned = numel(find(tUnits.*wUnits));
-touch_only = numel(setdiff(find(tUnits),co_tuned));
-whisk_only = numel(setdiff(find(wUnits),co_tuned));
+touch_only = numel(setdiff(find(tUnits),find(tUnits.*wUnits)));
+whisk_only = numel(setdiff(find(wUnits),find(tUnits.*wUnits)));
 untuned = length(U) - co_tuned - touch_only - whisk_only; 
 
 figure(340);clf
-pie([touch_tuned_num both_tuned_num  whisk_tuned_num untuned_num]);
+pie([touch_only co_tuned  whisk_only untuned]);
 legend({'touch','both','whisk','none'}) 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
 fn = ['B_intersect_proportions.eps'];
@@ -123,21 +122,25 @@ t_built = cellfun(@(x) isfield(x,'stim_response'),tStruct);
 w_built = cellfun(@(x) isfield(x,'stim_response'),wStruct);
 
 co_tuned = find(tUnits.*wUnits);
-co_built = find(t_built.*w_built);
 touch_only = setdiff(find(tUnits),co_tuned);
 whisk_only = setdiff(find(wUnits),co_tuned);
+untuned = setdiff(1:length(U),[co_tuned, touch_only, whisk_only]);
 
-touch_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,tStruct(co_built));
-whisk_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,wStruct(co_built));
+touch_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,tStruct);
+whisk_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,wStruct);
 
 touch_mod_abs_tune = cellfun(@(x) x.calculations.mod_idx_abs,tStruct(co_tuned));
 whisk_mod_abs_tune = cellfun(@(x) x.calculations.mod_idx_abs,wStruct(co_tuned));
 
 figure(8540);clf
-hold on;scatter(whisk_mod_abs,touch_mod_abs,'ko')
+hold on;scatter(whisk_mod_abs(untuned),touch_mod_abs(untuned),'ko')
 hold on;scatter(whisk_mod_abs(touch_only),touch_mod_abs(touch_only),'filled','ro')
 hold on;scatter(whisk_mod_abs(whisk_only),touch_mod_abs(whisk_only),'filled','co')
 hold on;scatter(whisk_mod_abs_tune,touch_mod_abs_tune,'filled','ko')
+hold on; errorbar(mean(whisk_mod_abs(untuned)),mean(touch_mod_abs(untuned)),...
+    std(touch_mod_abs(untuned))./sqrt(numel((untuned))),std(touch_mod_abs(untuned))./sqrt(numel((touch_only))),...
+    std(whisk_mod_abs(untuned))./sqrt(numel((untuned))),std(whisk_mod_abs(untuned))./sqrt(numel((touch_only)))...
+    ,'go','capsize',0)
 hold on; errorbar(mean(whisk_mod_abs_tune),mean(touch_mod_abs_tune),...
     std(touch_mod_abs_tune)./sqrt(numel(co_tuned)),std(touch_mod_abs_tune)./sqrt(numel(co_tuned)),...
     std(whisk_mod_abs_tune)./sqrt(numel(co_tuned)),std(whisk_mod_abs_tune)./sqrt(numel(co_tuned))...
@@ -150,10 +153,7 @@ hold on; errorbar(mean(whisk_mod_abs(whisk_only)),mean(touch_mod_abs(whisk_only)
     std(touch_mod_abs(whisk_only))./sqrt(numel((whisk_only))),std(touch_mod_abs(whisk_only))./sqrt(numel((whisk_only))),...
     std(whisk_mod_abs(whisk_only))./sqrt(numel((whisk_only))),std(whisk_mod_abs(whisk_only))./sqrt(numel((whisk_only)))...
     ,'co','capsize',0)
-hold on; errorbar(mean(whisk_mod_abs),mean(touch_mod_abs),...
-    std(touch_mod_abs)./sqrt(numel(co_built)),std(touch_mod_abs)./sqrt(numel(co_built)),...
-    std(whisk_mod_abs)./sqrt(numel(co_built)),std(whisk_mod_abs)./sqrt(numel(co_built))...
-    ,'go','capsize',0)
+
 
 hold on; plot([.1 100],[.1 100],'--k')
 set(gca,'xlim',[.1 100],'ylim',[.1 100],...

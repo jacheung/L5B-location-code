@@ -22,7 +22,7 @@ rc = numSubplots(numel(selectedCells));
 %function parameters
 alpha_value = .01; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
-binslin_bins = 20; %chose 50 based on testing a number of different bins (see sampling_justification.mat)
+binslin_bins = 20; 
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
@@ -127,24 +127,27 @@ for rec = 1:length(selectedCells)
     [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',binslin_bins);
     %     end
     
-    nonzero_bins = sum(cellfun(@mean, sorted)~=0);
     nanmat = cell2nanmat(sorted);
-    [quant_ol_p,~,stats] = anova1(nanmat,[],'off');
+    [quant_ol_p,tbl,stats] = anova1(nanmat,[],'off');
+    real_f = tbl{2,5};
     
 %     %shuffle method
-%     p_shuff_num = 1000;
-%     nanmat = cell2nanmat(sorted);
-%     p_shuff = zeros(1,p_shuff_num);
-%     for i = 1:p_shuff_num
-%         shuff = randperm(numel(nanmat));
-%         p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
-%     end
-%     sig_by_chance = mean(p_shuff<alpha_value);
+    shuff_num = 100;
+    nanmat = cell2nanmat(sorted);
+    f_stats = zeros(1,shuff_num); 
+    for i = 1:shuff_num
+        shuff = randperm(numel(nanmat));
+        [~,tbl] = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+       f_stats(i) = tbl{2,5};
+    end
+    %percentile of real_f compared to shuffled f distribution
+    real_pctile = double(find(sort(f_stats) < real_f,1,'last') ./ shuff_num);
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
     
+    clear barsFit
     %BARSP FOR MOD IDX CALCULATIONS
     try
         x = cellfun(@median,sortedBy);
@@ -201,9 +204,8 @@ for rec = 1:length(selectedCells)
         
     end
     
-%     if sig_by_chance < 0.05 && quant_ol_p < 0.05 && quant_ol_p ~=0 && ~isempty(barsFit) && nonzero_bins > 10 
-    if  quant_ol_p < alpha_value && ~isempty(barsFit) && mean(cellfun(@mean,sorted))>2
-
+%    if  quant_ol_p < alpha_value && ~isempty(barsFit) && mean(cellfun(@mean,sorted))>2 
+   if  quant_ol_p < alpha_value && ~isempty(barsFit) && real_pctile > .95
         %right and left tuning by idx
         compare_table = multcompare(stats,'Display','off');
         max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);

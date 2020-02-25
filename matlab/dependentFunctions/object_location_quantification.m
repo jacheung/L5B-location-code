@@ -114,18 +114,21 @@ for rec = 1:length(selectedCells)
         [sorted, sortedBy] = binslin(selected_feature,response,'equalN',numBins);
 %     end
     disp(['num touches per bin is ' num2str(round(mean(cellfun(@numel,sorted)))) ' touches'])
-    [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
+    [quant_ol_p,tbl,stats] = anova1(cell2nanmat(sorted),[],'off');
+    real_f = tbl{2,5};
     
 %     %shuffle method     
-    p_shuff_num = 1000;
+    shuff_num = 1000;
     nanmat = cell2nanmat(sorted);
-    p_shuff = zeros(1,p_shuff_num);
-    for i = 1:p_shuff_num
+    f_stats = zeros(1,shuff_num); 
+    for i = 1:shuff_num
         shuff = randperm(numel(nanmat));
-        p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+        [~,tbl] = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+       f_stats(i) = tbl{2,5};
     end
-%     sig_by_chance = mean(p_shuff<=alpha_value);
-%     
+    %percentile of real_f compared to shuffled f distribution
+    comp_pctile = find(sort(f_stats) < real_f,1,'last') ./ 1000 * 100;
+   
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
@@ -195,7 +198,8 @@ for rec = 1:length(selectedCells)
         end
         
 %         if sig_by_chance < 0.05 && quant_ol_p < 0.05
-         if quant_ol_p<alpha_value && mean(cellfun(@mean,sorted))>2
+%          if quant_ol_p<alpha_value && mean(cellfun(@mean,sorted))>2
+         if quant_ol_p < alpha_value && comp_pctile > 95
 %          if sig_by_chance<=alpha_value 
             %plot smoothed response first
             smooth_response = smooth(cellfun(@mean,sorted),smoothing_param);
