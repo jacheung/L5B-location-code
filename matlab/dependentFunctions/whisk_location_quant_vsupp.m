@@ -22,7 +22,7 @@ rc = numSubplots(numel(selectedCells));
 %function parameters
 alpha_value = .01; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
-binslin_bins = 50; %chose 50 based on testing a number of different bins (see sampling_justification.mat)
+binslin_bins = 20; %chose 50 based on testing a number of different bins (see sampling_justification.mat)
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));

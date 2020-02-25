@@ -143,26 +143,23 @@ export_fig([saveDir, fn], '-depsc ', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 %% heatmap for object location tuned touch units (D)
-pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
-tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
-sel_tstructs = pole_tuned(tuned_units);
-touch_heat = cell(1,sum(tuned_units));
+variable = 'pole';
+pole_tuned = object_location_quantification(U,selectedCells,variable,'off'); %for old see object_location_v1.0
+tuned_structs = pole_tuned(cellfun(@(x) x.is_tuned==1,pole_tuned));
+touch_heat = cell(1,numel(tuned_structs));
 
-for g = 1:numel(sel_tstructs)
-    curr_t = sel_tstructs{g}.stim_response.values;
+for g = 1:numel(tuned_structs)
+    curr_t = tuned_structs{g}.stim_response.values;
     curr_t = curr_t(~any(isnan(curr_t),2),:);%clean nan rows
     [~,u_idx] = unique(curr_t(:,1)); %catch non-unique x-values
     curr_t = curr_t(u_idx,:);
-    
-    if strcmp(hilbertVar,'pole')
+    if strcmp(variable,'pole')
         touch_x = -1:.1:1;
-    elseif strcmp(hilbertVar,'phase')
-        touch_x = linspace(-pi,pi,21);
-    else
-        touch_x = round(round(min(curr_t(:,1))):1:round(max(curr_t(:,1))));
+    elseif strcmp(variable,'angle')
+        touch_x = linspace(-30,60,21);
     end
-    touch_heat{g} = interp1(curr_t(:,1),curr_t(:,2),touch_x);
     
+    touch_heat{g} = interp1(curr_t(:,1),curr_t(:,2),touch_x);
 end
 unsorted_heat = norm_new(cell2mat(touch_heat')');
 [~,t_max_idx] = max(unsorted_heat,[],1);

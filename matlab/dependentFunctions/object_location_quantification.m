@@ -19,16 +19,12 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 
 
 %function parameters
-viewWindow = [-25:50]; %viewing window around touch
-proportionDataPerBin = .05; %AKA 20 BINS
+viewWindow = [-25:50]; %viewing window around touch for heatmap mainly
+proportionDataPerBin = .05; %binning param
 alpha_value = .01; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 5; %smoothing parameter for smooth f(x) in shadedErrorBar
-min_bins = 5; %minimum number of angle bins to consider quantifying
+min_touches_per_bin = 0; %minimum number of angle bins to consider quantifying
 gauss_filt = .5; %2D smoothing filter for heatmap
-
-%dependent function to id all touches and pre/post decision touches
-% preDecisionTouches = preDecisionTouchMat(uberarray);
-
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
@@ -46,15 +42,7 @@ end
 for rec = 1:length(selectedCells)
     %stimulus and response variables definitions
     array = uberarray{selectedCells(rec)};
-    try
-        rw = array.meta.touchProperties.responseWindow(1) : array.meta.touchProperties.responseWindow(2);
-    catch
-        touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
-        all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
-        touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
-        rw = touch_wind(1):touch_wind(2);
-    end
-    [tVar] = atTouch_sorter(array,rw);
+    [tVar] = atTouch_sorter(array,viewWindow);
     
     if ~isempty(hilbert_feature)
         if strcmp(hilbert_feature,'angle')
@@ -75,8 +63,16 @@ for rec = 1:length(selectedCells)
     else
         error('select features of "angle", "amplitude", "midpoint", "phase", "curvature", or "pole"')
     end
-
-    response = mean(tVar.allTouches.R_ntk,2) * 1000;
+    try
+        rw = find(viewWindow == array.meta.touchProperties.responseWindow(1)) : find(viewWindow == array.meta.touchProperties.responseWindow(2));
+    catch
+        touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
+        all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
+        touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
+        rw = find(viewWindow == touch_wind(1)) : find(viewWindow == touch_wind(2));
+    end
+    
+    response = mean(tVar.allTouches.R_ntk(:,rw),2) * 1000;
     numTouchesPerBin = round(numel(selected_feature).* proportionDataPerBin);   
     numBins = round(numel(selected_feature)./numTouchesPerBin);
 
@@ -121,13 +117,13 @@ for rec = 1:length(selectedCells)
     [quant_ol_p,~,stats] = anova1(cell2nanmat(sorted),[],'off');
     
 %     %shuffle method     
-%     p_shuff_num = 1000;
-%     nanmat = cell2nanmat(sorted);
-%     p_shuff = zeros(1,p_shuff_num);
-%     for i = 1:p_shuff_num
-%         shuff = randperm(numel(nanmat));
-%         p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
-%     end
+    p_shuff_num = 1000;
+    nanmat = cell2nanmat(sorted);
+    p_shuff = zeros(1,p_shuff_num);
+    for i = 1:p_shuff_num
+        shuff = randperm(numel(nanmat));
+        p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+    end
 %     sig_by_chance = mean(p_shuff<=alpha_value);
 %     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
@@ -187,7 +183,7 @@ for rec = 1:length(selectedCells)
     
     % making sure we've sampled enough bins before plotting.
     % min_bins defined as a global param above.
-    if numel(sortedBy)>min_bins
+    if numel(sortedBy{1}) >= min_touches_per_bin
         
         if willdisplay
             figure(23);subplot(rc(1),rc(2),rec)

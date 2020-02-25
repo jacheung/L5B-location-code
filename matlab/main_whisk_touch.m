@@ -2,7 +2,18 @@
 clear
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
-%%
+%% BUILD whisk structs
+hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
+capture_window = {'instant','lag','lag_window'};
+naming = {'instant','lag','window'};
+for k = 3
+    for g = 1:5
+        wStruct= whisk_location_quant_vsupp(U,1:length(U),hilbert_feature{g},'off',capture_window{k});
+        cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo')
+        save(['whisk_' hilbert_feature{g} '_' naming{k}],'wStruct')
+    end
+end
+%% LOAD whisk and touch structs
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 hilbertVar = 'angle';
 % tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
@@ -25,41 +36,14 @@ wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
 touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
 whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
 %% proportion of neurons that intersect pie (B)
-hilbertVar_list = {'angle','phase'};
-stacked_bar = cell(1,numel(hilbertVar_list));
-for i = 1
-    tStruct_tmp = object_location_quantification(U,touchCells,hilbertVar_list{i},'off');
-    
-    fileName = ['whisk_' hilbertVar_list{i} '_window'];
-    if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo\' fileName '.mat'],'file')
-        load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo\' fileName '.mat'])
-    else
-        wStruct = whisking_location_quantification(U,1:numel(U),hilbertVar_list{i},'off');
-    end
-    
-    tUnits = cellfun(@(x) x.is_tuned==1,tStruct_tmp);
-    wUnits = cellfun(@(x) x.is_tuned==1,wStruct);
-    
-    [~,touch_ix_idx] = intersect(find(tUnits),find(wUnits));
-    [~,whisk_ix_idx] = intersect(find(wUnits),find(tUnits));
-    
-    both_tuned_num = numel(intersect(find(tUnits),find(wUnits)));
-    touch_tuned_num = numel(setdiff(1:sum(tUnits),touch_ix_idx));
-    whisk_tuned_num = numel(setdiff(1:sum(wUnits),whisk_ix_idx));
-    untuned_num = numel(U) - (both_tuned_num + touch_tuned_num + whisk_tuned_num);
-    
-    stacked_bar{i} = [ both_tuned_num touch_tuned_num whisk_tuned_num untuned_num];
-    
-end
+co_tuned = numel(find(tUnits.*wUnits));
+touch_only = numel(setdiff(find(tUnits),co_tuned));
+whisk_only = numel(setdiff(find(wUnits),co_tuned));
+untuned = length(U) - co_tuned - touch_only - whisk_only; 
 
 figure(340);clf
-for b = 1:i
-    subplot(2,2,b)
-    pie(stacked_bar{b})
-    title(hilbertVar_list{b})
-end
-legend({'both','touch','whisk','none'})
-
+pie([touch_tuned_num both_tuned_num  whisk_tuned_num untuned_num]);
+legend({'touch','both','whisk','none'}) 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
 fn = ['B_intersect_proportions.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
@@ -151,26 +135,35 @@ whisk_mod_abs_tune = cellfun(@(x) x.calculations.mod_idx_abs,wStruct(co_tuned));
 
 figure(8540);clf
 hold on;scatter(whisk_mod_abs,touch_mod_abs,'ko')
+hold on;scatter(whisk_mod_abs(touch_only),touch_mod_abs(touch_only),'filled','ro')
+hold on;scatter(whisk_mod_abs(whisk_only),touch_mod_abs(whisk_only),'filled','co')
 hold on;scatter(whisk_mod_abs_tune,touch_mod_abs_tune,'filled','ko')
 hold on; errorbar(mean(whisk_mod_abs_tune),mean(touch_mod_abs_tune),...
     std(touch_mod_abs_tune)./sqrt(numel(co_tuned)),std(touch_mod_abs_tune)./sqrt(numel(co_tuned)),...
     std(whisk_mod_abs_tune)./sqrt(numel(co_tuned)),std(whisk_mod_abs_tune)./sqrt(numel(co_tuned))...
+    ,'ko','capsize',0)
+hold on; errorbar(mean(whisk_mod_abs(touch_only)),mean(touch_mod_abs(touch_only)),...
+    std(touch_mod_abs(touch_only))./sqrt(numel((touch_only))),std(touch_mod_abs(touch_only))./sqrt(numel((touch_only))),...
+    std(whisk_mod_abs(touch_only))./sqrt(numel((touch_only))),std(whisk_mod_abs(touch_only))./sqrt(numel((touch_only)))...
     ,'ro','capsize',0)
+hold on; errorbar(mean(whisk_mod_abs(whisk_only)),mean(touch_mod_abs(whisk_only)),...
+    std(touch_mod_abs(whisk_only))./sqrt(numel((whisk_only))),std(touch_mod_abs(whisk_only))./sqrt(numel((whisk_only))),...
+    std(whisk_mod_abs(whisk_only))./sqrt(numel((whisk_only))),std(whisk_mod_abs(whisk_only))./sqrt(numel((whisk_only)))...
+    ,'co','capsize',0)
 hold on; errorbar(mean(whisk_mod_abs),mean(touch_mod_abs),...
     std(touch_mod_abs)./sqrt(numel(co_built)),std(touch_mod_abs)./sqrt(numel(co_built)),...
     std(whisk_mod_abs)./sqrt(numel(co_built)),std(whisk_mod_abs)./sqrt(numel(co_built))...
-    ,'ko','capsize',0)
-hold on; plot([1 100],[1 100],'--k')
-set(gca,'xlim',[1 100],'ylim',[1 100],...
+    ,'go','capsize',0)
+
+hold on; plot([.1 100],[.1 100],'--k')
+set(gca,'xlim',[.1 100],'ylim',[.1 100],...
 'yscale','log','xscale','log')
 axis square
-
 xlabel('whisk abs mod (spks/s)')
 ylabel('touch abs mod (spks/s)')
-axis square
+
 [~,p,~,stats] = ttest(whisk_mod_abs,touch_mod_abs);
 text(5, 5,['all built : ' 'p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
-
 [~,p,~,stats] = ttest(whisk_mod_abs_tune,touch_mod_abs_tune);
 text(5, 4,['co tuned : ' 'p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
 
@@ -231,16 +224,16 @@ elseif strcmp(hilbertVar,'angle')
     %     hold on; errorbar(ones(1,length(touch_nonIX_idx))*-30,touch_pw(touch_nonIX_idx,1),touch_pw(touch_nonIX_idx,2),touch_pw(touch_nonIX_idx,3),'bo','vertical','capsize',0)%plot only touch tuned units
     hold on; errorbar(whisking_pw(whisk_ix_idx,1),touch_pw(touch_ix_idx,1),touch_pw(touch_ix_idx,2),touch_pw(touch_ix_idx,3),whisking_pw(whisk_ix_idx,2),whisking_pw(whisk_ix_idx,3),'ko','capsize',0)
     
-    set(gca,'xlim',[-30 80],'ylim',[-30 80],...
+    set(gca,'xlim',[-30 70],'ylim',[-30 70],...
         'xtick',-40:20:80,'ytick',-40:20:80)
     hold on; plot([-40 80],[-40 80],'--k')
     
     subplot(4,1,3)
     histogram(touch_pw(touch_nonIX_idx,1),-30:10:80,'facecolor','b','facealpha',1,'normalization','probability')
-    set(gca,'xlim',[-30 80],'ylim',[0 .5])
+    set(gca,'xlim',[-30 70],'ylim',[0 .5])
     subplot(4,1,4);
     histogram(whisking_pw(whisk_nonIX_idx,1),-430:10:80,'facecolor','c','facealpha',1,'normalization','probability')
-    set(gca,'xlim',[-30 80],'ylim',[0 .5])
+    set(gca,'xlim',[-30 70],'ylim',[0 .5])
     
 elseif strcmp(hilbertVar,'amplitude')
     subplot(4,1,[1:2])
