@@ -3,7 +3,7 @@ hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
 capture_window = {'instant','lag','lag_window'};
 naming = {'instant','lag','window'};
 for k = 3
-    for g = 1:5
+    for g = 2:5
         wStruct= whisk_location_quant_vsupp(U,1:length(U),hilbert_feature{g},'off',capture_window{k});
         cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo')
         save(['whisk_' hilbert_feature{g} '_' naming{k}],'wStruct')

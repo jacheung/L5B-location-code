@@ -128,15 +128,16 @@ caxis([0 1])
 xlabel('whisker position');
 
 %squished heatmap for phase and angle
-whisk_angle_tuned_idx = find(whisk_angle_tuned);
+whisk_cells_idx = {find(whisk_angle_tuned),  find(whisk_phase_tuned)};
+
 hvar_names = {'angle','phase'};
 whisk_structs = {whisk_struct.angle,whisk_struct.phase};
 clear whisk_heat
 figure(1210);clf
 for e = 1:numel(whisk_structs)
     
-    for d = 1:numel(whisk_angle_tuned_idx)
-        curr_w = whisk_structs{e}{whisk_angle_tuned_idx(d)}.stim_response.values;
+    for d = 1:numel(whisk_cells_idx{e})
+        curr_w = whisk_structs{e}{whisk_cells_idx{e}(d)}.stim_response.values;
         
         %clean nan rows
         curr_w = curr_w(~any(isnan(curr_w),2),:);

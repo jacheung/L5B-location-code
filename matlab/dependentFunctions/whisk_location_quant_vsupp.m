@@ -30,7 +30,7 @@ for i = 1:length(uberarray)
     tuneStruct{i}.is_tuned = nan;
     tuneStruct{i}.calculations = [];
 end
-
+cell_counter = 0 
 for rec = 1:length(selectedCells)
     array = uberarray{selectedCells(rec)};
     spikes = squeeze(array.R_ntk);
@@ -114,7 +114,7 @@ for rec = 1:length(selectedCells)
     filtered_spikes = nanmean(filt_spikes(response_idx),2);
     keep_whisks(unique([whisks_with_touch;find(isnan(filtered_spikes))])) = [];%only keep whisk examples that does not have any touch contamination or with at least 1 timepoint of spiking.
     
-    disp([capture_window ' : ' num2str(numel(keep_whisks) ./ length(response_idx).*100) '% of whisking timepoints w/ no touch contamination and 1 timepoint of spiking'])
+%     disp([capture_window ' : ' num2str(numel(keep_whisks) ./ length(response_idx).*100) '% of whisking timepoints w/ no touch contamination and 1 timepoint of spiking'])
     current_feature = current_feature(keep_whisks); 
     filtered_spikes = filtered_spikes(keep_whisks);
     
@@ -204,8 +204,9 @@ for rec = 1:length(selectedCells)
         
     end
     
+    
 %    if  quant_ol_p < alpha_value && ~isempty(barsFit) && mean(cellfun(@mean,sorted))>2 
-   if  quant_ol_p < alpha_value && ~isempty(barsFit) && real_pctile > .95
+   if  quant_ol_p < alpha_value && ~isempty(barsFit) && real_pctile > .95 && mean(cellfun(@mean,sorted))>2 
         %right and left tuning by idx
         compare_table = multcompare(stats,'Display','off');
         max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);
@@ -240,7 +241,11 @@ for rec = 1:length(selectedCells)
             tuneStruct{selectedCells(rec)}.calculations.tune_right_width = nan;
         end
         
-        tuneStruct{selectedCells(rec)}.is_tuned = 1;
+        if ~isnan(tuneStruct{selectedCells(rec)}.calculations.tune_right_width) | ~isnan(tuneStruct{selectedCells(rec)}.calculations.tune_left_width)
+            tuneStruct{selectedCells(rec)}.is_tuned = 1;
+        else
+            tuneStruct{selectedCells(rec)}.is_tuned = 0;
+        end
         tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{maxidx};
         tuneStruct{selectedCells(rec)}.calculations.responses_at_trough = sorted{minidx};
     else
@@ -255,6 +260,14 @@ for rec = 1:length(selectedCells)
         else
             set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
         end
+    end
+    
+    if tuneStruct{selectedCells(rec)}.is_tuned == 1
+        cell_counter = cell_counter+1;
+        [quant_ol_p, real_pctile]
+        figure(280);clf;scatter(cellfun(@median,sortedBy),cellfun(@mean,sorted))
+        disp(['num tuned cells = ' num2str(cell_counter) '/' num2str(rec)])
+        pause
     end
     
     tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};

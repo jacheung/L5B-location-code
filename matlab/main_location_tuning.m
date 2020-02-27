@@ -9,6 +9,9 @@ load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
 
+pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
+% pole_tuned = object_location_quantification(U,1:length(U),'pole','off'); %for old see object_location_v1.0
+
 %% Raster + PSTH one cell (A) 
 for i = 29
     %raster
@@ -65,7 +68,6 @@ end
 %% firing rate X depth of recording (B)
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 location_cells = cellfun(@(x) x.is_tuned==1,pole_tuned);
-% location_cells = cellfun(@(x) x.is_tuned==1,angle_tuned);
 
 jc_silent_cell = [766 819 895 631 776 815 910 871 844 902  941   840   888   748   732   940   686   944   950   933]; %Phils  from 902
 
@@ -101,7 +103,6 @@ fix_eps_fonts([saveDir, fn])
 
 %% touch psth by quartiles of far, close and near (C)
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
 tuned_units = find(cellfun(@(x) x.is_tuned==1,pole_tuned));
 
 touch_window = -25:50;
@@ -144,7 +145,6 @@ fix_eps_fonts([saveDir, fn])
 
 %% heatmap for object location tuned touch units (D)
 variable = 'pole';
-pole_tuned = object_location_quantification(U,selectedCells,variable,'off'); %for old see object_location_v1.0
 tuned_structs = pole_tuned(cellfun(@(x) x.is_tuned==1,pole_tuned));
 touch_heat = cell(1,numel(tuned_structs));
 
