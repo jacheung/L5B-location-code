@@ -7,7 +7,7 @@ hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
 capture_window = {'instant','lag','lag_window'};
 naming = {'instant','lag','window'};
 for k = 3
-    for g = 1
+    for g = 1:5
         wStruct= whisk_location_quant_vsupp(U,1:length(U),hilbert_feature{g},'off',capture_window{k});
         cd('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking_redo')
         save(['whisk_' hilbert_feature{g} '_' naming{k}],'wStruct')
@@ -189,7 +189,7 @@ fn = [hilbertVar '_touch_x_whisk_absmod.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 %% Shape correlation of tuning curves (E)
-intersect_correlation(tStruct,wStruct,hilbertVar)
+intersect_correlation_v2(tStruct,wStruct,hilbertVar)
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
 fn = [hilbertVar '_correlations.eps'];

@@ -49,21 +49,21 @@ for b = 1:numel(which_tuned)
     ix_touch(to_toss) = [];
     ix_whisk(to_toss) = [];
     
-    stretch_bins = median(cellfun(@(x) sum(~isnan(x)),[ix_touch ix_whisk]));
-    raw_touch = cellfun(@(x) x(~isnan(x)),ix_touch,'uniformoutput',0);
-    new_touch = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),raw_touch,'uniformoutput',0);
-    raw_whisk = cellfun(@(x) x(~isnan(x)),ix_whisk,'uniformoutput',0);
-    new_whisk = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),raw_whisk,'uniformoutput',0);
-    
-    
     %corr for matching bits
     matching_bins = cellfun(@(x,y) intersect(find(~isnan(x)),find(~isnan(y))),ix_touch,ix_whisk,'uniformoutput',0);
     match_stretch = mean(cellfun(@numel,matching_bins));
     matched_touch = cellfun(@(x,y) x(y),ix_touch,matching_bins,'uniformoutput',0);
     matched_whisk = cellfun(@(x,y) x(y),ix_whisk,matching_bins,'uniformoutput',0);
     
+    
+    stretch_bins = median(cellfun(@(x) sum(~isnan(x)),[ix_touch ix_whisk]));
+    raw_touch = cellfun(@(x) x(~isnan(x)),ix_touch,'uniformoutput',0);
+    new_touch = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),raw_touch,'uniformoutput',0);
+    raw_whisk = cellfun(@(x) x(~isnan(x)),ix_whisk,'uniformoutput',0);
+    new_whisk = cellfun(@(x) interp1(linspace(1,stretch_bins,numel(x)),x,1:stretch_bins),raw_whisk,'uniformoutput',0);
     match_stretch_touch=cellfun(@(x) interp1(linspace(1,match_stretch,numel(x)),x,1:match_stretch),matched_touch,'uniformoutput',0);
     match_stretch_whisk=cellfun(@(x) interp1(linspace(1,match_stretch,numel(x)),x,1:match_stretch),matched_whisk,'uniformoutput',0);
+    
     
     match_corr = cellfun(@(x,y,z) corr(x(z)',y(z)'),ix_touch,ix_whisk,matching_bins);
     

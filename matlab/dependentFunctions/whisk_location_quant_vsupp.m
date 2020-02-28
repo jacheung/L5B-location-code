@@ -264,10 +264,10 @@ for rec = 1:length(selectedCells)
     
     if tuneStruct{selectedCells(rec)}.is_tuned == 1
         cell_counter = cell_counter+1;
-        [quant_ol_p, real_pctile]
-        figure(280);clf;scatter(cellfun(@median,sortedBy),cellfun(@mean,sorted))
+%         [quant_ol_p, real_pctile]
+%         figure(280);clf;scatter(cellfun(@median,sortedBy),cellfun(@mean,sorted))
         disp(['num tuned cells = ' num2str(cell_counter) '/' num2str(rec)])
-        pause
+%         pause
     end
     
     tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};
