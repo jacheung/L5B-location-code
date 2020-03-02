@@ -15,7 +15,7 @@ for k = 3
 end
 %% LOAD whisk and touch structs
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-hilbertVar = 'angle';
+hilbertVar = 'phase';
 % tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
 tStruct = object_location_quantification(U,1:length(U),hilbertVar,'off');
 
@@ -51,7 +51,6 @@ co_tuned_bs = intersect(whisk_tuning,touch_tuning);
 touch_only_bs = numel(setdiff(touch_tuning,co_tuned_bs));
 whisk_only_bs = numel(setdiff(whisk_tuning,co_tuned_bs));
 untuned_bs = samples - numel(co_tuned_bs) - touch_only_bs - whisk_only_bs;
-
 
 figure(340);clf
 subplot(1,2,1)

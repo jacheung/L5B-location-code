@@ -580,13 +580,7 @@ fix_eps_fonts([saveDir, fn])
 %% phase map (SF)
 hilbert_feature = 'phase';
 
-fileName = ['whisk_' hilbert_feature{b} '_window'];
-if exist(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'],'file')
-    load(['C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Whisking\' fileName '.mat'])
-    whisk_struct.(hilbert_feature{b}) = wStruct;
-end
-
-tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.angle)==1;
+tuned_units = cellfun(@(x) x.is_tuned,whisk_struct.phase)==1;
 
 preferred_phase = cellfun(@(x) x.calculations.tune_peak,whisk_struct.phase(tuned_units));
 phase_mod = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.phase(tuned_units));
