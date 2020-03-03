@@ -15,7 +15,7 @@ for k = 3
 end
 %% LOAD whisk and touch structs
 touchCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-hilbertVar = 'phase';
+hilbertVar = 'angle';
 % tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
 tStruct = object_location_quantification(U,1:length(U),hilbertVar,'off');
 
@@ -36,7 +36,7 @@ selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'ex
 
 touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
 whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
-%% proportion of neurons that intersect pie (B)
+%% proportion of neurons that intersect pie (A)
 co_tuned = numel(find(tUnits.*wUnits));
 touch_only = numel(setdiff(find(tUnits),find(tUnits.*wUnits)));
 whisk_only = numel(setdiff(find(wUnits),find(tUnits.*wUnits)));
@@ -64,7 +64,7 @@ fn = ['B_intersect_proportions.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
-%% whisk and touch tuning curves (C)
+%% whisk and touch tuning curves (B)
 co_tuned = find(tUnits.*wUnits);
 touch_only = setdiff(find(tUnits),co_tuned);
 whisk_only = setdiff(find(wUnits),co_tuned);
@@ -132,7 +132,7 @@ for g = 1:numel(tuned_mat)
     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
     fix_eps_fonts([saveDir, fn])
 end
-%% Whisk x touch modulation depth (D)
+%% Whisk x touch modulation depth (C)
 
 t_built = cellfun(@(x) isfield(x,'stim_response'),tStruct);
 w_built = cellfun(@(x) isfield(x,'stim_response'),wStruct);
@@ -187,7 +187,7 @@ saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
 fn = [hilbertVar '_touch_x_whisk_absmod.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
-%% Shape correlation of tuning curves (E)
+%% Shape correlation of tuning curves (D)
 intersect_correlation_v2(tStruct,wStruct,hilbertVar)
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
@@ -195,7 +195,7 @@ fn = [hilbertVar '_correlations.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
-%% scatter of tuning preference of whisk and touch (F)
+%% scatter of tuning preference of whisk and touch (E)
 touch_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],tStruct(tUnits),'uniformoutput',0)') ;
 whisking_pw = cell2mat(cellfun(@(x) [x.calculations.tune_peak x.calculations.tune_left_width x.calculations.tune_right_width],wStruct(wUnits),'uniformoutput',0)');
 
@@ -311,7 +311,7 @@ min_ed = min(euclid_dist_all,[],2);
 [~,p,~,stats] = ttest(min_ed)
 
 
-%% Heatmap (G)
+%% Heatmap (SF)
 population_heatmap_builder(tStruct,wStruct,hilbertVar)
 
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
@@ -329,54 +329,3 @@ figure(52)
 fn = [hilbertVar '_histograms.eps'];
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
-
-%% Distance from intersect (for phase SF)
-tUnits = find(cellfun(@(x) x.is_tuned==1,tStruct));
-wUnits = find(cellfun(@(x) x.is_tuned==1,wStruct));
-
-[intersected_units,touch_ix_idx] = intersect(tUnits,wUnits);
-[intersected_whisk_units,whisk_ix_idx] = intersect(wUnits,tUnits);
-
-touch_nonIX_idx = setdiff(1:sum(tUnits),touch_ix_idx);
-whisk_nonIX_idx = setdiff(1:sum(wUnits),whisk_ix_idx);
-
-peak_response = cellfun(@(x) x.calculations.tune_peak,wStruct(intersected_whisk_units));
-
-figure(30);clf
-interp_norm_y = cell(1,length(peak_response));
-for g = 1:length(intersected_units)
-    sr = tStruct{intersected_units(g)}.stim_response;
-    centered_x = sr.values(:,1) - peak_response(g) ;
-    norm_y = norm_new(sr.values(:,2));
-    
-    if strcmp(hilbertVar,'angle')
-        interp_centered_x = -60:1:60;
-    elseif strcmp(hilbertVar,'phase')
-        interp_centered_x = linspace(-pi,pi,13);
-    end
-    raw_x = round(centered_x,2);
-    [~,idx] = unique(raw_x);
-    interp_norm_y{g} = interp1(raw_x(idx),norm_y(idx),interp_centered_x);
-    hold on; plot(interp_centered_x,interp_norm_y{g},'color',[.8 .8 .8])
-end
-
-pop_mean = nanmean(cell2mat(interp_norm_y'));
-pop_sem = nanstd(cell2mat(interp_norm_y')) ./ sqrt(sum(~isnan(cell2mat(interp_norm_y'))));
-hold on; shadedErrorBar(interp_centered_x,pop_mean,pop_sem,'k')
-
-if strcmp(hilbertVar,'angle')
-    set(gca,'xlim',[-60 60],'ytick',0:.5:1,'xtick',-60:20:60)
-elseif strcmp(hilbertVar,'phase')
-    set(gca,'xlim',[-pi pi],'ytick',0:.5:1,'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'})
-elseif strcmp(hilbertVar,'pole')
-    set(gca,'xlim',[-2 2],'xdir','reverse','ytick',0:.5:1,'xtick',-2:1:2)
-end
-
-xlabel('distance relative to whisk peak')
-axis square
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
-fn = [hilbertVar '_distance_from_whisk.eps'];
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
-
-

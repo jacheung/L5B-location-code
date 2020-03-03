@@ -317,8 +317,8 @@ fn = 'phase_x_angle.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
-%% Heat of modulation depth comparison (H/I)
-selectedCells = 1:length(U);
+%% Heat of modulation depth comparison (H/I/J)
+selectedCells = 1:length(wStruct);
 
 % w_mod_idx_pole = cellfun(@(x) x.calculations.mod_idx_relative,pole_whisk(selectedCells));
 w_mod_idx_angle = cellfun(@(x) x.calculations.mod_idx_relative,whisk_struct.angle(selectedCells));

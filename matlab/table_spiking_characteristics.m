@@ -188,11 +188,10 @@ pResponse_ol_peak = pResponse_peak(ix_idx);
 response_ol_peak = Response_peak(ix_idx);
 response_ol_trough = Response_trough(ix_idx);
 [~,p,~,stat] = ttest(response_ol_peak,response_ol_trough)
-subplot(2,6,[9 10])
 
+subplot(2,6,[9 10])
 scatter(pResponse_ol_trough(pResponse_sigs<=.01),pResponse_ol_peak(pResponse_sigs<=.01),'filled','markerfacecolor','g')
 hold on; scatter(pResponse_ol_trough(pResponse_sigs>.01),pResponse_ol_peak(pResponse_sigs>.01),'go')
-
 x = mean(pResponse_ol_trough) ;
 y = mean(pResponse_ol_peak) ; 
 xerr = std(pResponse_ol_trough) ; 
