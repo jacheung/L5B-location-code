@@ -5,14 +5,13 @@ U = struct_editor(U);
 %%
 dk_corr = zeros(1,numel(U));
 dt_corr = zeros(1,numel(U));
-fitCoeffs = cell(1,numel(U));
-fitDevExplained = zeros(1,numel(U));
-rsq = zeros(1,numel(U));
+ccoeff = cell(1,numel(U));
+mae = cell(1,numel(U)); 
 
-num_curvature_bins = 3; 
-num_angle_bins = 9;
+num_curvature_bins = 2; 
+num_angle_bins = 8;
 
-for i = 29
+for i = 1:length(U)
     
     % raw variables
     touchOn = [find(U{i}.S_ctk(9,:,:)==1)  ;find(U{i}.S_ctk(12,:,:)==1)];
@@ -62,21 +61,27 @@ for i = 29
         scatter(pt_theta(sort_idx),pt_dk(sort_idx),20,repmat(sort_colors,1,3),'filled');
         xlabel('whisker angle at touch')
         ylabel('max curvature')
-        title('protraction touch analyesis')
-        %stratification analyses (low and high curvature
+        title('protraction touch analysis')
         
+        %stratification analyses (low and high curvature      
         [dk_sorted, dksby] = binslin(pt_dk,[pt_theta pt_spikes],'equalN',num_curvature_bins);
         
+        sorted = cell(1,numel(dksby));
         subplot(2,1,2)
         for p = 1:numel(dksby)
-            [sorted, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,2),'equalN',num_angle_bins);     
-            hold on; plot(cellfun(@mean, sortedby),cellfun(@mean,sorted))
+            [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,2),'equalN',num_angle_bins,min(pt_theta),max(pt_theta));     
+            hold on; plot(cellfun(@median, sortedby),cellfun(@mean,sorted{p}))
         end
+        
+        avg_curves = cell2mat(cellfun(@(x) cellfun(@mean, x),sorted,'uniformoutput',0));
+        ccoeff{i} = corr(avg_curves);
+        mae{i} = abs(avg_curves(:,1)-avg_curves(:,2));
+        
         xlabel('whisker angle at touch')
         ylabel('firing rate (spks/s)')
-        legend('high dk','mid dk','low dk')
+        legend('high dk','low dk')
         
-        if mean( cellfun(@numel,sorted)) < 20
+        if mean( cellfun(@numel,sorted{1})) < 20
             disp('warning: number of samples per angle bin < 20')
         end
         
@@ -88,8 +93,25 @@ for i = 29
         disp(['cell ' num2str(i) ' is not a touch cell. Skipping']) 
     end
     
-    
-    %% simple glm for touch cells only
+end
+
+%analyzing average correlation between high and low dk
+nonempty = ccoeff(~cellfun(@isempty, ccoeff));
+c_accum = zeros(size(nonempty{1}));
+for i = 1:numel(nonempty)
+    c_accum = c_accum + nonempty{i};
+end
+
+%analyzing mae in fr. 
+m
+
+
+
+%% simple glm for touch cells only
+fitCoeffs = cell(1,numel(U));
+fitDevExplained = zeros(1,numel(U));
+rsq = zeros(1,numel(U));
+
     % as of 200522, model is garbage at predicting spikes using poisson and
     % dk and theta at touch for each touch. Response probabilites are just
     % way too low. Model using mean predicts FR suggesting that features
@@ -146,7 +168,7 @@ for i = 29
 %         fitCoeffs{i} = nan(size(DmatX,2)+1,1);
 %         rsq(i) = nan;
 %     end
-end
+
 
 
 
