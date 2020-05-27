@@ -6,7 +6,7 @@ U = struct_editor(U);
 dk_corr = zeros(1,numel(U));
 dt_corr = zeros(1,numel(U));
 ccoeff = cell(1,numel(U));
-mae = cell(1,numel(U)); 
+fr_diff = cell(1,numel(U)); 
 
 num_curvature_bins = 2; 
 num_angle_bins = 8;
@@ -74,8 +74,10 @@ for i = 1:length(U)
         end
         
         avg_curves = cell2mat(cellfun(@(x) cellfun(@mean, x),sorted,'uniformoutput',0));
+        normed = normalize_var(avg_curves(:),0,1);
+        norm_avg_curves = reshape(normed,num_angle_bins,2);
         ccoeff{i} = corr(avg_curves);
-        mae{i} = abs(avg_curves(:,1)-avg_curves(:,2));
+        fr_diff{i} = norm_avg_curves(:,1)-norm_avg_curves(:,2);
         
         xlabel('whisker angle at touch')
         ylabel('firing rate (spks/s)')
@@ -102,9 +104,18 @@ for i = 1:numel(nonempty)
     c_accum = c_accum + nonempty{i};
 end
 
-%analyzing mae in fr. 
-m
+%analyzing diff in normed firing rate between high and low dk.  
+figure(230);clf
+avg_diff = mean(cell2mat(fr_diff),2);
+avg_sd = std(cell2mat(fr_diff),[],2);
+avg_sem = avg_sd./sqrt(length(cell2mat(fr_diff)));
 
+errorbar(linspace(-1,1,numel(avg_diff)),avg_diff*100,avg_sem*100,'k-o')
+hold on; plot([-1 1],[0 0],'--k')
+set(gca,'ylim',[-10 30],'xlim',[-1.1 1.1],'xtick',[-1 0 1])
+xlabel('normalized pole location')
+ylabel('% change in firing rate (high dk - low dk)')
+title('on average, higher dk leads to increased firing rates')
 
 
 %% simple glm for touch cells only
