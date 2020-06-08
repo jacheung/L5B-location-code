@@ -96,7 +96,7 @@ for i = 1:length(U)
     end
     
 end
-
+%% analyses
 %analyzing average correlation between high and low dk
 nonempty = ccoeff(~cellfun(@isempty, ccoeff));
 c_accum = zeros(size(nonempty{1}));
@@ -110,12 +110,16 @@ avg_diff = mean(cell2mat(fr_diff),2);
 avg_sd = std(cell2mat(fr_diff),[],2);
 avg_sem = avg_sd./sqrt(length(cell2mat(fr_diff)));
 
-errorbar(linspace(-1,1,numel(avg_diff)),avg_diff*100,avg_sem*100,'k-o')
+shadedErrorBar(linspace(-1,1,numel(avg_diff)),avg_diff*100,avg_sem*100,'k')
 hold on; plot([-1 1],[0 0],'--k')
 set(gca,'ylim',[-10 30],'xlim',[-1.1 1.1],'xtick',[-1 0 1])
 xlabel('normalized pole location')
 ylabel('% change in firing rate (high dk - low dk)')
 title('on average, higher dk leads to increased firing rates')
+
+% testing to see if rate of change from one position is sig diff from another
+anova1(cell2mat(fr_diff)')
+
 
 
 %% simple glm for touch cells only
