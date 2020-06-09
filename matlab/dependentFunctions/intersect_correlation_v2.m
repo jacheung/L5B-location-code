@@ -43,7 +43,7 @@ end
     matching_bins = cellfun(@(x,y) intersect(find(~isnan(x)),find(~isnan(y))),touch_heat,whisk_heat,'uniformoutput',0);
     matched_touch = cellfun(@(x,y) x(y),touch_heat,matching_bins,'uniformoutput',0);
     matched_whisk = cellfun(@(x,y) x(y),whisk_heat,matching_bins,'uniformoutput',0);
-    %NEW ADDITION FOR ANDREW, normalize values from 0:1 202227
+    %NEW ADDITION FOR ANDREW, normalize values from 0:1 200227
     matched_touch = cellfun(@(x) normalize_var(x,0,1),matched_touch,'uniformoutput',0);
     matched_whisk = cellfun(@(x) normalize_var(x,0,1),matched_whisk,'uniformoutput',0);
 
@@ -72,5 +72,9 @@ end
     legend('shuff','data')
     suptitle(['KS p = ' num2str(p)])
     axis square
+
+% correlation between tuning curves with whisking preferences/
+
+real_corr
 
 
