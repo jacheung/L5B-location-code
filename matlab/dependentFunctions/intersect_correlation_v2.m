@@ -73,8 +73,28 @@ end
     suptitle(['KS p = ' num2str(p)])
     axis square
 
-% correlation between tuning curves with whisking preferences/
+% correlation between tuning curves with whisking preferences. submission 1
+% plos biology edit. 200609
+[~,tid] = intersect(whisk_or_touch,find(touch_units)); 
+[~,wid] = intersect(whisk_or_touch,find(whisk_units)); 
+tw_ix = intersect(tid,wid); % find whisk and touch units
 
-real_corr
+whisk_pref = cellfun(@(x) x.calculations.tune_peak,wStruct(whisk_or_touch));
+whisk_pref_tw = whisk_pref(tw_ix);
+real_corr_tw = real_corr(tw_ix);
+mdl = fitlm(whisk_pref_tw,real_corr_tw);
+
+figure(3940);clf
+scatter(whisk_pref_tw,real_corr_tw,'ko')
+hold on; plot(-40:80,mdl.predict((-40:80)'),'k')
+hold on; plot([-30 70],[0 0],'--k')
+set(gca,'ytick',-1:.5:1,'xtick',-40:20:80,'xlim',[-30 70],'ylim',[-1.1 1.1])
+axis square
+xlabel('whisk angle preference')
+ylabel('whisk and touch tuning curve correlation') 
+title(['corr = ' num2str(corr(whisk_pref_tw',real_corr_tw')) ', Rsq = ' num2str(mdl.Rsquared.Ordinary) ', n = ' num2str(length(real_corr_tw))])
+
+
+
 
 
