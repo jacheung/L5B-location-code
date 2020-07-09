@@ -64,6 +64,11 @@ fn = 'whisk_quiet_unity.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
+%% PLos Reviewer Edits (1.5)
+low_fr = fr_whisk(fr_quiet< 5) - fr_quiet(fr_quiet<5)
+high_fr = fr_whisk(fr_quiet>= 5) - fr_quiet(fr_quiet>=5)
+
+
 %% angle and phase tuning curves (B)
 angle_tuned = find(cellfun(@(x) x.is_tuned==1,whisk_struct.angle));
 rc = numSubplots(numel(angle_tuned));
@@ -283,6 +288,15 @@ fn = 'phase_x_angle_x_preference.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
+% inherit cotuned from main_whisk_touch
+ix = logical(tuned_units .* cotuned);
+nix = logical(tuned_units .* ~cotuned);
+
+nix_phase = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.phase(nix));
+nix_angle = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.angle(nix)); 
+
+ix_phase = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.phase(ix));
+ix_angle = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.angle(ix));
 
 figure(57);clf
 % ABSOLUTE MODULATION 
@@ -291,13 +305,26 @@ hold on; plot([0 30], [0 30],'k--')
 hold on; errorbar(mean(phase_mod_abs),mean(angle_mod_abs),...
     std(angle_mod_abs)./sqrt(sum(tuned_units)),std(angle_mod_abs)./sqrt(sum(tuned_units)),...
     std(phase_mod_abs)./sqrt(sum(tuned_units)),std(phase_mod_abs)./sqrt(sum(tuned_units))...
+    ,'ko','capsize',0)
+
+hold on; errorbar(mean(ix_phase),mean(ix_angle),...
+    std(ix_angle)./sqrt(sum(tuned_units)),std(ix_angle)./sqrt(sum(tuned_units)),...
+    std(ix_phase)./sqrt(sum(tuned_units)),std(ix_phase)./sqrt(sum(tuned_units))...
     ,'ro','capsize',0)
+
+hold on; errorbar(mean(nix_phase),mean(nix_angle),...
+    std(nix_angle)./sqrt(sum(tuned_units)),std(nix_angle)./sqrt(sum(tuned_units)),...
+    std(nix_phase)./sqrt(sum(tuned_units)),std(nix_phase)./sqrt(sum(tuned_units))...
+    ,'bo','capsize',0)
+
 set(gca,'xlim',[0 30],'ylim',[0 30])
 axis square
 xlabel('phase abs mod')
 ylabel('angle abs mod')
 [~,p,~,stats] = ttest(phase_mod_abs,angle_mod_abs);
 title(['p=' num2str(p) ', tstat=' num2str(stats.tstat) ', df=' num2str(stats.df)])
+
+
 
 % MODULATION DEPTH
 % scatter(phase_mod,angle_mod,'k')
