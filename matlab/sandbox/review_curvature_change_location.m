@@ -43,31 +43,35 @@ for i = 1:length(U)
         % response calculation
         response_window = U{i}.meta.touchProperties.responseWindow(1):U{i}.meta.touchProperties.responseWindow(2);
         tresponse = mean(spikes(touchOn + response_window),2) * 1000;
-    
-        % plotting
+        cmap_response = spikes(touchOn + [-25:50]) * 1000; 
+        
+        
         % protraction dk/dt correlation w/ pole location
         pt = dk<0;
         dk_corr(i) = corr(touch_poles(pt)',dk(pt));
         dt_corr(i) = corr(touch_poles(pt)',dt(pt));
-
+        
+        % filtering out retraction touches
         pt_spikes = tresponse(pt);
         pt_dk = dk(pt);
         pt_theta = touchTheta(pt);
+        pt_cmap = cmap_response(pt,:);
 
+        % plot 1 - 
         norm_pt = normalize_var(pt_spikes,1,0.1);
         [sort_colors,sort_idx] = sort(norm_pt,'descend');
         figure(03);clf
-        subplot(2,1,1)
+        subplot(3,2,[1 2])
         scatter(pt_theta(sort_idx),pt_dk(sort_idx),20,repmat(sort_colors,1,3),'filled');
         xlabel('whisker angle at touch')
         ylabel('max curvature')
         title('protraction touch analysis')
         
-        %stratification analyses (low and high curvature      
-        [dk_sorted, dksby] = binslin(pt_dk,[pt_theta pt_spikes],'equalN',num_curvature_bins);
+        % plot 2 - stratification analyses (low and high curvature      
+        [dk_sorted, dksby] = binslin(pt_dk,[pt_theta pt_spikes pt_cmap],'equalN',num_curvature_bins);
         
         sorted = cell(1,numel(dksby));
-        subplot(2,1,2)
+        subplot(3,2,[3 4])
         for p = 1:numel(dksby)
             [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,2),'equalN',num_angle_bins,min(pt_theta),max(pt_theta));     
             hold on; plot(cellfun(@median, sortedby),cellfun(@mean,sorted{p}))
@@ -83,6 +87,23 @@ for i = 1:length(U)
         ylabel('firing rate (spks/s)')
         legend('high dk','low dk')
         
+        peak_val = zeros(1,2); 
+        for p = 1:numel(dksby)
+            [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,3:end),'equalN',num_angle_bins,min(pt_theta),max(pt_theta));     
+            subplot(3,2,4+p)
+            strat_cmap = cell2mat(cellfun(@mean,sorted{p},'uniformoutput',0));
+            peak_val(p) = max(strat_cmap(:)); 
+            hold on; imagesc(strat_cmap)
+            set(gca,'ytick',1:length(sortedby),'yticklabel',round(cellfun(@mean, sortedby)),...
+            'ylim',[1 length(sortedby)], 'xtick',[0:25:75],'xticklabel',[-25:25:50])
+            colorbar;
+        end
+        
+        subplot(3,2,5); caxis([0 max(peak_val)])
+        subplot(3,2,6); caxis([0 max(peak_val)])
+        
+        
+        
         if mean( cellfun(@numel,sorted{1})) < 20
             disp('warning: number of samples per angle bin < 20')
         end
@@ -94,6 +115,7 @@ for i = 1:length(U)
         
         disp(['cell ' num2str(i) ' is not a touch cell. Skipping']) 
     end
+    pause;
     
 end
 %% analyses
