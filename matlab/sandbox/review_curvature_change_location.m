@@ -2,11 +2,18 @@
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 U = struct_editor(U);
+
+hilbertVar = 'angle';
+% tStruct = object_location_quantification(U,touchCells,hilbertVar,'off');
+tStruct = object_location_quantification(U,1:length(U),hilbertVar,'off');
+
+loc_units = cellfun(@(x) x.is_tuned==1,tStruct);
 %%
 dk_corr = zeros(1,numel(U));
 dt_corr = zeros(1,numel(U));
 ccoeff = cell(1,numel(U));
 fr_diff = cell(1,numel(U)); 
+dk_peak_diff = nan(numel(U),2);
 
 num_curvature_bins = 2; 
 num_angle_bins = 8;
@@ -75,6 +82,11 @@ for i = 1:length(U)
         for p = 1:numel(dksby)
             [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,2),'equalN',num_angle_bins,min(pt_theta),max(pt_theta));     
             hold on; plot(cellfun(@median, sortedby),cellfun(@mean,sorted{p}))
+            
+            vals = cellfun(@mean,sorted{p});
+            [peak_fr, max_idx] = max(vals);
+            avg_not_max = mean(vals(setdiff(1:length(vals),max_idx))); % mean of not max
+            dk_peak_diff(i,p) = peak_fr - avg_not_max;
         end
         
         avg_curves = cell2mat(cellfun(@(x) cellfun(@mean, x),sorted,'uniformoutput',0));
@@ -102,11 +114,13 @@ for i = 1:length(U)
         subplot(3,2,5); caxis([0 max(peak_val)])
         subplot(3,2,6); caxis([0 max(peak_val)])
         
-        
+        suptitle(['cell num ' num2str(i)])
         
         if mean( cellfun(@numel,sorted{1})) < 20
             disp('warning: number of samples per angle bin < 20')
         end
+        
+        
         
     catch
         touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),U);
@@ -115,10 +129,20 @@ for i = 1:length(U)
         
         disp(['cell ' num2str(i) ' is not a touch cell. Skipping']) 
     end
-    pause;
+    
     
 end
 %% analyses
+% peak vs non peak 
+loc_diff = dk_peak_diff(loc_units,:);
+c_diff = loc_diff(~isnan(loc_diff(:,1)),:);
+norm_c_diff = c_diff./max(c_diff,[],2);
+figure(23040);clf
+plot(norm_c_diff','o-', 'color',[.8 .8 .8])
+hold on; errorbar([1 2],mean(norm_c_diff),std(norm_c_diff),'bo-')
+set(gca,'xlim',[0.5 2.5])
+
+
 %analyzing average correlation between high and low dk
 nonempty = ccoeff(~cellfun(@isempty, ccoeff));
 c_accum = zeros(size(nonempty{1}));
