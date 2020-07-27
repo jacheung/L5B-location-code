@@ -74,52 +74,88 @@ for i = 1:length(U)
         ylabel('max curvature')
         title('protraction touch analysis')
         
-        % plot 2 - stratification analyses (low and high curvature      
-        [dk_sorted, dksby] = binslin(pt_dk,[pt_theta pt_spikes pt_cmap],'equalN',num_curvature_bins);
+        %% plot 2 - stratification analyses (low and high curvature      
+%         [dk_sorted, dksby] = binslin(pt_dk,[pt_theta pt_spikes pt_cmap],'equalN',num_curvature_bins);
+%         
+%         sorted = cell(1,numel(dksby));
+%         subplot(3,2,[3 4])
+%         for p = 1:numel(dksby)
+%             [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,2),'equalN',num_angle_bins,min(pt_theta),max(pt_theta));     
+%             hold on; plot(cellfun(@median, sortedby),cellfun(@mean,sorted{p}))
+%             
+%             vals = cellfun(@mean,sorted{p});
+%             [peak_fr, max_idx] = max(vals);
+%             avg_not_max = mean(vals(setdiff(1:length(vals),max_idx))); % mean of not max
+%             dk_peak_diff(i,p) = peak_fr - avg_not_max;
+%         end
+%         
+%         avg_curves = cell2mat(cellfun(@(x) cellfun(@mean, x),sorted,'uniformoutput',0));
+%         normed = normalize_var(avg_curves(:),0,1);
+%         norm_avg_curves = reshape(normed,num_angle_bins,2);
+%         ccoeff{i} = corr(avg_curves);
+%         fr_diff{i} = norm_avg_curves(:,1)-norm_avg_curves(:,2);
+%         
+%         xlabel('whisker angle at touch')
+%         ylabel('firing rate (spks/s)')
+%         legend('high dk','low dk')
+%         
+%         peak_val = zeros(1,2); 
+%         for p = 1:numel(dksby)
+%             [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,3:end),'equalN',num_angle_bins,min(pt_theta),max(pt_theta));     
+%             subplot(3,2,4+p)
+%             strat_cmap = cell2mat(cellfun(@mean,sorted{p},'uniformoutput',0));
+%             peak_val(p) = max(strat_cmap(:)); 
+%             hold on; imagesc(strat_cmap)
+%             set(gca,'ytick',1:length(sortedby),'yticklabel',round(cellfun(@mean, sortedby)),...
+%             'ylim',[1 length(sortedby)], 'xtick',[0:25:75],'xticklabel',[-25:25:50])
+%             colorbar;
+%         end
+%         
+%         subplot(3,2,5); caxis([0 max(peak_val)])
+%         subplot(3,2,6); caxis([0 max(peak_val)])
+%         
+%         suptitle(['cell num ' num2str(i)])
+%% plot 3 - stratification analyses - location first then curvature change    
+
+        [dk_sorted, thetasby] = binslin(pt_theta,[pt_dk pt_spikes pt_cmap],'equalN',num_angle_bins,min(pt_theta),max(pt_theta));
         
-        sorted = cell(1,numel(dksby));
-        subplot(3,2,[3 4])
-        for p = 1:numel(dksby)
-            [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,2),'equalN',num_angle_bins,min(pt_theta),max(pt_theta));     
-            hold on; plot(cellfun(@median, sortedby),cellfun(@mean,sorted{p}))
-            
-            vals = cellfun(@mean,sorted{p});
-            [peak_fr, max_idx] = max(vals);
-            avg_not_max = mean(vals(setdiff(1:length(vals),max_idx))); % mean of not max
-            dk_peak_diff(i,p) = peak_fr - avg_not_max;
+        sorted = cell(1,numel(thetasby));
+        sortedmap = cell(1,numel(thetasby));
+       
+        for p = 1:numel(thetasby)
+            [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,2),'equalN',num_curvature_bins);
+            [sortedmap{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,3:end),'equalN',num_curvature_bins);
         end
-        
-        avg_curves = cell2mat(cellfun(@(x) cellfun(@mean, x),sorted,'uniformoutput',0));
-        normed = normalize_var(avg_curves(:),0,1);
-        norm_avg_curves = reshape(normed,num_angle_bins,2);
-        ccoeff{i} = corr(avg_curves);
-        fr_diff{i} = norm_avg_curves(:,1)-norm_avg_curves(:,2);
-        
+        % plot of tuning curves
+        responses = cell2mat(cellfun(@(x) cellfun(@mean, x) ,sorted,'uniformoutput',0))';
+        stim =  cellfun(@median,thetasby);
+        subplot(3,2,[3 4])
+        plot(stim,responses)
         xlabel('whisker angle at touch')
         ylabel('firing rate (spks/s)')
         legend('high dk','low dk')
         
-        peak_val = zeros(1,2); 
-        for p = 1:numel(dksby)
-            [sorted{p}, sortedby] = binslin(dk_sorted{p}(:,1),dk_sorted{p}(:,3:end),'equalN',num_angle_bins,min(pt_theta),max(pt_theta));     
-            subplot(3,2,4+p)
-            strat_cmap = cell2mat(cellfun(@mean,sorted{p},'uniformoutput',0));
-            peak_val(p) = max(strat_cmap(:)); 
-            hold on; imagesc(strat_cmap)
-            set(gca,'ytick',1:length(sortedby),'yticklabel',round(cellfun(@mean, sortedby)),...
-            'ylim',[1 length(sortedby)], 'xtick',[0:25:75],'xticklabel',[-25:25:50])
+        % plot heatmaps for different dk
+        maps = cell(1,num_curvature_bins);
+        for b = 1:numel(maps)
+            maps{b} = cell2mat(cellfun(@(x) mean(x{b}), sortedmap,'uniformoutput',0)');
+            subplot(3,2,4+b)
+            imagesc(imgaussfilt(maps{b},.5))
+            set(gca,'ytick',1:length(stim),'yticklabel',round(stim),...
+            'ylim',[1 length(stim)], 'xtick',[0:25:75],'xticklabel',[-25:25:50]...
+            ,'ydir','normal')
             colorbar;
+            
         end
-        
-        subplot(3,2,5); caxis([0 max(peak_val)])
-        subplot(3,2,6); caxis([0 max(peak_val)])
-        
         suptitle(['cell num ' num2str(i)])
-        
         if mean( cellfun(@numel,sorted{1})) < 20
             disp('warning: number of samples per angle bin < 20')
         end
         
+        normed = normalize_var(responses(:),0,1);
+        norm_avg_curves = reshape(normed,num_angle_bins,2);
+        ccoeff{i} = corr(responses);
+        fr_diff{i} = norm_avg_curves(:,1)-norm_avg_curves(:,2);
         
         
     catch
@@ -129,8 +165,12 @@ for i = 1:length(U)
         
         disp(['cell ' num2str(i) ' is not a touch cell. Skipping']) 
     end
-    
-    
+%   if i ==29  
+%       saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+%       fn = ['angle_X_curvature.eps'];
+%       export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+%       fix_eps_fonts([saveDir, fn])
+%   end
 end
 %% analyses
 % peak vs non peak 
@@ -166,7 +206,10 @@ title('on average, higher dk leads to increased firing rates')
 % testing to see if rate of change from one position is sig diff from another
 anova1(cell2mat(fr_diff)')
 
-
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+fn = ['angle_X_curvature_diff.eps'];
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 %% simple glm for touch cells only
 fitCoeffs = cell(1,numel(U));
