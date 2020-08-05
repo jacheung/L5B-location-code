@@ -18,7 +18,7 @@ dk_peak_diff = nan(numel(U),2);
 num_curvature_bins = 2; 
 num_angle_bins = 8;
 
-for i = 1:length(U)
+for i = 86
     
     % raw variables
     touchOn = [find(U{i}.S_ctk(9,:,:)==1)  ;find(U{i}.S_ctk(12,:,:)==1)];
@@ -165,11 +165,13 @@ for i = 1:length(U)
         
         disp(['cell ' num2str(i) ' is not a touch cell. Skipping']) 
     end
+    
+    pause 
 %   if i ==29  
-%       saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
-%       fn = ['angle_X_curvature.eps'];
-%       export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-%       fix_eps_fonts([saveDir, fn])
+      saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
+      fn = ['angle_X_curvature_ex2.eps'];
+      export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+      fix_eps_fonts([saveDir, fn])
 %   end
 end
 %% analyses
