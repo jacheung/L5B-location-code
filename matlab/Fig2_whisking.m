@@ -1,8 +1,7 @@
-%% Load whisking structures 
-
+%% Load/build whisking structures 
 data_directory = 'C:\Users\jacheung\Dropbox\LocationCode\DataStructs\';
-whisk_struct = BuildWStruct(data_directory);
-
+load([data_directory 'Raw\excitatory_all.mat']);
+whisk_struct = CompileWStruct(data_directory);
 %% Main Figures 2
 % Figure 2A: whisking vs quiet comparison
 WhiskQuietComparison(U)
@@ -24,5 +23,3 @@ WhiskHilbertComparison(U,whisk_struct)
 
 %% Supplemental Figure 2
  Fig2Supplemental(U,whisk_struct)
-
-
