@@ -1,6 +1,6 @@
 %Load whisking and neural time series struct
 clear
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Raw\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 
@@ -11,7 +11,6 @@ selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'ex
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
 
 pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
-% pole_tuned = object_location_quantification(U,1:length(U),'pole','off'); %for old see object_location_v1.0
 
 %% Raster + PSTH one cell (A) 
 for i = 29

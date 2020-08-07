@@ -22,4 +22,4 @@ PlotPhaseAngleModulation(whisk_struct)
 WhiskHilbertComparison(U,whisk_struct)
 
 %% Supplemental Figure 2
- Fig2Supplemental(U,whisk_struct)
+Fig2Supplemental(U,whisk_struct)
