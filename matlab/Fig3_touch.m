@@ -1,8 +1,6 @@
 %Load whisking and neural time series struct
 clear
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Raw\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
-% load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
-
 
 %% Top level parameters and definitions
 % U = defTouchResponse(U,.95,'off');
@@ -10,7 +8,7 @@ clearvars -except U
 selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
 saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig3\';
 
-pole_tuned = object_location_quantification(U,selectedCells,'pole','off'); %for old see object_location_v1.0
+tStruct = object_location_quantification(U,selectedCells,'phase','off'); %for old see object_location_v1.0
 
 %% Raster + PSTH one cell (A) 
 for i = 29
