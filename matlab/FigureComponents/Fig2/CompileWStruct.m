@@ -1,13 +1,12 @@
-function whisk_struct = CompileWStruct(data_directory)
-hilbert_feature = {'angle','phase','midpoint','amplitude','velocity'};
+function whisk_struct = CompileWStruct(data_directory, feature_list)
 
-for b = 1:numel(hilbert_feature)
-    fileName = ['whisk_' hilbert_feature{b} '_window'];
+for b = 1:numel(feature_list)
+    fileName = ['whisk_' feature_list{b} '_window'];
     
     if exist([data_directory 'Whisking\' fileName '.mat'], 'file')
-        disp(['Loading whisking stucture for ' hilbert_feature{b}])
+        disp(['Loading whisking stucture for ' feature_list{b}])
         load([data_directory 'Whisking\' fileName '.mat']);
-        whisk_struct.(hilbert_feature{b}) = wStruct;
+        whisk_struct.(feature_list{b}) = wStruct;
     else
         disp('No whisking structure found. Building from scratch...')
         
@@ -16,9 +15,9 @@ for b = 1:numel(hilbert_feature)
             load([data_directory 'Raw\excitatory_all.mat']); %L5b excitatory cells recorded by Jon and Phil
         
         end
-        disp(['Building whisking structure for ' hilbert_feature{b}])
+        disp(['Building whisking structure for ' feature_list{b}])
         disp('This may take some time so consider loading pre-built structures')
-        whisk_struct.(hilbert_feature{b}) = whisking_location_quantification(U,1:length(U),hilbert_feature{b},'off');
+        whisk_struct.(feature_list{b}) = whisking_location_quantification(U,1:length(U),feature_list{b},'off');
         
     end
 end

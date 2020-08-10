@@ -1,20 +1,20 @@
-mouseNum = 'AH0716';
-date = '170902';
-cellName = 'JC1403';
-cellNum = 'AAAB';
-trialNum = '0194'
-
-% mouseNum = 'AH0762';
-% date = '171018';
-% cellName = 'JC1505';
+% mouseNum = 'AH0716';
+% date = '170902';
+% cellName = 'JC1403';
 % cellNum = 'AAAB';
-% trialNum = '0129'
+% trialNum = '0194'
+
+mouseNum = 'AH0762';
+date = '171018';
+cellName = 'JC1505';
+cellNum = 'AAAB';
+trialNum = '0129'
 % 
-% mouseNum = 'AH0669';
-% date = '170328';
-% cellName = 'JC1239';
-% cellNum = 'AAAA';
-% trialNum = '0129'
+mouseNum = 'AH0669';
+date = '170328';
+cellName = 'JC1239';
+cellNum = 'AAAA';
+trialNum = '0129'
 
 
 % cd('C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SweepArrays')
@@ -22,7 +22,7 @@ trialNum = '0194'
 
 
 cd(['C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\EPHUS\' mouseNum filesep cellName])
-spike_threshold = 2;
+spike_threshold = 3.5;
 loadTrial = [cellName cellNum trialNum '.xsg'];
 xsg_file = load([cellName cellNum trialNum '.xsg'], '-mat');
 

@@ -1,3 +1,10 @@
+data_directory = 'C:\Users\jacheung\Dropbox\LocationCode\DataStructs\';
+load([data_directory 'Raw\excitatory_all.mat']);
+feature_list = {'pole','angle'};
+touch_struct = CompileTStruct(data_directory, feature_list);
+
+
+
 %Load whisking and neural time series struct
 clear
 load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Raw\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
