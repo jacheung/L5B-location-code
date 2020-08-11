@@ -75,14 +75,21 @@ title('10 pulses and their responses')
 
 % spike shape
 spike_windows = round([-8:12] + spike_times_idx');
+selected_spikes = plot_trace(spike_windows)';
 subplot(2,1,2)
-plot(plot_trace(spike_windows)','color',[.8 .8 .8])
-hold on; plot(mean(plot_trace(spike_windows)),'r')
-symmetry_value = max(plot_trace(spike_windows)') ./ abs(min(plot_trace(spike_windows)'));
+plot(selected_spikes,'color',[.8 .8 .8])
+hold on; plot(mean(selected_spikes,2),'r')
+ptt_ratio = max(selected_spikes) ./ abs(min(selected_spikes));
+[~, max_idx] = max(selected_spikes);
+[~, min_idx] = min(selected_spikes);
+ptt_duration = mean((min_idx - max_idx) / 10 );
+
 set(gca,'xtick',0:10:20,'xticklabel',0:1:2)
 ylabel('amplitude')
 xlabel('ms')
-title(['symmetry value = ' num2str(mean(symmetry_value))]);
+
+text(2, -.5, ['ptt duration = ' num2str(ptt_duration) 'ms'])
+text(2, -1.5, ['ptt ratio = ' num2str(mean(ptt_ratio))])
 suptitle('example interneuron')
 
 % 
