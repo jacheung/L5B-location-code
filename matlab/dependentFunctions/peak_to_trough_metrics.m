@@ -1,5 +1,7 @@
+function [ptt_ratio, ptt_duration] = peak_to_trough_metrics(T_directory)
+
 %% load data
-T_directory = 'C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Raw\Excitatory\TArrays\';
+% T_directory = 'C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Raw\Excitatory\TArrays\';
 S_directory = 'C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SweepArrays\';
 ST_directory = 'C:\Users\jacheung\Dropbox\HLabBackup\Jon\DATA\SpikesData\SpikeArrays\';
 
@@ -35,9 +37,9 @@ for g = 1:length(T_array_list)
     
     % calculate peak to trough ratio and duration
     [max_vals, max_idx] = max(peak_normalized_waves,[],2);
-    [min_vals, min_idx] = min(peak_normalized_waves,[],2);
+    [min_vals, min_idx] = min(peak_normalized_waves(:,max_idx:end),[],2);
     ptt_ratio(g) = median(abs(max_vals ./ min_vals));
-    ptt_duration(g) = median(min_idx - max_idx)/10;
+    ptt_duration(g) = median((min_idx+max_idx) - max_idx)/10;
     disp(['peak to trough ratio: ' num2str(ptt_ratio(g)) ' , duration: ' num2str(ptt_duration(g)) 'ms'])
 
     % plot
