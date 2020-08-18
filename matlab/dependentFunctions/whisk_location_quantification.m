@@ -1,4 +1,4 @@
-function [tuneStruct] = whisking_location_quantification(uberarray,selectedCells,hilbert_feature,displayOpt)
+function [tuneStruct] = whisk_location_quantification(uberarray,selectedCells,hilbert_feature,displayOpt,capture_window)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % this function is used to plot a heat map of whisking
@@ -20,9 +20,9 @@ willdisplay = ~(strcmp(displayOpt,'nodisplay') | strcmp(displayOpt,'n') ...
 rc = numSubplots(numel(selectedCells));
 
 %function parameters
-alpha_value = .05; %p-value threshold to determine whether a cell is OL tuned or not
+alpha_value = .01; %p-value threshold to determine whether a cell is OL tuned or not
 smoothing_param = 10; %smoothing parameter for smooth f(x) in shadedErrorBar
-binslin_bins = 50; %chose 50 based on testing a number of different bins (see sampling_justification.mat)
+binslin_bins = 20; 
 
 %populating struct for tuning quantification
 tuneStruct = cell(1,length(uberarray));
@@ -30,7 +30,7 @@ for i = 1:length(uberarray)
     tuneStruct{i}.is_tuned = nan;
     tuneStruct{i}.calculations = [];
 end
-
+cell_counter = 0 
 for rec = 1:length(selectedCells)
     array = uberarray{selectedCells(rec)};
     spikes = squeeze(array.R_ntk);
@@ -82,8 +82,41 @@ for rec = 1:length(selectedCells)
     end
     
     current_feature = conversion_feature(whisking_mask==1);
-    filtered_spikes =spikes(whisking_mask==1);
+    whiskIdx = find(whisking_mask==1); 
+    if strcmp(capture_window,'lag_window')
+        try
+            touch_wind = array.meta.touchProperties.responseWindow;
+        catch
+            touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'responseWindow'),uberarray);
+            all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.responseWindow,uberarray(touch_cells),'uniformoutput',0)');
+            touch_wind = median(all_windows); %filling empty touch windows w/ median touch windows
+        end
+        response_idx = repmat(whiskIdx,1,length(touch_wind(1):touch_wind(2))) + repmat(touch_wind(1):touch_wind(2),numel(whiskIdx),1);
+    elseif strcmp(capture_window,'lag')
+        try
+            touch_wind = array.meta.touchProperties.peakResponse;
+        catch
+            touch_cells = cellfun(@(x) isfield(x.meta.touchProperties,'peakResponse'),uberarray);
+            all_windows = cell2mat(cellfun(@(x) x.meta.touchProperties.peakResponse,uberarray(touch_cells),'uniformoutput',0)');
+            touch_wind = round(median(all_windows)); %filling empty touch windows w/ median touch windows
+        end
+        response_idx = whiskIdx+touch_wind;
+    elseif strcmp(capture_window,'instant')
+        response_idx = whiskIdx;
+    end
     
+    filt_spikes = spikes .* whisking_mask;
+    filt_spikes = [filt_spikes nan(size(filt_spikes,1),1)]; %padding w/ nans at end for indexing
+    
+    stretch_touch_mask = [touchEx_mask nan(size(touchEx_mask,1),1)];
+    whisks_with_touch = find(any(isnan(stretch_touch_mask(response_idx)),2));
+    keep_whisks = 1:length(response_idx);
+    filtered_spikes = nanmean(filt_spikes(response_idx),2);
+    keep_whisks(unique([whisks_with_touch;find(isnan(filtered_spikes))])) = [];%only keep whisk examples that does not have any touch contamination or with at least 1 timepoint of spiking.
+    
+%     disp([capture_window ' : ' num2str(numel(keep_whisks) ./ length(response_idx).*100) '% of whisking timepoints w/ no touch contamination and 1 timepoint of spiking'])
+    current_feature = current_feature(keep_whisks); 
+    filtered_spikes = filtered_spikes(keep_whisks);
     
     %% Tuning in whisk windows
     %     equalN_numBins = round(sum(~isnan(current_feature(:)))./numWhiskSamplesPerBin);
@@ -94,23 +127,27 @@ for rec = 1:length(selectedCells)
     [sorted, sortedBy] = binslin(current_feature,filtered_spikes*1000,'equalN',binslin_bins);
     %     end
     
-    nonzero_bins = sum(cellfun(@mean, sorted)~=0);
     nanmat = cell2nanmat(sorted);
-    [quant_ol_p,~,stats] = anova1(nanmat,[],'off');
+    [quant_ol_p,tbl,stats] = anova1(nanmat,[],'off');
+    real_f = tbl{2,5};
     
-    p_shuff_num = 1000;
+%     %shuffle method
+    shuff_num = 100;
     nanmat = cell2nanmat(sorted);
-    p_shuff = zeros(1,p_shuff_num);
-    for i = 1:p_shuff_num
+    f_stats = zeros(1,shuff_num); 
+    for i = 1:shuff_num
         shuff = randperm(numel(nanmat));
-        p_shuff(i) = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+        [~,tbl] = anova1(reshape(nanmat(shuff),size(cell2nanmat(sorted))),[],'off');
+       f_stats(i) = tbl{2,5};
     end
-    sig_by_chance = mean(p_shuff<quant_ol_p);
+    %percentile of real_f compared to shuffled f distribution
+    real_pctile = double(find(sort(f_stats) < real_f,1,'last') ./ shuff_num);
     
     SEM = cellfun(@(x) std(x) ./ sqrt(numel(x)),sorted);
     tscore = cellfun(@(x) tinv(.95,numel(x)-1),sorted);
     CI = SEM.*tscore;
     
+    clear barsFit
     %BARSP FOR MOD IDX CALCULATIONS
     try
         x = cellfun(@median,sortedBy);
@@ -167,7 +204,9 @@ for rec = 1:length(selectedCells)
         
     end
     
-    if sig_by_chance < 0.05 && quant_ol_p < 0.05 && ~isempty(barsFit) && nonzero_bins > 10 %maybe add quant_ol_p~=0?
+    
+%    if  quant_ol_p < alpha_value && ~isempty(barsFit) && mean(cellfun(@mean,sorted))>2 
+   if  quant_ol_p < alpha_value && ~isempty(barsFit) && real_pctile > .95 && mean(cellfun(@mean,sorted))>2 
         %right and left tuning by idx
         compare_table = multcompare(stats,'Display','off');
         max_compares = compare_table(any(compare_table(:,[1 2]) == maxidx,2),:);
@@ -202,7 +241,11 @@ for rec = 1:length(selectedCells)
             tuneStruct{selectedCells(rec)}.calculations.tune_right_width = nan;
         end
         
-        tuneStruct{selectedCells(rec)}.is_tuned = 1;
+        if ~isnan(tuneStruct{selectedCells(rec)}.calculations.tune_right_width) | ~isnan(tuneStruct{selectedCells(rec)}.calculations.tune_left_width)
+            tuneStruct{selectedCells(rec)}.is_tuned = 1;
+        else
+            tuneStruct{selectedCells(rec)}.is_tuned = 0;
+        end
         tuneStruct{selectedCells(rec)}.calculations.responses_at_peak = sorted{maxidx};
         tuneStruct{selectedCells(rec)}.calculations.responses_at_trough = sorted{minidx};
     else
@@ -217,6 +260,14 @@ for rec = 1:length(selectedCells)
         else
             set(gca,'xlim',[min(cellfun(@median, sortedBy)) max(cellfun(@median, sortedBy))])
         end
+    end
+    
+    if tuneStruct{selectedCells(rec)}.is_tuned == 1
+        cell_counter = cell_counter+1;
+%         [quant_ol_p, real_pctile]
+%         figure(280);clf;scatter(cellfun(@median,sortedBy),cellfun(@mean,sorted))
+        disp(['num tuned cells = ' num2str(cell_counter) '/' num2str(rec)])
+%         pause
     end
     
     tuneStruct{selectedCells(rec)}.stim_response.varNames = {'median S_ctk','mean R_ntk','std R_ntk','95CI R_ntk'};

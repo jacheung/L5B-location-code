@@ -5,7 +5,7 @@ for b = 1:numel(feature_list)
     
     if exist([data_directory 'Touch\' fileName '.mat'], 'file')
         % Load existing touch structure
-        disp(['Loading whisking stucture for ' feature_list{b}])
+        disp(['Loading touch stucture for ' feature_list{b}])
         load([data_directory 'Touch\' fileName '.mat']);
         touch_struct.(feature_list{b}) = tStruct;
     
@@ -14,14 +14,16 @@ for b = 1:numel(feature_list)
         disp('No touch structure found. Building from scratch...')
         
         if ~exist('U')
-            disp('Loading complete all neural recordings')
-            load([data_directory 'Raw\excitatory_all.mat']); %L5b excitatory cells recorded by Jon and Phil
+            disp('Loading all neural recordings')
+            load([data_directory 'Raw\excitatory_clean.mat']); %L5b excitatory cells recorded by Jon and Phil
         end
         
         disp(['Building touch structure for ' feature_list{b}])
         disp('This may take some time so consider loading pre-built structures')
-        selected_cells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U)); % get touch cells
-        touch_struct.(feature_list{b}) = object_location_quantification(U,selected_cells,feature_list{b},'off');      
-   
+%         selected_cells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U)); % get touch cells
+        selected_cells = 1:length(U);
+        tStruct = object_location_quantification(U,selected_cells,feature_list{b},'off');      
+        save(['touch_' feature_list{b}],'tStruct') 
+        touch_struct.(feature_list{b}) = tStruct;
     end
 end

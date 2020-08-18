@@ -38,6 +38,11 @@ hold on; plot([0.01 100],[0.01 100],'--k')
 set(gca,'xlim',[0 100],'ylim',[0 100],'xscale','log','yscale','log')
 xlabel('quiet FR');ylabel('whisking FR')
 
+fn = '2A.eps';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
+
 %% PLos Reviewer Edits (1.5)
 low_fr = fr_whisk(fr_quiet< 5) - fr_quiet(fr_quiet<5);
 high_fr = fr_whisk(fr_quiet>= 5) - fr_quiet(fr_quiet>=5);

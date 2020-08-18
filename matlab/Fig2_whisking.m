@@ -1,6 +1,6 @@
 %% Load/build whisking structures 
 data_directory = 'C:\Users\jacheung\Dropbox\LocationCode\DataStructs\';
-load([data_directory 'Raw\excitatory_all.mat']);
+load([data_directory 'Raw\excitatory_clean.mat']);
 feature_list = {'angle','phase','midpoint','amplitude','velocity'};
 whisk_struct = CompileWStruct(data_directory, feature_list);
 %% Main Figures 2

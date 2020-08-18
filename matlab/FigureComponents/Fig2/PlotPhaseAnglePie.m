@@ -11,7 +11,7 @@ figure(580620);clf
 pie([numel(untuned) numel(co_tuned) numel(angle_only) numel(phase_only)],...
     {'not tuned','co-tuned','angle only','phase only'})
 
-% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
-% fn = 'proportion_angle_phase_pie.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+fn = 'proportion_angle_phase_pie.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])

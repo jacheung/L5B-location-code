@@ -1,23 +1,22 @@
 %% Load whisking and neural time series struct
 clear
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_all.mat') %L5b excitatory cells recorded by Jon and Phil
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_clean.mat') %L5b excitatory cells recorded by Jon and Phil
 % load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
 
 %% Top level parameters and definitions
-hilbertVar = 'pole';
-selectedCells = find(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U));
-pole_tuned = object_location_quantification(U,selectedCells,hilbertVar,'off'); %for old see object_location_v1.0
+feature_list = {'pole'};
+touch_struct = CompileTStruct(data_directory, feature_list);
 %% accuracy during recording sessions (B)
-expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
+trained = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
-recording_accuracy = cellfun(@(x) mean(x.meta.trialCorrect),U(expert));
+train_accuracy = cellfun(@(x) mean(x.meta.trialCorrect),U(trained));
 naive_accuracy = cellfun(@(x) mean(x.meta.trialCorrect),U(naive));
 
 figure(51);clf
 scatter(ones(1,sum(naive)),naive_accuracy,'markeredgecolor',[.7 .7 .7]);
 hold on; errorbar(1,mean(naive_accuracy),std(naive_accuracy),'ko');
-scatter(ones(1,sum(expert)).*2,recording_accuracy,'markeredgecolor',[.7 .7 .7]);
-hold on; errorbar(2,mean(recording_accuracy),std(recording_accuracy),'ko');
+scatter(ones(1,sum(trained)).*2,train_accuracy,'markeredgecolor',[.7 .7 .7]);
+hold on; errorbar(2,mean(train_accuracy),std(train_accuracy),'ko');
 hold on; plot([0 3],[.5 .5],'--k')
 set(gca,'ylim',[0 1],'ytick',0:.25:1','xtick',[],'xlim',[0 3])
 %
@@ -26,26 +25,26 @@ set(gca,'ylim',[0 1],'ytick',0:.25:1','xtick',[],'xlim',[0 3])
 % export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 % fix_eps_fonts([saveDir, fn])
 
-rawPsychometricCurves(U(expert))
+rawPsychometricCurves(U(naive))
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 fn = 'expert_psycho.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 
 %% Comparison of naive vs expert proportion of touch/OL cells (C)
 naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
-expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
+trained = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
 num_naive_touch = sum(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U(naive)));
-num_expert_touch = sum(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U(expert)));
-num_naive_OL = sum((cellfun(@(x) x.is_tuned==1,pole_tuned(naive)))) ;
-num_expert_OL = sum((cellfun(@(x) x.is_tuned==1,pole_tuned(expert)))) ;
+num_expert_touch = sum(cellfun(@(x) strcmp(x.meta.touchProperties.responseType,'excited'),U(trained)));
+num_naive_OL = sum((cellfun(@(x) x.is_tuned==1,touch_struct.pole(naive)))) ;
+num_expert_OL = sum((cellfun(@(x) x.is_tuned==1,touch_struct.pole(trained)))) ;
 
 naive_proportion_touch = num_naive_touch ./ sum(naive);
-expert_proportion_touch = num_expert_touch ./ sum(expert);
+expert_proportion_touch = num_expert_touch ./ sum(trained);
 naive_proportion_OL  = num_naive_OL ./ sum(naive);
-expert_proportion_OL  = num_expert_OL ./ sum(expert);
+expert_proportion_OL  = num_expert_OL ./ sum(trained);
 
 x = table([num_naive_touch - num_naive_OL; num_naive_OL],[ num_expert_touch - num_expert_OL ;num_expert_OL]);
 [h,p,stats] = fishertest(x);
@@ -55,7 +54,7 @@ subplot(1,2,1)
 hold on; bar(1:2,[naive_proportion_touch expert_proportion_touch],'facecolor',[.8 .8 .8])
 hold on; bar(1:2,[naive_proportion_OL expert_proportion_OL],'facecolor','k')
 ylabel('proportion of units')
-set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(sum(naive))],['expert n=' num2str(sum(expert))]},'ytick',0:.25:1,'ylim',[0 1])
+set(gca,'xtick',1:2,'xticklabel',{['naive n=' num2str(sum(naive))],['expert n=' num2str(sum(trained))]},'ytick',0:.25:1,'ylim',[0 1])
 legend('touch','location tuned','location','northwest')
 
 subplot(1,2,2)
@@ -71,12 +70,12 @@ fn = 'unit_distribution_bar.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])
 %% shape of tuning (D)
-tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
+tuned_units = cellfun(@(x) x.is_tuned==1,touch_struct.pole);
 naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
-expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
+trained = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
 naive_tuned_units = intersect(find(tuned_units),find(naive));
-expert_tuned_units = intersect(find(tuned_units),find(expert));
+expert_tuned_units = intersect(find(tuned_units),find(trained));
 
 tuned_units_list = {naive_tuned_units,expert_tuned_units};
 
@@ -84,9 +83,9 @@ figure(30);clf
 pop_mean = cell(1,2);
 pop_sem = cell(1,2);
 for b=1:length(tuned_units_list)
-    peak_response = cellfun(@(x) x.calculations.tune_peak,pole_tuned(tuned_units_list{b}));
+    peak_response = cellfun(@(x) x.calculations.tune_peak,touch_struct.pole(tuned_units_list{b}));
     for g = 1:length(peak_response)
-        sr = pole_tuned{tuned_units_list{b}(g)}.stim_response;
+        sr = touch_struct.pole{tuned_units_list{b}(g)}.stim_response;
         centered_x = sr.values(:,1) - peak_response(g) ;
         norm_y = normalize_var(sr.values(:,2),0,1);
         
@@ -114,28 +113,28 @@ set(gca,'xlim',[-2 2],'xdir','reverse','ytick',0:.5:1,'xtick',-2:1:2)
 xlabel('distance from peak (mm)')
 axis square
 
-figure(30);
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
-fn = 'naive_expert_modulation_width.eps';
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% figure(30);
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
+% fn = 'naive_expert_modulation_width.eps';
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 
 
 %% Heatmap of tuning (E)
-tuned_units = cellfun(@(x) x.is_tuned==1,pole_tuned);
+tuned_units = cellfun(@(x) x.is_tuned==1,touch_struct.pole);
 naive = cellfun(@(x) ~strcmp(x.meta.layer,'BVL5b'),U);
-expert = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
+trained = cellfun(@(x) strcmp(x.meta.layer,'BVL5b'),U);
 
 naive_tuned_units = intersect(find(tuned_units),find(naive));
-expert_tuned_units = intersect(find(tuned_units),find(expert));
+expert_tuned_units = intersect(find(tuned_units),find(trained));
 
 tuned_units = {naive_tuned_units,expert_tuned_units};
 
 figure(80);clf
 touch_map_all=[];
 for b=1:length(tuned_units)
-    sel_tstructs = pole_tuned(tuned_units{b});
+    sel_tstructs = touch_struct.pole(tuned_units{b});
     
     touch_heat = cell(1,length(sel_tstructs));
     %building heatmap for object location tuned touch units
@@ -144,14 +143,7 @@ for b=1:length(tuned_units)
         curr_t = curr_t(~any(isnan(curr_t),2),:);%clean nan rows
         [~,u_idx] = unique(curr_t(:,1)); %catch non-unique x-values
         curr_t = curr_t(u_idx,:);
-        
-        if strcmp(hilbertVar,'pole')
-            touch_x = -1:.1:1;
-        elseif strcmp(hilbertVar,'phase')
-            touch_x = linspace(-pi,pi,21);
-        else
-            touch_x = round(round(min(curr_t(:,1))):1:round(max(curr_t(:,1))));
-        end
+        touch_x = -1:.1:1;
         touch_heat{g} = interp1(curr_t(:,1),curr_t(:,2),touch_x);
     end
     
@@ -161,6 +153,7 @@ for b=1:length(tuned_units)
     [~,t_max_idx] = max(unsorted_heat,[],1);
     [~,t_idx] = sort(t_max_idx);
     data = unsorted_heat(:,t_idx)';
+    
     %set unsampled heatmap to nan;
     [nr,nc] = size(data);
     pcolor([nan(nr,1) data nan(nr,1); nan(1,nc+2)]);
@@ -197,10 +190,10 @@ fix_eps_fonts([saveDir, fn])
 touch_nums = cellfun(@(x) sum(squeeze(x.S_ctk(9,:,:)==1) + squeeze(x.S_ctk(13,:,:)==1)),U,'uniformoutput',0);
 whisk_mat = cellfun(@(x) squeeze(x.S_ctk(3,:,:)>5),U,'uniformoutput',0);
 
-w_prop_expert = cellfun(@(x) mean(x(:)),whisk_mat(expert));
+w_prop_expert = cellfun(@(x) mean(x(:)),whisk_mat(trained));
 w_prop_naive = cellfun(@(x) mean(x(:)),whisk_mat(naive));
 
-expert_mean = [cellfun(@(x) nanmean(x),touch_nums(expert))];
+expert_mean = [cellfun(@(x) nanmean(x),touch_nums(trained))];
 naive_mean = [cellfun(@(x) nanmean(x),touch_nums(naive))];
 
 figure(48);clf
