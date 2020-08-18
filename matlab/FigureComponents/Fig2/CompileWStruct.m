@@ -16,7 +16,7 @@ for b = 1:numel(feature_list)
         end
         disp(['Building whisking structure for ' feature_list{b}])
         disp('This may take some time so consider loading pre-built structures')
-        wStruct = whisking_location_quantification(U,1:length(U),feature_list{b},'off');
+        wStruct = whisk_location_quantification(U,1:length(U),feature_list{b},'off','lag_window');
         save(['whisk_' feature_list{b} '_window'],'wStruct') 
         whisk_struct.(feature_list{b}) = wStruct;
     end

@@ -1,9 +1,7 @@
 %% Load whisking and neural time series struct
 clear
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\excitatory_clean.mat') %L5b excitatory cells recorded by Jon and Phil
-% load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\interneurons.mat') %L5b inhibitory cells
-
-%% Top level parameters and definitions
+load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Raw\excitatory_clean.mat') %L5b excitatory cells recorded by Jon and Phil
+data_directory = 'C:\Users\jacheung\Dropbox\LocationCode\DataStructs\';
 feature_list = {'pole'};
 touch_struct = CompileTStruct(data_directory, feature_list);
 %% accuracy during recording sessions (B)
@@ -218,7 +216,7 @@ ylabel('proportion of units')
 [~,p_whisk] = ttest2(w_prop_expert,w_prop_naive);
 title(num2str(p_whisk));
 
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig4\';
 fn = 'naive_expert_stimulus.eps';
 export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
 fix_eps_fonts([saveDir, fn])

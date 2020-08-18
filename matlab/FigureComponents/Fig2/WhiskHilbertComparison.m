@@ -18,10 +18,10 @@ midpoint_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.midpoint(sel
 velocity_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.velocity(selectedCells));
 
 tuned_units = find(cellfun(@(x) x.is_tuned,whisk_struct.angle));
-a_p = angle_abs(tuned_units) - phase_abs(tuned_units);
-a_a = angle_abs(tuned_units) - amp_abs(tuned_units);
-a_m = angle_abs(tuned_units) - midpoint_abs(tuned_units);
-a_v = angle_abs(tuned_units) - velocity_abs(tuned_units);
+a_p = phase_abs(tuned_units)- angle_abs(tuned_units) ;
+a_a = amp_abs(tuned_units) - angle_abs(tuned_units);
+a_m =  midpoint_abs(tuned_units) - angle_abs(tuned_units);
+a_v = velocity_abs(tuned_units) - angle_abs(tuned_units);
 
 % plot gray heatmap
 [~,idx] = sort(w_mod_idx_angle);
@@ -50,9 +50,10 @@ set(gca,'ytick',1:2,'yticklabel',{'log firing rate'})
 caxis([-2 2])
 colormap(gray)
 
-% fn = 'gray_whisk_sort.eps';
-% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-% fix_eps_fonts([saveDir, fn])
+saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig2\';
+fn = 'gray_whisk_sort.eps';
+export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+fix_eps_fonts([saveDir, fn])
 
 figure(3480);clf
 subplot(1,2,1)
