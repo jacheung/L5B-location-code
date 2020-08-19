@@ -103,11 +103,11 @@ axis square
 xlabel('whisk tune peak');ylabel('touch tune peak')
 title(['whisk=' num2str(numel(whisk_nonIX_idx)) ', touch=' num2str(numel(touch_nonIX_idx)) ', both=' num2str(numel(touch_ix_idx))])
 
-figure(3850);
-saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
-fn = [hilbert_var '_intersect.eps'];
-export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-fix_eps_fonts([saveDir, fn])
+% figure(3850);
+% saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+% fn = [hilbert_var '_intersect.eps'];
+% export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+% fix_eps_fonts([saveDir, fn])
 
 
 % Distance from unity line (D stats)  

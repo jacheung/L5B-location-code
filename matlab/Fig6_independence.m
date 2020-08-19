@@ -6,7 +6,7 @@ whisk_struct = CompileWStruct(data_directory, feature_list);
 touch_struct = CompileTStruct(data_directory, feature_list);
 %% Plots
 % proportion of neurons that intersect pie (A)
-hilbert_var = 'phase'; 
+hilbert_var = 'angle'; 
 pie_comparison(touch_struct,whisk_struct,hilbert_var)
 
 % whisk and touch tuning curves (B)

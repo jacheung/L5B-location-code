@@ -6,7 +6,7 @@ wUnits = cellfun(@(x) x.is_tuned==1,whisk_struct.(hilbert_var));
 co_tuned = numel(find(tUnits.*wUnits));
 touch_only = numel(setdiff(find(tUnits),find(tUnits.*wUnits)));
 whisk_only = numel(setdiff(find(wUnits),find(tUnits.*wUnits)));
-untuned = length(U) - co_tuned - touch_only - whisk_only; 
+untuned = length(touch_struct.(hilbert_var)) - co_tuned - touch_only - whisk_only; 
 
 % bootstrapping
 samples = 1000; 
