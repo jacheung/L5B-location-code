@@ -1,4 +1,4 @@
-function Fig2Supplemental(U,whisk_struct)
+function Fig2_supplemental(U,whisk_struct)
 
 %% example whisker trace (SF)
 for cell = 33

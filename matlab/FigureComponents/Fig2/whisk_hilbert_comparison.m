@@ -1,4 +1,4 @@
-function WhiskHilbertComparison(U, whisk_struct)
+function whisk_hilbert_comparison(U, whisk_struct)
 
 selectedCells = 1:length(whisk_struct.angle);
 

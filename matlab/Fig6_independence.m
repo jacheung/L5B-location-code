@@ -1,9 +1,5 @@
 %% Load whisking and neural time series struct
-clear
-load('C:\Users\jacheung\Dropbox\LocationCode\DataStructs\Raw\excitatory_clean.mat') %L5b excitatory cells recorded by Jon and Phil
-
 data_directory = 'C:\Users\jacheung\Dropbox\LocationCode\DataStructs\';
-
 load([data_directory 'Raw\excitatory_clean.mat']);
 feature_list = {'angle','phase'};
 whisk_struct = CompileWStruct(data_directory, feature_list);

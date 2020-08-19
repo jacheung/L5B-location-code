@@ -1,4 +1,4 @@
-function WhiskQuietComparison(U)
+function whisk_quiet_comparison(U)
 
 % block out certain periods of whisk and quiet 
 masks = cellfun(@(x) maskBuilder(x),U,'uniformoutput',0);

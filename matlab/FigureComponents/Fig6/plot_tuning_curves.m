@@ -63,11 +63,12 @@ for g = 1:length(save_labels)
                     set(gca,'xtick',-pi:pi:pi,'xticklabel',{'-\pi',0,'\pi'})
                 end
             end
-        end
+        end   
     end
-    suptitle(save_labels)
-%     saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
-%     fn = [hilbert_var save_labels{g} '_curves.eps'];
-%     export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
-%     fix_eps_fonts([saveDir, fn])
+    
+    suptitle(save_labels{g})
+    saveDir = 'C:\Users\jacheung\Dropbox\LocationCode\Figures\Parts\Fig6\';
+    fn = [hilbert_var save_labels{g} '_curves.eps'];
+    export_fig([saveDir, fn], '-depsc', '-painters', '-r1200', '-transparent')
+    fix_eps_fonts([saveDir, fn])
 end

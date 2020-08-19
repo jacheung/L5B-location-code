@@ -5,7 +5,7 @@ feature_list = {'angle','phase','midpoint','amplitude','velocity'};
 whisk_struct = CompileWStruct(data_directory, feature_list);
 %% Main Figures 2
 % Figure 2A: whisking vs quiet comparison
-WhiskQuietComparison(U)
+whisk_quiet_comparison(U)
 
 % Figure 2B: angle and phase tuning curves
 PlotPhaseAngleCurves(whisk_struct)
@@ -20,7 +20,7 @@ PlotPhaseAnglePie(whisk_struct)
 PlotPhaseAngleModulation(whisk_struct)
 
 % Figure 2H-J: Hilbert decomposition comparison 
-WhiskHilbertComparison(U,whisk_struct)
+whisk_hilbert_comparison(U,whisk_struct)
 
 %% Supplemental Figure 2
-Fig2Supplemental(U,whisk_struct)
+Fig2_supplemental(U,whisk_struct)
