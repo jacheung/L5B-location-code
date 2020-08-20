@@ -1,4 +1,4 @@
-function PlotPhaseAngleCurves(whisk_struct)
+function plot_phase_angle_curves(whisk_struct)
 
 angle_tuned = find(cellfun(@(x) x.is_tuned==1,whisk_struct.angle));
 tmp = cellfun(@(x) range(x.stim_response.bars_fit.mean),whisk_struct.phase(angle_tuned));

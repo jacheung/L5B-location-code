@@ -1,4 +1,4 @@
-function PlotPhaseAnglePie(whisk_struct)
+function plot_phase_angle_pie(whisk_struct)
 
 whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.angle);
 whisk_phase_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.phase);

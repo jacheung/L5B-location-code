@@ -1,7 +1,7 @@
 %% Load/build touch structures 
 clear
 data_directory = 'C:\Users\jacheung\Dropbox\LocationCode\DataStructs\';
-load([data_directory 'Raw\excitatory_all.mat']);
+load([data_directory 'excitatory_all.mat']);
 feature_list = {'pole'};
 touch_struct = CompileTStruct(data_directory, feature_list);
 %% Raster + PSTH one cell (A) 

@@ -1,4 +1,4 @@
-function PlotPhaseAngleHeat(whisk_struct)
+function plot_phase_angle_heat(whisk_struct)
 
 % find tuned units to either phase or angle
 whisk_angle_tuned= cellfun(@(x) x.is_tuned==1,whisk_struct.angle);

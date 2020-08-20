@@ -1,4 +1,4 @@
-function PlotPhaseAngleModulation(whisk_struct)
+function plot_phase_angle_modulation(whisk_struct)
 %% part 1: phase and angle curves
 tuned_units = (double(cellfun(@(x) x.is_tuned,whisk_struct.angle)==1) + double(cellfun(@(x) x.is_tuned,whisk_struct.phase)==1))>0;
 phase_mod_abs = cellfun(@(x) x.calculations.mod_idx_abs,whisk_struct.phase(tuned_units));
