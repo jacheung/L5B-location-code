@@ -7,8 +7,10 @@ touch_struct = CompileTStruct(data_directory, feature_list);
 %% Main Figures 4
 % accuracy during recording sessions (B)
 session_accuracy(U)
+
 % Comparison of naive vs expert proportion of touch/OL cells (C)
 unit_proportions(U,touch_struct)
+
 % shape of tuning (D)
 modulation_width_comparison(U,touch_struct)
 
