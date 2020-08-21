@@ -12,7 +12,6 @@ Below are scripts used to characterize encoding and test touch location decoding
 ## Requirements: 
 - All code is built and tested on MATLAB 2018b. <br />
 - glmnet from Qian and Hastie 2013 - https://web.stanford.edu/~hastie/glmnet_matlab/ <br />
-- Dataset structures with neural recordings and stimulus variables - Request datasets by emailing jacheung6@gmail.com <br />
 - [Dataset!](https://www.dropbox.com/sh/i9znmsh7q7bphyk/AAAeObJwfwIRMBCa7_Rby5Efa?dl=0)
 
 
