@@ -6,6 +6,7 @@ During active tactile exploration, the dynamic patterns of touch are transduced 
 ![Task design](./pictures/Fig1_taskDesign.png)  
 *Mice are trained to locate a pole across various locations (A). During the task, whisker motion (B and C) are captured along with targeted neural recordings to L5 (D) of primary somatosensory cortex. Time-series motion and neural recordings are synchronized and packaged (E).*
 
+![](./pictures/trial_animation.gif)
 
 Below are scripts used to characterize encoding and test touch location decoding using single neurons. For summary of all results and findings using this script see Cheung et al., 2020. For a complete description of the behavioral paradigm during neural recordings refer to Cheung et al., 2019. 
 
