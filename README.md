@@ -6,7 +6,7 @@ During active tactile exploration, the dynamic patterns of touch are transduced 
 ![Task design](./pictures/Fig1_simple.png)  
 *Mice are trained to locate a pole across various locations (A). During the task, whisker motion (B and C) are captured along with targeted neural recordings to L5 (D) of primary somatosensory cortex.*
 
-![](./pictures/trial_animation.gif)
+![](./pictures/trial_animation.gif) <br />
 *Single example trial lasting 4 seconds. Example video (left) along with whisker traces, decomposed components, and spikes recorded from L5 (right)*
 
 ## Code:
